@@ -1,0 +1,17 @@
+wheel
+pyusb
+pyserial~=3.5
+docopt~=0.6.2
+pycryptodome
+unicorn~=1.0.2
+colorama~=0.4.3
+
+scrypt~=0.8.13
+usb~=0.0.83.dev0
+capstone~=4.0.2
+enum34~=1.1.10
+argparse~=1.4.0
+pyelftools~=0.26
+asn1~=2.4.1
+keystone-engine
+asn1crypto~=1.4.0

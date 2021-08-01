@@ -1,0 +1,1257 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+# (c) B.Kerler 2018-2021 MIT License
+import sys
+import logging
+import os
+import time
+import array
+from struct import pack, unpack
+from binascii import hexlify
+from mtkclient.Library.utils import LogBase, print_progress, read_object, logsetup
+from mtkclient.Library.error import ErrorHandler
+from mtkclient.Library.daconfig import DaStorage, EMMC_PartitionType
+from mtkclient.Library.partition import Partition
+from mtkclient.config.payloads import pathconfig
+
+norinfo = [
+    ('m_nor_ret', '>I'),
+    ('m_nor_chip_select', '2B'),
+    ('m_nor_flash_id', '>H'),
+    ('m_nor_flash_size', '>I'),
+    ('m_nor_flash_dev_code', '>4H'),
+    ('m_nor_flash_otp_status', '>I'),
+    ('m_nor_flash_otp_size', '>I')
+]
+
+nandinfo32 = [
+    ('m_nand_info', '>I'),
+    ('m_nand_chip_select', '>B'),
+    ('m_nand_flash_id', '>H'),
+    ('m_nand_flash_size', '>I'),
+    ('m_nand_flash_id_count', '>H'),
+]
+
+nandinfo64 = [
+    ('m_nand_info', '>I'),
+    ('m_nand_chip_select', '>B'),
+    ('m_nand_flash_id', '>H'),
+    ('m_nand_flash_size', '>Q'),
+    ('m_nand_flash_id_count', '>H'),
+]
+
+# ('m_nand_flash_dev_code', '>7H'),
+
+nandinfo2 = [
+    ('m_nand_pagesize', '>H'),
+    ('m_nand_sparesize', '>H'),
+    ('m_nand_pages_per_block', '>H'),
+    ('m_nand_io_interface', 'B'),
+    ('m_nand_addr_cycle', 'B'),
+    ('m_nand_bmt_exist', 'B'),
+]
+
+emmcinfo = [
+    ('m_emmc_ret', '>I'),
+    ('m_emmc_boot1_size', '>Q'),
+    ('m_emmc_boot2_size', '>Q'),
+    ('m_emmc_rpmb_size', '>Q'),
+    ('m_emmc_gp_size', '>4Q'),
+    ('m_emmc_ua_size', '>Q'),
+    ('m_emmc_cid', '>2Q'),
+    ('m_emmc_fwver', '8B')
+]
+
+sdcinfo = [
+    ('m_sdmmc_info', '>I'),
+    ('m_sdmmc_ua_size', '>Q'),
+    ('m_sdmmc_cid', '>2Q')
+]
+
+configinfo = [
+    ('m_int_sram_ret', '>I'),
+    ('m_int_sram_size', '>I'),
+    ('m_ext_ram_ret', '>I'),
+    ('m_ext_ram_type', 'B'),
+    ('m_ext_ram_chip_select', 'B'),
+    ('m_ext_ram_size', '>Q'),
+    ('randomid', '>2Q'),
+]
+
+passinfo = [
+    ('ack', 'B'),
+    ('m_download_status', '>I'),
+    ('m_boot_style', '>I'),
+    ('soc_ok', 'B')
+]
+
+
+def crc_word(data, chs=0):
+    return (sum(data) + chs) & 0xFFFF
+
+
+errortbl = {
+    3000: "S_DA_INT_RAM_ERROR",
+    3001: "S_DA_EXT_RAM_ERROR",
+    3002: "S_DA_SETUP_DRAM_FAIL",
+    3003: "S_DA_SETUP_PLL_ERR",
+    3004: "S_DA_DRAM_NOT_SUPPORT",
+    3005: "S_DA_RAM_FLOARTING",
+    3006: "S_DA_RAM_UNACCESSABLE",
+    3007: "S_DA_RAM_ERROR",
+    3008: "S_DA_DEVICE_NOT_FOUND",
+    3009: "S_DA_NOR_UNSUPPORTED_DEV_ID",
+    3010: "S_DA_NAND_UNSUPPORTED_DEV_ID",
+    3011: "S_DA_NOR_FLASH_NOT_FOUND",
+    3012: "S_DA_NAND_FLASH_NOT_FOUND",
+    3013: "S_DA_SOC_CHECK_FAIL",
+    3014: "S_DA_NOR_PROGRAM_FAILED",
+    3015: "S_DA_NOR_ERASE_FAILED",
+    3016: "S_DA_NAND_PAGE_PROGRAM_FAILED",
+    3017: "S_DA_NAND_SPARE_PROGRAM_FAILED",
+    3018: "S_DA_NAND_HW_COPYBACK_FAILED",
+    3019: "S_DA_NAND_ERASE_FAILED",
+    3020: "S_DA_TIMEOUT",
+    3021: "S_DA_IN_PROGRESS",
+    3022: "S_DA_SUPERAND_ONLY_SUPPORT_PAGE_READ",
+    3023: "S_DA_SUPERAND_PAGE_READ_NOT_SUPPORT",
+    3024: "S_DA_SUPERAND_PAGE_PRGRAM_NOT_SUPPORT",
+    3025: "S_DA_SUPERAND_SPARE_PRGRAM_NOT_SUPPORT",
+    3026: "S_DA_SUPERAND_SPARE_READ_NOT_SUPPORT",
+    3027: "S_DA_SUPERAND_PAGE_SPARE_PRGRAM_NOT_SUPPORT",
+    3028: "S_DA_SUPERAND_COPYBACK_NOT_SUPPORT",
+    3029: "S_DA_NOR_CMD_SEQUENCE_ERR",
+    3030: "S_DA_NOR_BLOCK_IS_LOCKED",
+    3031: "S_DA_NAND_BLOCK_IS_LOCKED",
+    3032: "S_DA_NAND_BLOCK_DATA_UNSTABLE",
+    3033: "S_DA_NOR_BLOCK_DATA_UNSTABLE",
+    3034: "S_DA_NOR_VPP_RANGE_ERR",
+    3035: "S_DA_INVALID_BEGIN_ADDR",
+    3036: "S_DA_NOR_INVALID_ERASE_BEGIN_ADDR",
+    3037: "S_DA_NOR_INVALID_READ_BEGIN_ADDR",
+    3038: "S_DA_NOR_INVALID_PROGRAM_BEGIN_ADDR",
+    3039: "S_DA_INVALID_RANGE",
+    3040: "S_DA_NOR_PROGRAM_AT_ODD_ADDR",
+    3041: "S_DA_NOR_PROGRAM_WITH_ODD_LENGTH",
+    3042: "S_DA_NOR_BUFPGM_NO_SUPPORT",
+    3043: "S_DA_NAND_UNKNOWN_ERR",
+    3044: "S_DA_NAND_BAD_BLOCK",
+    3045: "S_DA_NAND_ECC_1BIT_CORRECT",
+    3046: "S_DA_NAND_ECC_2BITS_ERR",
+    3047: "S_DA_NAND_ECC_UNCORRECTABLE_ERROR",
+    3048: "S_DA_NAND_SPARE_CHKSUM_ERR",
+    3049: "S_DA_NAND_HW_COPYBACK_DATA_INCONSISTENT",
+    3050: "S_DA_NAND_INVALID_PAGE_INDEX",
+    3051: "S_DA_NFI_NOT_SUPPORT",
+    3052: "S_DA_NFI_CS1_NOT_SUPPORT",
+    3053: "S_DA_NFI_16BITS_IO_NOT_SUPPORT",
+    3054: "S_DA_NFB_BOOTLOADER_NOT_EXIST",
+    3055: "S_DA_NAND_NO_GOOD_BLOCK",
+    3056: "S_DA_BOOTLOADER_IS_TOO_LARGE",
+    3057: "S_DA_SIBLEY_REWRITE_OBJ_MODE_REGION",
+    3058: "S_DA_SIBLEY_WRITE_B_HALF_IN_CTRL_MODE_REGION",
+    3059: "S_DA_SIBLEY_ILLEGAL_CMD",
+    3060: "S_DA_SIBLEY_PROGRAM_AT_THE_SAME_REGIONS",
+    3061: "S_DA_UART_GET_DATA_TIMEOUT",
+    3062: "S_DA_UART_GET_CHKSUM_LSB_TIMEOUT",
+    3063: "S_DA_UART_GET_CHKSUM_MSB_TIMEOUT",
+    3064: "S_DA_UART_DATA_CKSUM_ERROR",
+    3065: "S_DA_UART_RX_BUF_FULL",
+    3066: "S_DA_FLASH_RECOVERY_BUF_NOT_ENOUGH",
+    3067: "S_DA_HANDSET_SEC_INFO_NOT_FOUND",
+    3068: "S_DA_HANDSET_SEC_INFO_MAC_VERIFY_FAIL",
+    3069: "S_DA_HANDSET_ROM_INFO_NOT_FOUND",
+    3070: "S_DA_HANDSET_FAT_INFO_NOT_FOUND",
+    3071: "S_DA_OPERATION_UNSUPPORT_FOR_NFB",
+    3072: "S_DA_BYPASS_POST_PROCESS",
+    3073: "S_DA_NOR_OTP_NOT_SUPPORT",
+    3074: "S_DA_NOR_OTP_EXIST",
+    3075: "S_DA_NOR_OTP_LOCKED",
+    3076: "S_DA_NOR_OTP_GETSIZE_FAIL",
+    3077: "S_DA_NOR_OTP_READ_FAIL",
+    3078: "S_DA_NOR_OTP_PROGRAM_FAIL",
+    3079: "S_DA_NOR_OTP_LOCK_FAIL",
+    3080: "S_DA_NOR_OTP_LOCK_CHECK_STATUS_FAIL",
+    3081: "S_DA_BLANK_FLASH",
+    3082: "S_DA_CODE_AREA_IS_BLANK",
+    3083: "S_DA_SEC_RO_AREA_IS_BLANK",
+    3084: "S_DA_NOR_OTP_UNLOCKED",
+    3085: "S_DA_UNSUPPORTED_BBCHIP",
+    3086: "S_DA_FAT_NOT_EXIST",
+    3087: "S_DA_EXT_SRAM_NOT_FOUND",
+    3088: "S_DA_EXT_DRAM_NOT_FOUND",
+    3089: "S_DA_MT_PIN_LOW",
+    3090: "S_DA_MT_PIN_HIGH",
+    3091: "S_DA_MT_PIN_SHORT",
+    3092: "S_DA_MT_BUS_ERROR",
+    3093: "S_DA_MT_ADDR_NOT_2BYTE_ALIGNMENT",
+    3094: "S_DA_MT_ADDR_NOT_4BYTE_ALIGNMENT",
+    3095: "S_DA_MT_SIZE_NOT_2BYTE_ALIGNMENT",
+    3096: "S_DA_MT_SIZE_NOT_4BYTE_ALIGNMENT",
+    3097: "S_DA_MT_DEDICATED_PATTERN_ERROR",
+    3098: "S_DA_MT_INC_PATTERN_ERROR",
+    3099: "S_DA_MT_DEC_PATTERN_ERROR",
+    3100: "S_DA_NFB_BLOCK_0_IS_BAD",
+    3101: "S_DA_CUST_PARA_AREA_IS_BLANK",
+    3102: "S_DA_ENTER_RELAY_MODE_FAIL",
+    3103: "S_DA_ENTER_RELAY_MODE_IS_FORBIDDEN_AFTER_META",
+    3104: "S_DA_NAND_PAGE_READ_FAILED",
+    3105: "S_DA_NAND_IMAGE_BLOCK_NO_EXIST",
+    3106: "S_DA_NAND_IMAGE_LIST_NOT_EXIST",
+    3107: "S_DA_MBA_RESOURCE_NO_EXIST_IN_TARGET",
+    3108: "S_DA_MBA_PROJECT_VERSION_NO_MATCH_WITH_TARGET",
+    3109: "S_DA_MBA_UPDATING_RESOURCE_NO_EXIST_IN_TARGET",
+    3110: "S_DA_MBA_UPDATING_RESOURCE_SIZE_EXCEED_IN_TARGET",
+    3111: "S_DA_NAND_BIN_SIZE_EXCEED_MAX_SIZE",
+    3112: "S_DA_NAND_EXCEED_CONTAINER_LIMIT",
+    3113: "S_DA_NAND_REACH_END_OF_FLASH",
+    3114: "S_DA_NAND_OTP_NOT_SUPPORT",
+    3115: "S_DA_NAND_OTP_EXIST",
+    3116: "S_DA_NAND_OTP_LOCKED",
+    3117: "S_DA_NAND_OTP_LOCK_FAIL",
+    3118: "S_DA_NAND_OTP_UNLOCKED",
+    3119: "S_DA_OTP_NOT_SUPPORT",
+    3120: "S_DA_OTP_EXIST",
+    3121: "S_DA_OTP_LOCKED",
+    3122: "S_DA_OTP_GETSIZE_FAIL",
+    3123: "S_DA_OTP_READ_FAIL",
+    3124: "S_DA_OTP_PROGRAM_FAIL",
+    3125: "S_DA_OTP_LOCK_FAIL",
+    3126: "S_DA_OTP_LOCK_CHECK_STATUS_FAIL",
+    3127: "S_DA_OTP_UNLOCKED",
+    3128: "S_DA_SEC_RO_ILLEGAL_MAGIC_TAIL",
+    3129: "S_DA_HANDSET_FOTA_INFO_NOT_FOUND",
+    3130: "S_DA_HANDSET_UA_INFO_NOT_FOUND",
+    3131: "S_DA_SB_FSM_INVALID_INFO",
+    3132: "S_DA_NFB_TARGET_DUAL_BL_PAIRED_VERSION_NOT_MATCHED_WITH_MAUI",
+    3133: "S_DA_NFB_TARGET_DUAL_BL_FEATURE_COMBINATION_NOT_MATCHED_WITH_MAUI",
+    3134: "S_DA_NFB_TARGET_IS_SINGLE_BL_BUT_PC_NOT",
+    3135: "S_DA_NFB_TARGET_IS_DUAL_BL_BUT_PC_NOT",
+    3136: "S_DA_NOR_TARGET_BL_PAIRED_VERSION_NOT_MATCHED_WITH_MAUI",
+    3137: "S_DA_NOR_TARGET_BL_FEATURE_COMBINATION_NOT_MATCHED_WITH_MAUI",
+    3138: "S_DA_NOR_TARGET_IS_NOT_NEW_BL_BUT_PC_IS",
+    3139: "S_DA_NOR_TARGET_IS_NEW_BL_BUT_PC_NOT",
+    3140: "S_DA_GEN_DA_VERSION_INFO_TEMP_ILB_FAIL",
+    3141: "S_DA_FLASH_NOT_FOUND",
+    3142: "S_DA_BOOT_CERT_NOT_EXIST",
+    3143: "S_DA_NAND_CODE_IMAGE_OVERLAP_FAT_REGION",
+    3144: "S_DA_DOWNLOAD_BOOTLOADER_FLASH_DEV_IS_NONE",
+    3145: "S_DA_DOWNLOAD_BOOTLOADER_FLASH_DEV_IS_NOT_SUPPORTED",
+    3146: "S_DA_DOWNLOAD_BOOTLOADER_BEGIN_ADDR_OVERLAPS_WITH_PREVIOUS_BOUNDARY",
+    3147: "S_DA_UPDATE_BOOTLOADER_EXIST_MAGIC_NOT_MATCHED",
+    3148: "S_DA_UPDATE_BOOTLOADER_FILE_TYPE_NOT_MATCHED",
+    3149: "S_DA_UPDATE_BOOTLOADER_FILE_SIZE_EXCEEDS_BOUNDARY_ADDR",
+    3150: "S_DA_UPDATE_BOOTLOADER_BEGIN_ADDR_NOT_MATCHED",
+    3151: "S_DA_CBR_SET_BUF_AND_API_FAIL",
+    3152: "S_DA_CBR_NOT_FOUND",
+    3153: "S_DA_CBR_FLASH_LAYOUT_NOT_FOUND",
+    3154: "S_DA_CBR_FLASH_SPACE_INFO_NOT_FOUND",
+    3155: "S_DA_CBR_FLASH_CONFIG_NOT_FOUND",
+    3156: "S_DA_CBR_SET_ENVRIONMENT_FAILED",
+    3157: "S_DA_CBR_CREAT_FAILED",
+    3158: "S_DA_CBR_COMPARE_FAILED",
+    3159: "S_DA_CBR_WRONG_VERSION",
+    3160: "S_DA_CBR_ALREADY_EXIST",
+    3161: "S_DA_CBR_RECORD_BUF_TOO_SMALL",
+    3162: "S_DA_CBR_RECORD_NOT_EXIST",
+    3163: "S_DA_CBR_RECORD_ALREADY_EXIST",
+    3164: "S_DA_CBR_FULL",
+    3165: "S_DA_CBR_RECORD_WRITE_LEN_INCONSISTENT",
+    3166: "S_DA_CBR_VERSION_NOT_MATCHED",
+    3167: "S_DA_CBR_NOT_SUPPORT_PCT_FLASH",
+    3168: "S_DA_CBR_UNKNOWN_ERROR",
+    3169: "S_DA_SEC_RO_ACC_PARSE_ERROR",
+    3170: "S_DA_HEADER_BLOCK_NOT_EXIST",
+    3171: "S_DA_S_PRE_PARSE_CUSTOMER_NAME_FAIL",
+    3172: "S_DA_S_RETRIEVE_SEC_RO_FAIL_IN_SECURE_INIT",
+    3173: "S_DA_S_FLASH_INFO_NOT_EXIST",
+    3174: "S_DA_S_MAUI_INFO_NOT_EXIST",
+    3175: "S_DA_S_BOOTLOADER_SHARE_DATA_NOT_EXIST",
+    3176: "S_DA_GFH_FILE_INFO_RETREIVAL_FAIL",
+    3177: "S_DA_NAND_REMARK_FAIL",
+    3178: "S_DA_TARGET_IS_NOT_NEW_BL_BUT_PC_IS",
+    3179: "S_DA_EMMC_FLASH_NOT_FOUND",
+    3180: "S_DA_EMMC_ENABLE_BOOT_FAILED",
+    3181: "S_DA_HB_FOUND_IN_OTHER_FLASH_DEV",
+    3182: "S_DA_USB_2_0_NOT_SUPPORT",
+    3183: "S_DA_CBR_INIT_FAILED",
+    3184: "S_DA_CBR_MAUI_INFO_SIZE_TOO_BIG",
+    3185: "S_DA_CBR_WRITE_MAUI_INFO_FAILED",
+    3186: "S_DA_CBR_READ_MAUI_INFO_FAILED",
+    3187: "S_DA_UNSUPPORTED_OPERATION",
+    3188: "S_DA_MBA_RESOURCE_BIN_NUMBER_NOT_MATCH_WITH_TARGET",
+    3189: "S_DA_MBA_HEADER_NOT_EXIST",
+    3190: "S_DA_MBA_RESOURCE_VERSION_NO_MATCH_WITH_TARGET",
+    3191: "S_DA_BOOTLOADER_SELF_UPDATE_FAIL",
+    3192: "S_DA_SEARCH_BL_SELF_UPDATE_INFO_FAIL",
+    3193: "S_DA_SPACE_NOT_ENOUGH_FOR_EXT_BL_MARKER",
+    3194: "S_DA_FIND_EXT_BL_MARKER_FAIL",
+    3195: "S_DA_TOO_MANY_BAD_BLOCKS_FOR_EXT_BL_MARKER",
+    3196: "S_DA_TOO_MANY_BAD_BLOCKS_FOR_EXT_BL_BACKUP",
+    3197: "S_DA_EXT_BL_VER_MISMATCHED",
+    3198: "S_DA_EXT_BL_VER_NOT_FOUND",
+    3199: "S_DA_BL_SELF_UPDATE_FEATURE_CHECK_FAILED",
+    3200: "S_DA_BL_ROM_INFO_NOT_FOUND",
+    3201: "S_DA_EXT_BL_MAX_SIZE_MISMATCHED",
+    3202: "S_DA_INVALID_PARAMETER_FROM_PC",
+    3203: "S_DA_BL_SELF_UPDATE_NOT_SUPPORTED",
+    3204: "S_DA_EXT_BL_HDR_NOT_FOUND",
+    3205: "S_DA_S_FLASH_LAYOUT_NOT_EXIST",
+    3206: "S_DA_S_FLASH_ID_NOT_EXIST",
+    3207: "S_DA_MAUI_GFH_FLASH_ID_NOT_MATCH_WITH_TARGET",
+    3208: "S_DA_FLASH_ERASE_SIZE_NOT_SUPPORT",
+    3209: "S_DA_SRD_NOT_FOUND",
+    3210: "S_DA_SRD_UPDATE_FAILED",
+    3211: "S_DA_NAND_DATA_ADDR_NOT_PAGE_ALIGNMENT",
+    3212: "S_DA_BL_GFH_BROM_SEC_CFG_NOT_FOUND",
+    3213: "S_DA_BL_CUSTOMER_NAME_BUFFER_INSUFFICIENT",
+    3214: "S_DA_COM_BUSY",
+    3215: "S_DA_INITIAL_BMT_FAILED_CAUSED_FROM_POOL_SIZE_ERROR",
+    3216: "S_DA_LOAD_ORIGINAL_BMT_FAILED",
+    3217: "S_DA_INVALID_NAND_PAGE_BUFFER",
+    3218: "S_DA_DL_BOOT_REGION_IS_OVERLAP_CONTROL_BLOCK_REGION",
+    3219: "S_DA_PRE_DL_HB_INIT_FAIL",
+    3220: "S_DA_POST_DL_HB_WRITE_FAIL",
+    3221: "S_DA_LOAD_IMG_PARA_FAIL",
+    3222: "S_DA_WRITE_IMG_PARA_FAIL",
+    3223: "S_DA_UPDATE_HB_FAIL",
+    3224: "S_DA_BIN_SIZE_EXCEED_MAX_ERR",
+    3225: "S_DA_PARTIAL_BIN_TYPE_ERR",
+    3226: "S_DA_IMAGE_PARA_QUERY_ERR",
+    3227: "S_DA_IMAGE_PARA_UPDATE_ERR",
+    3228: "S_DA_FLASH_LAYOUT_BIN_NOT_FOUND",
+    3229: "S_DA_FLASH_LAYOUT_GET_ELEMENT_FAIL",
+    3230: "S_DA_FLASH_LAYOUT_ADD_ELEMENT_FAIL",
+    3231: "S_DA_CBR_FOUND_BUT_MAUI_NOT_EXIST",
+    3232: "S_DA_UPDATE_BOOTLOADER_NOT_CONTAIN_CRITICAL_DATA",
+    3233: "S_DA_DUMP_FLASH_LAYOUT_FAIL",
+    3234: "S_DA_BMT_NO_INIT",
+    3235: "S_DA_NOR_PROGRAM_REGION_IS_OVERLAP"
+}
+
+
+def error_to_string(errorcode):
+    if errorcode in errortbl:
+        return errortbl[errorcode]
+
+
+class DALegacy(metaclass=LogBase):
+    class Rsp:
+        SOC_OK = b"\xC1"
+        SOC_FAIL = b"\xCF"
+        SYNC_CHAR = b"\xC0"
+        CONT_CHAR = b"\x69"
+        STOP_CHAR = b"\x96"
+        ACK = b"\x5A"
+        NACK = b"\xA5"
+        UNKNOWN_CMD = b"\xBB"
+
+    class PortValues:
+        UART_BAUD_921600 = b'\x01',
+        UART_BAUD_460800 = b'\x02',
+        UART_BAUD_230400 = b'\x03',
+        UART_BAUD_115200 = b'\x04',
+        UART_BAUD_57600 = b'\x05',
+        UART_BAUD_38400 = b'\x06',
+        UART_BAUD_19200 = b'\x07',
+        UART_BAUD_9600 = b'\x08',
+        UART_BAUD_4800 = b'\x09',
+        UART_BAUD_2400 = b'\x0a',
+        UART_BAUD_1200 = b'\x0b',
+        UART_BAUD_300 = b'\x0c',
+        UART_BAUD_110 = b'\x0d'
+
+    class Cmd:
+        # COMMANDS
+        DOWNLOAD_BLOADER_CMD = b"\x51"
+        NAND_BMT_REMARK_CMD = b"\x52"
+
+        SDMMC_SWITCH_PART_CMD = b"\x60"
+        SDMMC_WRITE_IMAGE_CMD = b"\x61"
+        SDMMC_WRITE_DATA_CMD = b"\x62"
+        SDMMC_GET_CARD_TYPE = b"\x63"
+        SDMMC_RESET_DIS_CMD = b"\x64"
+
+        UFS_SWITCH_PART_CMD = b"\x80"
+        UFS_WRITE_IMAGE_CMD = b"\x81"
+        UFS_WRITE_DATA_CMD = b"\x82"
+        UFS_READ_GPT_CMD = b"\x85"
+        UFS_WRITE_GPT_CMD = b"\x89"
+
+        UFS_OTP_CHECKDEVICE_CMD = b"\x8a"
+        UFS_OTP_GETSIZE_CMD = b"\x8b"
+        UFS_OTP_READ_CMD = b"\x8c"
+        UFS_OTP_PROGRAM_CMD = b"\x8d"
+        UFS_OTP_LOCK_CMD = b"\x8e"
+        UFS_OTP_LOCK_CHECKSTATUS_CMD = b"\x8f"
+
+        USB_SETUP_PORT = b"\x70"
+        USB_LOOPBACK = b"\x71"
+        USB_CHECK_STATUS = b"\x72"
+        USB_SETUP_PORT_EX = b"\x73"
+
+        # EFUSE
+        READ_REG32_CMD = b"\x7A"
+        WRITE_REG32_CMD = b"\x7B"
+        PWR_READ16_CMD = b"\x7C"
+        PWR_WRITE16_CMD = b"\x7D"
+        PWR_READ8_CMD = b"\x7E"
+        PWR_WRITE8_CMD = b"\x7F"
+
+        EMMC_OTP_CHECKDEVICE_CMD = b"\x99"
+        EMMC_OTP_GETSIZE_CMD = b"\x9A"
+        EMMC_OTP_READ_CMD = b"\x9B"
+        EMMC_OTP_PROGRAM_CMD = b"\x9C"
+        EMMC_OTP_LOCK_CMD = b"\x9D"
+        EMMC_OTP_LOCK_CHECKSTATUS_CMD = b"\x9E"
+
+        WRITE_USB_DOWNLOAD_CONTROL_BIT_CMD = b"\xA0"
+        WRITE_PARTITION_TBL_CMD = b"\xA1"
+        READ_PARTITION_TBL_CMD = b"\xA2"
+        READ_BMT = b"\xA3"
+        SDMMC_WRITE_PMT_CMD = b"\xA4"
+        SDMMC_READ_PMT_CMD = b"\xA5"
+        READ_IMEI_PID_SWV_CMD = b"\xA6"
+        READ_DOWNLOAD_INFO = b"\xA7"
+        WRITE_DOWNLOAD_INFO = b"\xA8"
+        SDMMC_WRITE_GPT_CMD = b"\xA9"
+        NOR_READ_PTB_CMD = b"\xAA"
+        NOR_WRITE_PTB_CMD = b"\xAB"
+
+        NOR_BLOCK_INDEX_TO_ADDRESS = b"\xB0"  # deprecated
+        NOR_ADDRESS_TO_BLOCK_INDEX = b"\xB1"  # deprecated
+        NOR_WRITE_DATA = b"\xB2"  # deprecated
+        NAND_WRITE_DATA = b"\xB3"
+        SECURE_USB_RECHECK_CMD = b"\xB4"
+        SECURE_USB_DECRYPT_CMD = b"\xB5"
+        NFB_BL_FEATURE_CHECK_CMD = b"\xB6"  # deprecated
+        NOR_BL_FEATURE_CHECK_CMD = b"\xB7"  # deprecated
+
+        SF_WRITE_IMAGE_CMD = b"\xB8"  # deprecated
+
+        # Android S-USBDL
+        SECURE_USB_IMG_INFO_CHECK_CMD = b"\xB9"
+        SECURE_USB_WRITE = b"\xBA"
+        SECURE_USB_ROM_INFO_UPDATE_CMD = b"\xBB"
+        SECURE_USB_GET_CUST_NAME_CMD = b"\xBC"
+        SECURE_USB_CHECK_BYPASS_CMD = b"\xBE"
+        SECURE_USB_GET_BL_SEC_VER_CMD = b"\xBF"
+        # Android S-USBDL
+
+        VERIFY_IMG_CHKSUM_CMD = b"\xBD"
+
+        GET_BATTERY_VOLTAGE_CMD = b"\xD0"
+        POST_PROCESS = b"\xD1"
+        SPEED_CMD = b"\xD2"
+        MEM_CMD = b"\xD3"
+        FORMAT_CMD = b"\xD4"
+        WRITE_CMD = b"\xD5"
+        READ_CMD = b"\xD6"
+        WRITE_REG16_CMD = b"\xD7"
+        READ_REG16_CMD = b"\xD8"
+        FINISH_CMD = b"\xD9"
+        GET_DSP_VER_CMD = b"\xDA"
+        ENABLE_WATCHDOG_CMD = b"\xDB"
+        NFB_WRITE_BLOADER_CMD = b"\xDC"  # deprecated
+        NAND_IMAGE_LIST_CMD = b"\xDD"
+        NFB_WRITE_IMAGE_CMD = b"\xDE"
+        NAND_READPAGE_CMD = b"\xDF"
+        CHK_PC_SEC_INFO_CMD = b"\xE0"
+        UPDATE_FLASHTOOL_CFG_CMD = b"\xE1"
+        CUST_PARA_GET_INFO_CMD = b"\xE2"  # deprecated
+        CUST_PARA_READ_CMD = b"\xE3"  # deprecated
+        CUST_PARA_WRITE_CMD = b"\xE4"  # deprecated
+        SEC_RO_GET_INFO_CMD = b"\xE5"  # deprecated
+        SEC_RO_READ_CMD = b"\xE6"  # deprecated
+        SEC_RO_WRITE_CMD = b"\xE7"  # deprecated
+        ENABLE_DRAM = b"\xE8"
+        OTP_CHECKDEVICE_CMD = b"\xE9"
+        OTP_GETSIZE_CMD = b"\xEA"
+        OTP_READ_CMD = b"\xEB"
+        OTP_PROGRAM_CMD = b"\xEC"
+        OTP_LOCK_CMD = b"\xED"
+        OTP_LOCK_CHECKSTATUS_CMD = b"\xEE"
+        GET_PROJECT_ID_CMD = b"\xEF"
+        GET_FAT_INFO_CMD = b"\xF0"  # deprecated
+        FDM_MOUNTDEVICE_CMD = b"\xF1"
+        FDM_SHUTDOWN_CMD = b"\xF2"
+        FDM_READSECTORS_CMD = b"\xF3"
+        FDM_WRITESECTORS_CMD = b"\xF4"
+        FDM_MEDIACHANGED_CMD = b"\xF5"
+        FDM_DISCARDSECTORS_CMD = b"\xF6"
+        FDM_GETDISKGEOMETRY_CMD = b"\xF7"
+        FDM_LOWLEVELFORMAT_CMD = b"\xF8"
+        FDM_NONBLOCKWRITESECTORS_CMD = b"\xF9"
+        FDM_RECOVERABLEWRITESECTORS_CMD = b"\xFA"
+        FDM_RESUMESECTORSTATES = b"\xFB"
+        NAND_EXTRACT_NFB_CMD = b"\xFC"  # deprecated
+        NAND_INJECT_NFB_CMD = b"\xFD"  # deprecated
+
+        MEMORY_TEST_CMD = b"\xFE"
+        ENTER_RELAY_MODE_CMD = b"\xFF"
+
+    def __init__(self, mtk, daconfig, loglevel=logging.INFO):
+        self.__logger = logsetup(self, self.__logger, loglevel)
+        self.prog = 0
+        self.progpos = 0
+        self.progtime = 0
+        self.emmc = None
+        self.nand = None
+        self.nor = None
+        self.sdc = None
+        self.flashconfig = None
+        self.mtk = mtk
+        self.daconfig = daconfig
+        self.eh = ErrorHandler()
+        self.config = self.mtk.config
+        self.usbwrite = self.mtk.port.usbwrite
+        self.usbread = self.mtk.port.usbread
+        self.echo = self.mtk.port.echo
+        self.rbyte = self.mtk.port.rbyte
+        self.rdword = self.mtk.port.rdword
+        self.rword = self.mtk.port.rword
+        self.sectorsize = self.daconfig.pagesize
+        self.totalsectors = self.daconfig.flashsize
+        self.partition = Partition(self.mtk, self.readflash, self.read_pmt, loglevel)
+        self.pathconfig = pathconfig()
+
+    def show_progress(self, prefix, pos, total, display=True):
+        t0 = time.time()
+        if pos == 0:
+            self.prog = 0
+            self.progtime = time.time()
+            self.progpos = pos
+        prog = round(float(pos) / float(total) * float(100), 1)
+        if pos != total:
+            if prog > self.prog:
+                if display:
+                    tdiff = t0 - self.progtime
+                    datasize = (pos - self.progpos) / 1024 / 1024
+                    throughput = datasize / tdiff
+                    print_progress(prog, 100, prefix='Progress:',
+                                   suffix=prefix + ' (Sector %d of %d) %0.2f MB/s' %
+                                          (pos // self.daconfig.pagesize,
+                                           total // self.daconfig.pagesize,
+                                           throughput), bar_length=50)
+                    self.prog = prog
+                    self.progpos = pos
+                    self.progtime = t0
+        else:
+            if display:
+                print_progress(100, 100, prefix='Progress:', suffix='Complete', bar_length=50)
+
+    def read_pmt(self):  # A5
+        class GptEntries:
+            partentries = []
+
+            def __init__(self, sectorsize, totalsectors):
+                self.sectorsize = sectorsize
+                self.totalsectors = totalsectors
+
+            def print(self):
+                print("\nGPT Table:\n-------------")
+                for partition in self.partentries:
+                    print("{:20} Offset 0x{:016x}, Length 0x{:016x}, Flags 0x{:08x}, UUID {}, Type {}".format(
+                        partition.name + ":", partition.sector * self.sectorsize, partition.sectors * self.sectorsize,
+                        partition.flags, partition.unique, partition.type))
+                print("\nTotal disk size:0x{:016x}, sectors:0x{:016x}".format(self.totalsectors * self.sectorsize,
+                                                                              self.totalsectors))
+
+        gpt = GptEntries(self.sectorsize, self.totalsectors)
+
+        class PartitionLegacy:
+            type = 0
+            unique = b""
+            sector = 0
+            sectors = 0
+            flags = 0
+            name = ""
+
+        if self.usbwrite(self.Cmd.SDMMC_READ_PMT_CMD):
+            ack = unpack(">B", self.usbread(1))[0]
+            if ack == 0x5a:
+                datalength = unpack(">I", self.usbread(4))[0]
+                if self.usbwrite(self.Rsp.ACK):
+                    partdata = self.usbread(datalength)
+                    if self.usbwrite(self.Rsp.ACK):
+                        if partdata[0x48] == 0xFF:
+                            for pos in range(0, datalength, 0x60):
+                                partname = partdata[pos:pos + 0x40].rstrip(b"\x00").decode('utf-8')
+                                size = unpack("<Q", partdata[pos + 0x40:pos + 0x48])[0]
+                                mask_flags = unpack("<Q", partdata[pos + 0x48:pos + 0x50])[0]
+                                offset = unpack("<Q", partdata[pos + 0x50:pos + 0x58])[0]
+                                p = PartitionLegacy()
+                                p.name = partname
+                                p.type = 1
+                                p.sector = offset // self.daconfig.pagesize
+                                p.sectors = size // self.daconfig.pagesize
+                                p.flags = mask_flags
+                                p.unique = b""
+                                gpt.partentries.append(p)
+                        else:
+                            mask_flags = unpack("<Q", partdata[0x48:0x4C])[0]
+                            if 0xA > mask_flags > 0:
+                                # 64Bit
+                                for pos in range(0, datalength, 0x58):
+                                    partname = partdata[pos:pos + 0x40].rstrip(b"\x00").decode('utf-8')
+                                    size = unpack("<Q", partdata[pos + 0x40:pos + 0x48])[0]
+                                    offset = unpack("<Q", partdata[pos + 0x48:pos + 0x50])[0]
+                                    mask_flags = unpack("<Q", partdata[pos + 0x50:pos + 0x58])[0]
+                                    p = PartitionLegacy()
+                                    p.name = partname
+                                    p.type = 1
+                                    p.sector = offset // self.daconfig.pagesize
+                                    p.sectors = size // self.daconfig.pagesize
+                                    p.flags = mask_flags
+                                    p.unique = b""
+                                    gpt.partentries.append(p)
+                            else:
+                                # 32Bit
+                                for pos in range(0, datalength, 0x4C):
+                                    partname = partdata[pos:pos + 0x40]
+                                    size = unpack("<Q", partdata[pos + 0x40:pos + 0x44])[0]
+                                    offset = unpack("<Q", partdata[pos + 0x44:pos + 0x48])[0]
+                                    mask_flags = unpack("<Q", partdata[pos + 0x48:pos + 0x4C])[0]
+                                    p = PartitionLegacy()
+                                    p.name = partname
+                                    p.type = 1
+                                    p.sector = offset // self.daconfig.pagesize
+                                    p.sectors = size // self.daconfig.pagesize
+                                    p.flags = mask_flags
+                                    p.unique = b""
+                                    gpt.partentries.append(p)
+                        return partdata, gpt
+        return b"", []
+
+    def get_part_info(self):
+        res = self.mtk.port.mtk_cmd(self.Cmd.SDMMC_READ_PMT_CMD, 1 + 4)  # 0xA5
+        value, length = unpack(">BI", res)
+        self.usbwrite(self.Rsp.ACK)
+        data = self.usbread(length)
+        self.usbwrite(self.Rsp.ACK)
+        return data
+
+    def sdmmc_switch_partition(self, partition):
+        if self.usbwrite(self.Cmd.SDMMC_SWITCH_PART_CMD):
+            ack = self.usbread(1)
+            if ack == self.Rsp.ACK:
+                self.usbwrite(pack(">B", partition))
+                res = self.usbread(1)
+                if res < 0:
+                    return False
+                else:
+                    return True
+        return False
+
+    def check_security(self):
+        cmd = self.Cmd.CHK_PC_SEC_INFO_CMD + pack(">I", 0)  # E0
+        ack = self.mtk.port.mtk_cmd(cmd, 1)
+        if ack == self.Rsp.ACK:
+            return True
+        return False
+
+    def recheck(self):  # If Preloader is needed
+        sec_info_len = 0
+        cmd = self.Cmd.SECURE_USB_RECHECK_CMD + pack(">I", sec_info_len)  # B4
+        status = unpack(">I", self.mtk.port.mtk_cmd(cmd, 1))[0]
+        if status == 0x1799:
+            return False  # S-USBDL disabled
+        return True
+
+    def set_stage2_config(self, hwcode):
+        # m_nor_chip_select[0]="CS_0"(0x00), m_nor_chip_select[1]="CS_WITH_DECODER"(0x08)
+        if hwcode == 0x6572:
+            self.usbwrite(self.Cmd.ENTER_RELAY_MODE_CMD)
+            self.usbwrite(pack("B", 0x01))
+        else:
+            self.usbwrite(self.Cmd.GET_PROJECT_ID_CMD)
+            self.usbwrite(pack("B", 1))
+        m_nor_chip = 0x08
+        self.usbwrite(pack(">H", m_nor_chip))
+        m_nor_chip_select = 0x00
+        self.usbwrite(pack("B", m_nor_chip_select))
+        m_nand_acccon = 0x7007FFFF
+        self.usbwrite(pack(">I", m_nand_acccon))
+        self.config.bmtsettings(self.config.hwcode)
+        self.usbwrite(pack("B", self.config.bmtflag))
+        self.usbwrite(pack(">I", self.config.bmtpartsize))
+        # self.usbwrite(pack(">I", bmtblockcount))
+        # unsigned char force_charge=0x02; //Setting in tool: 0x02=Auto, 0x01=On
+        force_charge = 0x02
+        self.usbwrite(pack("B", force_charge))
+        resetkeys = 0x01  # default
+        if hwcode == 0x6583:
+            resetkeys = 0
+        self.usbwrite(pack("B", resetkeys))
+        # EXT_CLOCK: ext_clock(0x02)="EXT_26M".
+        extclock = 0x02
+        self.usbwrite(pack("B", extclock))
+        msdc_boot_ch = 0
+        self.usbwrite(pack("B", msdc_boot_ch))
+        toread = 4
+        if hwcode == 0x6592:
+            is_gpt_solution = 0
+            self.usbwrite(pack(">I", is_gpt_solution))
+            toread = (6 * 4)
+        elif hwcode == 0x6580 or hwcode == 0x8163:
+            slc_percent = 0x1
+            self.usbwrite(pack(">I", slc_percent))
+            unk = b"\x46\x46\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\x00\x00\x00"
+            self.usbwrite(unk)
+        elif hwcode in [0x6583, 0x6589]:
+            forcedram = 0
+            if hwcode == 0x6583:
+                forcedram = 0
+            elif hwcode == 0x6589:
+                forcedram = 1
+            self.usbwrite(pack(">I", forcedram))
+        elif hwcode == 0x8127:
+            skipdl = 0
+            self.usbwrite(pack(">I", skipdl))
+        elif hwcode == 0x6582:
+            newcombo = 0
+            self.usbwrite(pack(">I", newcombo))
+        time.sleep(0.350)
+        buffer = self.usbread(toread)
+        if toread == 4 and buffer == pack(">I", 0xBC3):
+            buffer += self.usbread(4)
+            pdram = [b"", b""]
+            draminfo = self.usbread(16)
+            pdram[0] = draminfo[:9]
+            draminfo = draminfo[:4][::-1] + draminfo[4:8][::-1] + draminfo[8:12][::-1] + draminfo[12:16][::-1]
+            pdram[1] = draminfo[:9]
+            self.info("DRAM config needed for : " + hexlify(draminfo).decode('utf-8'))
+            if self.daconfig.emi is None:
+                found = False
+                for root, dirs, files in os.walk(os.path.join(self.pathconfig.get_payloads_path(), 'Preloader')):
+                    for file in files:
+                        with open(os.path.join(root, file), "rb") as rf:
+                            data = rf.read()
+                            if pdram[0] in data or pdram[1] in data:
+                                preloader = os.path.join(root, file)
+                                print("Detected preloader: " + preloader)
+                                self.daconfig.emi = self.daconfig.extract_emi
+                                found = True
+                                break
+                    if found:
+                        break
+            if self.usbread(4) == pack(">I", 0xBC4):  # Nand_Status
+                nand_id_count = unpack(">H", self.usbread(2))[0]
+                nand_ids = []
+                for i in range(0, nand_id_count):
+                    nand_ids.append(unpack(">H", self.usbread(2))[0])
+                if self.daconfig.emi is not None:
+                    self.usbwrite(self.Cmd.ENABLE_DRAM)  # E8
+                    if self.config.hwcode == 0x8163:
+                        val = 0x10
+                    elif self.config.hwcode == 0x6580:
+                        val = 0x15
+                    elif self.config.hwcode == 0x6572:
+                        val = 0x0B
+                    else:
+                        val = 0x14
+                    self.usbwrite(pack(">I", val))
+                    if self.usbread(1) == self.Rsp.ACK:
+                        dramlength = len(self.daconfig.emi)
+                        if val in [0x10, 0x14, 0x15]:
+                            dramlength = unpack(">I", self.usbread(0x4))[0]  # 0x000000BC
+                            self.debug("Info: " + hex(dramlength))
+                            self.usbwrite(self.Rsp.ACK)
+                            lendram=len(self.daconfig.emi)
+                            self.usbwrite(pack(">I", lendram))
+                        elif val in [0x0B]:
+                            info = self.usbread(0x10)  # 0x000000BC
+                            self.debug("Info: " + hexlify(info).decode('utf-8'))
+                            dramlength = unpack(">I", self.usbread(0x4))[0]
+                            self.usbwrite(self.Rsp.ACK)
+                        self.usbwrite(self.daconfig.emi)
+                        checksum = unpack(">H", self.usbread(2))[0]  # 0x440C
+                        self.debug("Status: %04X" % checksum)
+                        self.usbwrite(self.Rsp.ACK)
+                        self.usbwrite(pack(">I", 0x80000001))  # Send DRAM config
+                        m_ext_ram_ret = unpack(">I", self.usbread(4))[0]  # 0x00000000 S_DONE
+                        self.debug(f"M_EXT_RAM_RET : {m_ext_ram_ret}")
+                        if m_ext_ram_ret != 0:
+                            self.error("Preloader error: %d => %s" % (m_ext_ram_ret, error_to_string(m_ext_ram_ret)))
+                            self.mtk.port.close()
+                            sys.exit(0)
+                        m_ext_ram_type = self.usbread(1)[0]  # 0x02 HW_RAM_DRAM
+                        self.debug(f"M_EXT_RAM_TYPE : {m_ext_ram_type}")
+                        m_ext_ram_chip_select = self.usbread(1)[0]  # 0x00 CS_0
+                        self.debug(f"M_EXT_RAM_CHIP_SELECT : {m_ext_ram_chip_select}")
+                        m_ext_ram_size = unpack(">Q", self.usbread(8))  # 0x80000000
+                        self.debug(f"M_EXT_RAM_SIZE : {m_ext_ram_size}")
+                else:
+                    self.error("Preloader needed due to dram config.")
+                    self.mtk.port.close()
+                    sys.exit(0)
+        return buffer
+
+    def read_flash_info(self):
+        data = self.usbread(0x1C)
+        self.nor = read_object(data, norinfo)
+        data = self.usbread(0x11)
+        self.nand = read_object(data, nandinfo64)
+        nandcount = self.nand["m_nand_flash_id_count"]
+        if nandcount == 0:
+            self.nand = read_object(data, nandinfo32)
+            nandcount = self.nand["m_nand_flash_id_count"]
+            nc = data[-4:] + self.usbread(nandcount * 2 - 4)
+        else:
+            nc = self.usbread(nandcount * 2)
+        m_nand_dev_code = unpack(">" + str(nandcount) + "H", nc)
+        self.nand["m_nand_flash_dev_code"] = m_nand_dev_code
+        ni2 = read_object(self.usbread(9), nandinfo2)
+        for ni in ni2:
+            self.nand[ni] = ni2[ni]
+        self.emmc = read_object(self.usbread(0x5C), emmcinfo)
+        self.sdc = read_object(self.usbread(0x1C), sdcinfo)
+        self.flashconfig = read_object(self.usbread(0x26), configinfo)
+        pi = read_object(self.usbread(0xA), passinfo)
+        if pi["ack"] == 0x5A:
+            return True
+        elif pi['m_download_status'] == 0x5A:
+            tmp = self.usbread(1)
+            return True
+        return False
+
+    def upload(self):
+        if self.daconfig.da is None:
+            self.error("No valid da loader found... aborting.")
+            return False
+        loader = self.daconfig.loader
+        if self.config.blver == -2 or self.config.blver <= 0x80:
+            self.info("Uploading stage 1...")
+            with open(loader, 'rb') as bootldr:
+                # stage 1
+                stage = 2
+                offset = self.daconfig.da[stage]["m_buf"]
+                size = self.daconfig.da[stage]["m_len"]
+                address = self.daconfig.da[stage]["m_start_addr"]
+                sig_len = self.daconfig.da[stage]["m_sig_len"]
+                bootldr.seek(offset)
+                dadata = bootldr.read(size)
+                if self.mtk.preloader.send_da(address, size, sig_len, dadata):
+                    if self.mtk.preloader.jump_da(address):
+                        sync = self.usbread(1)
+                        if sync != b"\xC0":
+                            self.error("Error on DA sync")
+                            return False
+                    else:
+                        return False
+                else:
+                    return False
+                nandinfo = unpack(">I", self.usbread(4))[0]
+                self.debug("NAND_INFO: " + hex(nandinfo))
+                ids = unpack(">H", self.usbread(2))[0]
+                nandids = []
+                for i in range(0, ids):
+                    tmp = unpack(">H", self.usbread(2))[0]
+                    nandids.append(tmp)
+
+                emmcinfolegacy = unpack(">I", self.usbread(4))[0]
+                self.debug("EMMC_INFO: " + hex(emmcinfolegacy))
+                emmcids = []
+                for i in range(0, 4):
+                    tmp = unpack(">I", self.usbread(4))[0]
+                    emmcids.append(tmp)
+
+                if nandids[0] != 0:
+                    self.daconfig.flashtype = "nand"
+                elif emmcids[0] != 0:
+                    self.daconfig.flashtype = "emmc"
+                else:
+                    self.daconfig.flashtype = "nor"
+
+                self.usbwrite(self.Rsp.ACK)
+                ackval = self.usbread(3)
+                self.debug("ACK: " + hexlify(ackval).decode('utf-8'))
+
+                self.set_stage2_config(self.config.hwcode)
+                self.info("Uploading stage 2...")
+                # stage 2
+                if self.brom_send(self.daconfig, bootldr, 3):
+                    if self.read_flash_info():
+                        if self.daconfig.flashtype == "nand":
+                            self.daconfig.flashsize = self.nand["m_nand_flash_size"]
+                        elif self.daconfig.flashtype == "emmc":
+                            self.daconfig.flashsize = self.emmc["m_emmc_ua_size"]
+                            if self.daconfig.flashsize == 0:
+                                self.daconfig.flashsize = self.sdc["m_sdmmc_ua_size"]
+                        elif self.daconfig.flashtype == "nor":
+                            self.daconfig.flashsize = self.nor["m_nor_flash_size"]
+                        self.info("Reconnecting to preloader")
+                        self.set_usb_cmd()
+                        self.mtk.port.close()
+                        time.sleep(2)
+                        if self.mtk.port.cdc.connect():
+                            self.info("Connected to preloader")
+                        self.check_usb_cmd()
+                        return True
+                return False
+        else:
+            self.error("Unknown bloader version. Aborting.")
+            return False
+
+    def upload_da(self):
+        self.info("Uploading da...")
+        if self.upload():
+            if self.emmc == "nor":
+                flashinfo = self.nor
+            elif self.emmc == "nand":
+                flashinfo = self.nand
+            else:
+                fo = self.emmc
+                fo2 = self.sdc
+                flashinfo = {}
+                for v in fo:
+                    flashinfo[v] = fo[v]
+                for v in fo2:
+                    flashinfo[v] = fo2[v]
+            self.printinfo(flashinfo)
+            self.printinfo(self.flashconfig)
+            return True
+        return False
+
+    def printinfo(self, fi):
+        for info in fi:
+            value = fi[info]
+            if info != "raw_data":
+                subtype = type(value)
+                if subtype is bytes:
+                    self.info(info + ": " + hexlify(value).decode('utf-8'))
+                elif subtype is int:
+                    self.info(info + ": " + hex(value))
+
+    def close(self):
+        self.finish(0x0)  # DISCONNECT_USB_AND_RELEASE_POWERKEY
+        self.mtk.port.close()
+
+    def brom_send(self, dasetup, da, stage, packetsize=0x1000):
+        offset = dasetup.da[stage]["m_buf"]
+        size = dasetup.da[stage]["m_len"]
+        address = dasetup.da[stage]["m_start_addr"]
+        da.seek(offset)
+        dadata = da.read(size)
+        self.usbwrite(pack(">I", address))
+        self.usbwrite(pack(">I", size))
+        self.usbwrite(pack(">I", packetsize))
+        buffer = self.usbread(1)
+        if buffer == self.Rsp.ACK:
+            for pos in range(0, size, packetsize):
+                self.usbwrite(dadata[pos:pos + packetsize])
+                buffer = self.usbread(1)
+                if buffer != self.Rsp.ACK:
+                    self.error(
+                        f"Error on sending brom stage {stage - 1} addr {hex(pos)}: " + hexlify(buffer).decode('utf-8'))
+                    break
+            time.sleep(0.5)
+            self.usbwrite(self.Rsp.ACK)
+            buffer = self.usbread(1)
+            if buffer == self.Rsp.ACK:
+                self.info(f"Successfully uploaded stage {stage - 1}")
+                return True
+        else:
+            self.error(f"Error on sending brom stage {stage - 1} : " + hexlify(buffer).decode('utf-8'))
+        return False
+
+    def check_usb_cmd(self):
+        if self.usbwrite(self.Cmd.USB_CHECK_STATUS):  # 72
+            res = self.usbread(2)
+            if len(res) > 1:
+                if res[0] is self.Rsp.ACK[0]:
+                    return True
+        return False
+
+    def set_usb_cmd(self):
+        if self.usbwrite(self.Cmd.USB_SETUP_PORT):  # 72
+            if self.usbwrite(b"\x01"):
+                res = self.usbread(1)
+                if len(res) > 0:
+                    if res[0] is self.Rsp.ACK[0]:
+                        return True
+        return False
+
+    def sdmmc_switch_part(self, partition=0x8):
+        self.usbwrite(self.Cmd.SDMMC_SWITCH_PART_CMD)  # 60
+        ack = self.usbread(1)
+        if ack == self.Rsp.ACK:
+            # partition = 0x8  # EMMC_Part_User = 0x8, sonst 0x0
+            self.usbwrite(pack("B", partition))
+            ack = self.usbread(1)
+            if ack == self.Rsp.ACK:
+                return True
+        return False
+
+    def finish(self, value):
+        self.usbwrite(self.Cmd.FINISH_CMD)  # D9
+        ack = self.usbread(1)[0]
+        if ack is self.Rsp.ACK:
+            self.usbwrite(pack(">I", value))
+            ack = self.usbread(1)[0]
+            if ack is self.Rsp.ACK:
+                return True
+        return False
+
+    def sdmmc_write_data(self, addr, length, filename, offset=0, parttype=None, display=True):
+        if parttype is None or parttype == "user":
+            length = min(length, self.emmc["m_emmc_ua_size"])
+            parttype = EMMC_PartitionType.MTK_DA_EMMC_PART_USER
+        elif parttype == "boot1":
+            length = min(length, self.emmc["m_emmc_boot1_size"])
+            parttype = EMMC_PartitionType.MTK_DA_EMMC_PART_BOOT1
+        elif parttype == "boot2":
+            length = min(length, self.emmc["m_emmc_boot2_size"])
+            parttype = EMMC_PartitionType.MTK_DA_EMMC_PART_BOOT2
+        elif parttype == "gp1":
+            length = min(length, self.emmc["m_emmc_gp_size"])
+            parttype = EMMC_PartitionType.MTK_DA_EMMC_PART_GP1
+        elif parttype == "gp2":
+            length = min(length, self.emmc["m_emmc_gp_size"])
+            parttype = EMMC_PartitionType.MTK_DA_EMMC_PART_GP2
+        elif parttype == "gp3":
+            length = min(length, self.emmc["m_emmc_gp_size"])
+            parttype = EMMC_PartitionType.MTK_DA_EMMC_PART_GP3
+        elif parttype == "gp4":
+            length = min(length, self.emmc["m_emmc_gp_size"])
+            parttype = EMMC_PartitionType.MTK_DA_EMMC_PART_GP4
+        elif parttype == "rpmb":
+            parttype = EMMC_PartitionType.MTK_DA_EMMC_PART_RPMB
+
+        if self.daconfig.flashtype == "nor":
+            storage = DaStorage.MTK_DA_STORAGE_NOR
+        elif self.daconfig.flashtype == "nand":
+            storage = DaStorage.MTK_DA_STORAGE_NAND
+        elif self.daconfig.flashtype == "ufs":
+            storage = DaStorage.MTK_DA_STORAGE_UFS
+        elif self.daconfig.flashtype == "sdc":
+            storage = DaStorage.MTK_DA_STORAGE_SDMMC
+        else:
+            storage = DaStorage.MTK_DA_STORAGE_EMMC
+
+        if filename != "":
+            with open(filename, "rb") as rf:
+                rf.seek(offset)
+                self.show_progress("Write", 0, 100, display)
+                self.usbwrite(self.Cmd.SDMMC_WRITE_DATA_CMD)
+                self.usbwrite(pack(">B", storage))
+                self.usbwrite(pack(">B", parttype))
+                self.usbwrite(pack(">Q", addr))
+                self.usbwrite(pack(">Q", length))
+                self.usbwrite(pack(">I", 0x100000))
+                if self.usbread(1) != self.Rsp.ACK:
+                    self.error("Couldn't send sdmmc_write_data header")
+                    return False
+                offset = 0
+                while offset < length:
+                    self.usbwrite(self.Rsp.ACK)
+                    count = min(0x100000, length - offset)
+                    data = bytearray(rf.read(count))
+                    self.usbwrite(data)
+                    chksum = sum(data) & 0xFFFF
+                    self.usbwrite(pack(">H", chksum))
+                    if self.usbread(1) != self.Rsp.CONT_CHAR:
+                        self.error("Data ack failed for sdmmc_write_data")
+                        return False
+                    self.show_progress("Write",offset,length,display)
+                    offset += count
+                self.show_progress("Write", 100, 100, display)
+                return True
+
+    def sdmmc_write_image(self, addr, length, filename, display=True):
+        if filename != "":
+            with open(filename, "rb") as rf:
+                if self.daconfig.flashtype == "emmc":
+                    self.usbwrite(self.Cmd.SDMMC_WRITE_IMAGE_CMD)  # 61
+                    self.usbwrite(b"\x00")  # checksum level 0
+                    self.usbwrite(b"\x08")  # EMMC_PART_USER
+                    self.usbwrite(pack(">Q", addr))
+                    self.usbwrite(pack(">Q", length))
+                    self.usbwrite(b"\x08")  # index 8
+                    self.usbwrite(b"\x03")
+                    packetsize = unpack(">I", self.usbread(4))[0]
+                    ack = unpack(">B", self.usbread(1))[0]
+                    if ack == self.Rsp.ACK[0]:
+                        self.usbwrite(self.Rsp.ACK)
+                self.show_progress("Write", 0, 100, display)
+                checksum = 0
+                bytestowrite = length
+                while bytestowrite > 0:
+                    size = min(bytestowrite, packetsize)
+                    for i in range(0, size, 0x400):
+                        data = bytearray(rf.read(size))
+                        pos = length - bytestowrite
+                        self.show_progress("Write", pos, length, display)
+                        if self.usbwrite(data):
+                            bytestowrite -= size
+                            if bytestowrite == 0:
+                                checksum = 0
+                                for val in data:
+                                    checksum += val
+                                checksum = checksum & 0xFFFF
+                                self.usbwrite(pack(">H", checksum))
+                            if self.usbread(1) == b"\x69":
+                                if bytestowrite == 0:
+                                    self.usbwrite(pack(">H", checksum))
+                                if self.usbread(1) == self.Rsp.ACK:
+                                    return True
+                                else:
+                                    self.usbwrite(self.Rsp.ACK)
+                self.show_progress("Write", 100, 100, display)
+                return True
+        return True
+
+    def writeflash(self, addr, length, filename, partitionname, offset=0, parttype=None, display=True):
+        return self.sdmmc_write_data(addr=addr, length=length, filename=filename, offset=offset, parttype=parttype,
+                                     display=display)
+
+    def formatflash(self, addr, length, parttype=None, display=True):
+        if parttype is None or parttype == "user" or parttype == "":
+            length = min(length, self.emmc["m_emmc_ua_size"])
+            parttype = EMMC_PartitionType.MTK_DA_EMMC_PART_USER
+        elif parttype == "boot1":
+            length = min(length, self.emmc["m_emmc_boot1_size"])
+            parttype = EMMC_PartitionType.MTK_DA_EMMC_PART_BOOT1
+        elif parttype == "boot2":
+            length = min(length, self.emmc["m_emmc_boot2_size"])
+            parttype = EMMC_PartitionType.MTK_DA_EMMC_PART_BOOT2
+        elif parttype == "gp1":
+            length = min(length, self.emmc["m_emmc_gp_size"])
+            parttype = EMMC_PartitionType.MTK_DA_EMMC_PART_GP1
+        elif parttype == "gp2":
+            length = min(length, self.emmc["m_emmc_gp_size"])
+            parttype = EMMC_PartitionType.MTK_DA_EMMC_PART_GP2
+        elif parttype == "gp3":
+            length = min(length, self.emmc["m_emmc_gp_size"])
+            parttype = EMMC_PartitionType.MTK_DA_EMMC_PART_GP3
+        elif parttype == "gp4":
+            length = min(length, self.emmc["m_emmc_gp_size"])
+            parttype = EMMC_PartitionType.MTK_DA_EMMC_PART_GP4
+        elif parttype == "rpmb":
+            parttype = EMMC_PartitionType.MTK_DA_EMMC_PART_RPMB
+        self.check_usb_cmd()
+        if self.daconfig.flashtype == "emmc":
+            self.sdmmc_switch_part(parttype)
+            self.usbwrite(self.Cmd.FORMAT_CMD)  # D6
+            self.usbwrite(b"\x02")  # Storage-Type: EMMC
+            self.usbwrite(b"\x00")  # 0x00 Nutil erase
+            self.usbwrite(b"\x00")  # Validation false
+            self.usbwrite(b"\x00")  # NUTL_ADDR_LOGICAL
+            self.usbwrite(pack(">Q", addr))
+            self.usbwrite(pack(">Q", length))
+            progress = 0
+            while progress != 100:
+                ack = self.usbread(1)[0]
+                if ack is not self.Rsp.ACK[0]:
+                    self.error(f"Error on sending emmc read command, response: {hex(ack)}")
+                    exit(1)
+                ack = self.usbread(1)[0]
+                if ack is not self.Rsp.ACK[0]:
+                    self.error(f"Error on sending emmc read command, response: {hex(ack)}")
+                    exit(1)
+                data = self.usbread(4)[0]  # PROGRESS_INIT
+                progress = self.usbread(1)[0]
+                self.usbwrite(b"\x5A")  # Send ACK
+                if progress == 0x64:
+                    ack = self.usbread(1)[0]
+                    if ack is not self.Rsp.ACK[0]:
+                        self.error(f"Error on sending emmc read command, response: {hex(ack)}")
+                        exit(1)
+                    ack = self.usbread(1)[0]
+                    if ack is not self.Rsp.ACK[0]:
+                        self.error(f"Error on sending emmc read command, response: {hex(ack)}")
+                        exit(1)
+                    return True
+            return False
+
+    def readflash(self, addr, length, filename, parttype=None, display=True):
+        if parttype is None or parttype == "user" or parttype == "":
+            length = min(length, self.emmc["m_emmc_ua_size"])
+            parttype = EMMC_PartitionType.MTK_DA_EMMC_PART_USER
+        elif parttype == "boot1":
+            length = min(length, self.emmc["m_emmc_boot1_size"])
+            parttype = EMMC_PartitionType.MTK_DA_EMMC_PART_BOOT1
+        elif parttype == "boot2":
+            length = min(length, self.emmc["m_emmc_boot2_size"])
+            parttype = EMMC_PartitionType.MTK_DA_EMMC_PART_BOOT2
+        elif parttype == "gp1":
+            length = min(length, self.emmc["m_emmc_gp_size"])
+            parttype = EMMC_PartitionType.MTK_DA_EMMC_PART_GP1
+        elif parttype == "gp2":
+            length = min(length, self.emmc["m_emmc_gp_size"])
+            parttype = EMMC_PartitionType.MTK_DA_EMMC_PART_GP2
+        elif parttype == "gp3":
+            length = min(length, self.emmc["m_emmc_gp_size"])
+            parttype = EMMC_PartitionType.MTK_DA_EMMC_PART_GP3
+        elif parttype == "gp4":
+            length = min(length, self.emmc["m_emmc_gp_size"])
+            parttype = EMMC_PartitionType.MTK_DA_EMMC_PART_GP4
+        elif parttype == "rpmb":
+            parttype = EMMC_PartitionType.MTK_DA_EMMC_PART_RPMB
+        self.check_usb_cmd()
+        packetsize = 0x0
+        if self.daconfig.flashtype == "emmc":
+            self.sdmmc_switch_part(parttype)
+            packetsize = 0x100000
+            self.usbwrite(self.Cmd.READ_CMD)  # D6
+            self.usbwrite(b"\x0C")  # Host:Linux, 0x0B=Windows
+            self.usbwrite(b"\x02")  # Storage-Type: EMMC
+            self.usbwrite(pack(">Q", addr))
+            self.usbwrite(pack(">Q", length))
+            self.usbwrite(pack(">I", packetsize))
+            ack = self.usbread(1)[0]
+            if ack is not self.Rsp.ACK[0]:
+                self.error(f"Error on sending emmc read command, response: {hex(ack)}")
+                exit(1)
+            self.daconfig.readsize = self.daconfig.flashsize
+        elif self.daconfig.flashtype == "nand":
+            self.usbwrite(self.Cmd.NAND_READPAGE_CMD)  # DF
+            self.usbwrite(b"\x0C")  # Host:Linux, 0x0B=Windows
+            self.usbwrite(b"\x00")  # Storage-Type: NUTL_READ_PAGE_SPARE
+            self.usbwrite(b"\x01")  # Addr-Type: NUTL_ADDR_LOGICAL
+            self.usbwrite(pack(">I", addr))
+            self.usbwrite(pack(">I", length))
+            self.usbwrite(pack(">I", 0))
+            ack = self.usbread(1)[0]
+            if ack is not self.Rsp.ACK:
+                self.error(f"Error on sending nand read command, response: {hex(ack)}")
+                exit(1)
+            self.daconfig.pagesize = unpack(">I", self.usbread(4))[0]
+            self.daconfig.sparesize = unpack(">I", self.usbread(4))[0]
+            packetsize = unpack(">I", self.usbread(4))[0]
+            pagestoread = 1
+            self.usbwrite(pack(">I", pagestoread))
+            self.usbread(4)
+            self.daconfig.readsize = self.daconfig.flashsize // self.daconfig.pagesize * (
+                    self.daconfig.pagesize + self.daconfig.sparesize)
+        self.show_progress("Read",0,100,display)
+        if filename != "":
+            with open(filename, "wb") as wf:
+                bytestoread = length
+                while bytestoread > 0:
+                    size = bytestoread
+                    if bytestoread > packetsize:
+                        size = packetsize
+                    wf.write(self.usbread(size,0x400))
+                    bytestoread -= size
+                    checksum = unpack(">H", self.usbread(1)+self.usbread(1))[0]
+                    self.debug("Checksum: %04X" % checksum)
+                    self.usbwrite(self.Rsp.ACK)
+                    self.show_progress("Read", length-bytestoread, length, display)
+                self.show_progress("Read", 100, 100, display)
+                return True
+        else:
+            buffer = bytearray()
+            bytestoread = length
+            while bytestoread > 0:
+                size = bytestoread
+                if bytestoread > packetsize:
+                    size = packetsize
+                buffer.extend(self.usbread(size,0x400))
+                bytestoread -= size
+                checksum = unpack(">H", self.usbread(2))[0]
+                self.debug("Checksum: %04X" % checksum)
+                self.usbwrite(self.Rsp.ACK)
+                self.show_progress("Read", length-bytestoread, length, display)
+            self.show_progress("Read", 100, 100, display)
+            return buffer
