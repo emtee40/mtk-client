@@ -1,6 +1,6 @@
 # mtkclient
-Just some mtk tool for exploitation, reading/writing flash and doing crazy stuff. For linux, a patched kernel is needed (see Setup folder) (except for read/write flash).
-For windows, you need to install zadig driver and replace pid 0003 / pid 2000 driver.
+Just some mtk tool for exploitation, reading/writing flash and doing crazy stuff. For linux, a patched kernel is only needed for kamakiri (see Setup folder) (except for read/write flash).
+For windows, you need to install zadig driver and replace pid 0003 / pid 2000 driver with WinUSB one (not ! libusb0/libusbK).
 
 Once the mtk script is running, boot into brom mode by powering off device, press and hold either
 vol up + power or vol down + power and connect the phone. Once detected by the tool,
