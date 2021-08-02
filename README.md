@@ -15,7 +15,7 @@ release the buttons.
 ## Installation
 
 ### Use Re LiveDVD (everything ready to go):
-[Download Re Live DVD](https://drive.google.com/file/d/1aroCr2VaXON6fWB6G8R1sz8wMvSbleck/view?usp=sharing)
+[Download Re Live DVD](https://drive.google.com/file/d/1VUK0toC6I0jhJ4ZTFPREhSXFTkSe9_gl/view?usp=sharing)
 User: livedvd, Password:livedvd
 
 ### Use FireISO as LiveDVD:
