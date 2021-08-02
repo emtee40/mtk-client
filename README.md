@@ -7,9 +7,10 @@ vol up + power or vol down + power and connect the phone. Once detected by the t
 release the buttons.
 
 ## Credits
-xyzz (kamakiri)
-unknown (kamakiri2) (to be renamed, most likely pandora)
-Chaosmaster (Payloads)
+- kamakiri [xyzz]
+- kamakiri2 (to be renamed) [most likely pandora, need to be confirmed]
+- Chaosmaster
+- All contributors
 
 ## Installation
 
