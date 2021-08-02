@@ -6,7 +6,10 @@ Once the mtk script is running, boot into brom mode by powering off device, pres
 vol up + power or vol down + power and connect the phone. Once detected by the tool,
 release the buttons.
 
-Credits for original kamakiri go to xyzz, credits for original "kamakiri2" (to be renamed) go to unknown author (most likely pandora).
+## Credits
+xyzz (kamakiri)
+unknown (kamakiri2) (to be renamed, most likely pandora)
+Chaosmaster (Payloads)
 
 ## Installation
 
