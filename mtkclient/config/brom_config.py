@@ -384,18 +384,26 @@ hwconfig = {
         damode=damodes.DEFAULT,
         dacode=0x6589,
         name="MT6583/6589"),
-    0x6592: chipconfig(  # var1
+    0x6592: chipconfig(
+        var1=0xA, #confirmed
         watchdog=0x10007000,
-        # uart
-        # brom_payload_addr
+        uart=0x11002000,
+        brom_payload_addr=0x100A00,
         da_payload_addr=0x110000,
         pl_payload_addr=0x80001000,
-        # gcpu_base
-        # sej_base
-        # dxcc_base
-        # cqdma_base
-        # ap_dma_mem
-        # blacklist
+        gcpu_base=0x10210000,
+        sej_base=0x1000A000,
+        # no dxcc
+        cqdma_base=0x10212000,  # This chip might not support cqdma
+        ap_dma_mem=0x11000000 + 0x320,  # AP_DMA_I2C_0_RX_MEM_ADDR
+        blacklist=[(0x00102764,0),(0x00105BF0,0)],
+        blacklist_count=0x00000008,
+        send_ptr=(0x1027a4,0xa564),
+        ctrl_buffer=0x00103054,
+        cmd_handler=0x0000B09F,
+        brom_register_access=(0xa838,0xa9ec),
+        meid_addr=0x1030A8,
+        has_socid=False,
         dacode=0x6592,
         damode=damodes.DEFAULT,  #
         name="MT6592"),
