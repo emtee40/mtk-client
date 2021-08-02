@@ -8,7 +8,7 @@ release the buttons.
 
 ## Credits
 - kamakiri [xyzz]
-- kamakiri2 (to be renamed) [most likely pandora, need to be confirmed]
+- kamakiri2 (to be renamed) [most likely chimera or pandora, need to be confirmed]
 - Chaosmaster
 - All contributors
 
