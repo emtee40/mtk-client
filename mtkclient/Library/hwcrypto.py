@@ -22,6 +22,7 @@ class crypto_setup:
     blacklist = None
     cqdma_base = None
     ap_dma_mem = None
+    meid_addr = None
 
 class hwcrypto(metaclass=LogBase):
     def __init__(self, setup, loglevel=logging.INFO):
@@ -35,6 +36,7 @@ class hwcrypto(metaclass=LogBase):
         self.setup = setup
         self.read32 = setup.read32
         self.write32 = setup.write32
+        self.meid_addr = setup.meid_addr
 
     def aes_hwcrypt(self, data=b"", iv=None, encrypt=True, otp=None, mode="cbc", btype="sej"):
         if otp is None:
