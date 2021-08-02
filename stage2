@@ -16,6 +16,50 @@ from mtkclient.Library.hwcrypto import crypto_setup, hwcrypto
 from mtkclient.config.brom_config import Mtk_Config
 
 class Stage2(metaclass=LogBase):
+    def __init__(self, args, loglevel=logging.INFO):
+        self.__logger = self.__logger
+        self.args = args
+        self.loglevel = loglevel
+        self.info = self.__logger.info
+        self.error = self.__logger.error
+        self.warning = self.__logger.warning
+        self.emmc_inited = False
+        # Setup HW Crypto chip variables
+        self.setup = crypto_setup()
+
+        if loglevel == logging.DEBUG:
+            logfilename = os.path.join("logs", "log.txt")
+            if os.path.exists(logfilename):
+                os.remove(logfilename)
+            fh = logging.FileHandler(logfilename)
+            self.__logger.addHandler(fh)
+            self.__logger.setLevel(logging.DEBUG)
+        else:
+            self.__logger.setLevel(logging.INFO)
+
+        portconfig = [[0x0E8D, 0x0003, -1], [0x0E8D, 0x2000, -1]]
+        self.cdc = usb_class(portconfig=portconfig, loglevel=loglevel, devclass=10)
+
+    def preinit(self):
+        try:
+            hwcode = self.read32(0x8000000)
+        except:
+            print("Error reading hwcode...aborting.")
+            return False
+        self.config = Mtk_Config(self.loglevel)
+        self.config.init_hwcode(hwcode)
+        self.setup.blacklist = self.config.chipconfig.blacklist
+        self.setup.gcpu_base = self.config.chipconfig.gcpu_base
+        self.setup.dxcc_base = self.config.chipconfig.dxcc_base
+        self.setup.da_payload_addr = self.config.chipconfig.da_payload_addr
+        self.setup.sej_base = self.config.chipconfig.sej_base
+        self.setup.read32 = self.read32
+        self.setup.write32 = self.write32
+        self.setup.writemem = self.memwrite
+        self.setup.meid_addr = self.config.chipconfig.meid_addr
+        self.hwcrypto = hwcrypto(self.setup, self.loglevel)
+        return True
+
     def init_emmc(self):
         self.cdc.usbwrite(pack(">I", 0xf00dd00d))
         self.cdc.usbwrite(pack(">I", 0x6001))
@@ -73,43 +117,6 @@ class Stage2(metaclass=LogBase):
             else:
                 return False
         return True
-
-    def __init__(self, args, loglevel=logging.INFO):
-        self.__logger = self.__logger
-        self.args = args
-        self.info = self.__logger.info
-        self.error = self.__logger.error
-        self.warning = self.__logger.warning
-        self.emmc_inited = False
-        # Setup HW Crypto chip variables
-        setup = crypto_setup()
-        with open(os.path.join("logs", "hwcode"), "rb") as rf:
-            hwcode = int(rf.read(), 16)
-            self.config = Mtk_Config(loglevel)
-            self.config.init_hwcode(hwcode)
-            setup.blacklist = self.config.chipconfig.blacklist
-            setup.gcpu_base = self.config.chipconfig.gcpu_base
-            setup.dxcc_base = self.config.chipconfig.dxcc_base
-            setup.da_payload_addr = self.config.chipconfig.da_payload_addr
-            setup.sej_base = self.config.chipconfig.sej_base
-            setup.read32 = self.read32
-            setup.write32 = self.write32
-            setup.writemem = self.memwrite
-            setup.meid_addr = self.config.chipconfig.meid_addr
-        self.hwcrypto = hwcrypto(setup, loglevel)
-
-        if loglevel == logging.DEBUG:
-            logfilename = os.path.join("logs", "log.txt")
-            if os.path.exists(logfilename):
-                os.remove(logfilename)
-            fh = logging.FileHandler(logfilename)
-            self.__logger.addHandler(fh)
-            self.__logger.setLevel(logging.DEBUG)
-        else:
-            self.__logger.setLevel(logging.INFO)
-
-        portconfig = [[0x0E8D, 0x0003, -1], [0x0E8D, 0x2000, -1]]
-        self.cdc = usb_class(portconfig=portconfig, loglevel=loglevel, devclass=10)
 
     def connect(self):
         self.cdc.connected = self.cdc.connect()
@@ -458,7 +465,7 @@ def main():
     parser_memread.add_argument('--filename', dest='filename', type=str,
                         help='Save to filename')
 
-    parser_memwrite = subparsers.add_parser("memread", help="Write memory")
+    parser_memwrite = subparsers.add_parser("memwrite", help="Write memory")
     parser_memwrite.add_argument(dest='start', type=str,
                         help='Start offset to dump')
     parser_memwrite.add_argument('--data', dest='data', type=str,
@@ -483,6 +490,9 @@ def main():
         os.mkdir("logs")
     st2 = Stage2(args)
     if st2.connect():
+        if not st2.preinit():
+            exit(1)
+
         if cmd == "rpmb":
             if args.filename is None:
                 filename = os.path.join("logs", "rpmb")
