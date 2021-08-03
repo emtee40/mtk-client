@@ -531,8 +531,8 @@ def main():
             if args.start is None:
                 print("Option --start is needed")
                 exit(0)
-            if args.data is None:
-                print("Option --data is needed")
+            if args.data is None and args.filename is None:
+                print("Option --data or --filename are needed")
                 exit(0)
             start = getint(args.start)
             if st2.memwrite(start, args.data, args.filename):
