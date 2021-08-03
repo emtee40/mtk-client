@@ -39,7 +39,6 @@ class chipconfig:
         self.dacode = dacode
         self.damode = damode
         self.loader = loader
-        self.has_socid = False
 
 
     # Credits to cyrozap and Chaosmaster for some values
