@@ -16,6 +16,50 @@ from mtkclient.Library.hwcrypto import crypto_setup, hwcrypto
 from mtkclient.config.brom_config import Mtk_Config
 
 class Stage2(metaclass=LogBase):
+    def __init__(self, args, loglevel=logging.INFO):
+        self.__logger = self.__logger
+        self.args = args
+        self.loglevel = loglevel
+        self.info = self.__logger.info
+        self.error = self.__logger.error
+        self.warning = self.__logger.warning
+        self.emmc_inited = False
+        # Setup HW Crypto chip variables
+        self.setup = crypto_setup()
+
+        if loglevel == logging.DEBUG:
+            logfilename = os.path.join("logs", "log.txt")
+            if os.path.exists(logfilename):
+                os.remove(logfilename)
+            fh = logging.FileHandler(logfilename)
+            self.__logger.addHandler(fh)
+            self.__logger.setLevel(logging.DEBUG)
+        else:
+            self.__logger.setLevel(logging.INFO)
+
+        portconfig = [[0x0E8D, 0x0003, -1], [0x0E8D, 0x2000, -1]]
+        self.cdc = usb_class(portconfig=portconfig, loglevel=loglevel, devclass=10)
+
+    def preinit(self):
+        try:
+            hwcode = self.read32(0x8000000)
+        except:
+            print("Error reading hwcode...aborting.")
+            return False
+        self.config = Mtk_Config(self.loglevel)
+        self.config.init_hwcode(hwcode)
+        self.setup.blacklist = self.config.chipconfig.blacklist
+        self.setup.gcpu_base = self.config.chipconfig.gcpu_base
+        self.setup.dxcc_base = self.config.chipconfig.dxcc_base
+        self.setup.da_payload_addr = self.config.chipconfig.da_payload_addr
+        self.setup.sej_base = self.config.chipconfig.sej_base
+        self.setup.read32 = self.read32
+        self.setup.write32 = self.write32
+        self.setup.writemem = self.memwrite
+        self.setup.meid_addr = self.config.chipconfig.meid_addr
+        self.hwcrypto = hwcrypto(self.setup, self.loglevel)
+        return True
+
     def init_emmc(self):
         self.cdc.usbwrite(pack(">I", 0xf00dd00d))
         self.cdc.usbwrite(pack(">I", 0x6001))
@@ -73,42 +117,6 @@ class Stage2(metaclass=LogBase):
             else:
                 return False
         return True
-
-    def __init__(self, args, loglevel=logging.INFO):
-        self.__logger = self.__logger
-        self.args = args
-        self.info = self.__logger.info
-        self.error = self.__logger.error
-        self.warning = self.__logger.warning
-        self.emmc_inited = False
-        # Setup HW Crypto chip variables
-        setup = crypto_setup()
-        with open(os.path.join("logs", "hwcode"), "rb") as rf:
-            hwcode = int(rf.read(), 16)
-            self.config = Mtk_Config(loglevel)
-            self.config.init_hwcode(hwcode)
-            setup.blacklist = self.config.chipconfig.blacklist
-            setup.gcpu_base = self.config.chipconfig.gcpu_base
-            setup.dxcc_base = self.config.chipconfig.dxcc_base
-            setup.da_payload_addr = self.config.chipconfig.da_payload_addr
-            setup.sej_base = self.config.chipconfig.sej_base
-            setup.read32 = self.read32
-            setup.write32 = self.write32
-            setup.writemem = self.memwrite
-        self.hwcrypto = hwcrypto(setup, loglevel)
-
-        if loglevel == logging.DEBUG:
-            logfilename = os.path.join("logs", "log.txt")
-            if os.path.exists(logfilename):
-                os.remove(logfilename)
-            fh = logging.FileHandler(logfilename)
-            self.__logger.addHandler(fh)
-            self.__logger.setLevel(logging.DEBUG)
-        else:
-            self.__logger.setLevel(logging.INFO)
-
-        portconfig = [[0x0E8D, 0x0003, -1], [0x0E8D, 0x2000, -1]]
-        self.cdc = usb_class(portconfig=portconfig, loglevel=loglevel, devclass=10)
 
     def connect(self):
         self.cdc.connected = self.cdc.connect()
@@ -347,27 +355,39 @@ class Stage2(metaclass=LogBase):
             fdekey = self.hwcrypto.aes_hwcrypt(btype="dxcc",mode="fde")
             tfdekey = self.hwcrypto.aes_hwcrypt(btype="dxcc",mode="itrustee-fde")
             platkey, provkey = self.hwcrypto.aes_hwcrypt(btype="dxcc",mode="prov")
+            print("\nKeys :\n-----------------------------------------")
             print("RPMB: " + hexlify(rpmbkey).decode('utf-8'))
             print("FDE : " + hexlify(fdekey).decode('utf-8'))
             print("iTrustee-FDE: " + hexlify(tfdekey).decode('utf-8'))
             print("Platform: " + hexlify(platkey).decode('utf-8'))
             print("Provisioning: " + hexlify(provkey).decode('utf-8'))
+            print()
         elif mode == "sej":
             rpmbkey = self.hwcrypto.aes_hwcrypt(mode="rpmb", data=data, otp=otp, btype="sej")
+            print("\nKeys :\n-----------------------------------------")
             print("RPMB: " + hexlify(rpmbkey).decode('utf-8'))
+            print()
         elif mode == "sej_aes_decrypt":
             dec_data = self.hwcrypto.aes_hwcrypt(mode="cbc", data=data, btype="sej", encrypt=False)
+            print()
             print("Data: " + hexlify(dec_data).decode('utf-8'))
+            print()
         elif mode == "sej_aes_encrypt":
             enc_data = self.hwcrypto.aes_hwcrypt(mode="cbc", data=data, btype="sej", encrypt=False)
+            print()
             print("Data: " + hexlify(enc_data).decode('utf-8'))
+            print()
         elif mode == "dxcc_sha256":
             sha256val = self.hwcrypto.aes_hwcrypt(mode="sha256", data=data, btype="dxcc")
+            print()
             print("SHA256: " + hexlify(sha256val).decode('utf-8'))
+            print()
 
     def reboot(self):
+        print("Rebooting..")
         self.cdc.usbwrite(pack(">I", 0xf00dd00d))
         self.cdc.usbwrite(pack(">I", 0x3000))
+
 
 
 def getint(valuestr):
@@ -409,52 +429,93 @@ def showcommands():
 
 def main():
     parser = argparse.ArgumentParser(description=info)
-    parser.add_argument("cmd", help="Valid commands are: rpmb, preloader, boot2, memread, memwrite, keys")
-    parser.add_argument('--reverse', dest='reverse', action="store_true",
-                        help='Reverse byte order (example: rpmb command)')
-    parser.add_argument('--length', dest='length', type=str,
-                        help='Max length to dump')
-    parser.add_argument('--start', dest='start', type=str,
+    subparsers = parser.add_subparsers(dest="cmd", help='Valid commands are: rpmb, preloader, boot2, memread, memwrite, keys')
+
+    parser_rpmb = subparsers.add_parser("rpmb", help="Dump the rpmb")
+    parser_rpmb.add_argument('--start', dest='start', type=str,
                         help='Start offset to dump')
-    parser.add_argument('--data', dest='data', type=str,
-                        help='Data to write')
-    parser.add_argument('--mode', dest='mode', type=str,
-                        help='Mode for keys (dxcc,sej,gcpu)')
-    parser.add_argument('--otp', dest='otp', type=str,
-                        help='OTP for keys (dxcc,sej,gcpu)')
-    parser.add_argument('--filename', dest='filename', type=str,
+    parser_rpmb.add_argument('--length', dest='length', type=str,
+                        help='Max length to dump')
+    parser_rpmb.add_argument('--reverse', dest='reverse', action="store_true",
+                        help='Reverse byte order (example: rpmb command)')
+    parser_rpmb.add_argument('--filename', dest='filename', type=str,
                         help='Read from / save to filename')
-    parser.add_argument('--meid', type=str,
-                        help='MEID (hex) as previously extracted from device')
+
+    parser_preloader = subparsers.add_parser("preloader", help="Dump the preloader")
+    parser_preloader.add_argument('--start', dest='start', type=str,
+                        help='Start offset to dump')
+    parser_preloader.add_argument('--length', dest='length', type=str,
+                        help='Max length to dump')
+    parser_preloader.add_argument('--filename', dest='filename', type=str,
+                        help='Read from / save to filename')
+
+    parser_boot2 = subparsers.add_parser("boot2", help="Dump boot2")
+    parser_boot2.add_argument('--start', dest='start', type=str,
+                        help='Start offset to dump')
+    parser_boot2.add_argument('--length', dest='length', type=str,
+                        help='Max length to dump')
+    parser_boot2.add_argument('--filename', dest='filename', type=str,
+                        help='Read from / save to filename')
+
+    parser_memread = subparsers.add_parser("memread", help="Read memory")
+    parser_memread.add_argument(dest='start', type=str,
+                        help='Start offset to dump')
+    parser_memread.add_argument(dest='length', type=str,
+                        help='Max length to dump')
+    parser_memread.add_argument('--filename', dest='filename', type=str,
+                        help='Save to filename')
+
+    parser_memwrite = subparsers.add_parser("memwrite", help="Write memory")
+    parser_memwrite.add_argument(dest='start', type=str,
+                        help='Start offset to dump')
+    parser_memwrite.add_argument('--data', dest='data', type=str,
+                        help='Data to write')
+    parser_memwrite.add_argument('--filename', dest='filename', type=str,
+                        help='Read from filename')
+
+    parser_reboot = subparsers.add_parser("reboot", help="Reboot device")
+
+    parser_keys = subparsers.add_parser("keys", help="Write memory")
+    parser_keys.add_argument('--mode', dest='mode', type=str,
+                        help='Mode for keys (dxcc,sej,gcpu)')
+    parser_keys.add_argument('--otp', dest='otp', type=str,
+                        help='OTP for keys (dxcc,sej,gcpu)')
     args = parser.parse_args()
     cmd = args.cmd
     if cmd not in cmds:
         showcommands()
         exit(0)
 
-    start = getint(args.start)
-    length = getint(args.length)
     if not os.path.exists("logs"):
         os.mkdir("logs")
     st2 = Stage2(args)
     if st2.connect():
+        if not st2.preinit():
+            exit(1)
+
         if cmd == "rpmb":
             if args.filename is None:
                 filename = os.path.join("logs", "rpmb")
             else:
                 filename = args.filename
+            start = getint(args.start)
+            length = getint(args.length)
             st2.rpmb(start, length, filename, args.reverse)
         elif cmd == "preloader":
             if args.filename is None:
                 filename = os.path.join("logs", "preloader")
             else:
                 filename = args.filename
+            start = getint(args.start)
+            length = getint(args.length)
             st2.preloader(start, length, filename=filename)
         elif cmd == "boot2":
             if args.filename is None:
                 filename = os.path.join("logs", "boot2")
             else:
                 filename = args.filename
+            start = getint(args.start)
+            length = getint(args.length)
             st2.boot2(start, length, filename=filename)
         elif cmd == "memread":
             if args.start is None:
@@ -463,14 +524,17 @@ def main():
             if args.length is None:
                 print("Option --length is needed")
                 exit(0)
+            start = getint(args.start)
+            length = getint(args.length)
             st2.memread(start, length, args.filename)
         elif cmd == "memwrite":
             if args.start is None:
                 print("Option --start is needed")
                 exit(0)
-            if args.data is None:
-                print("Option --data is needed")
+            if args.data is None and args.filename is None:
+                print("Option --data or --filename are needed")
                 exit(0)
+            start = getint(args.start)
             if st2.memwrite(start, args.data, args.filename):
                 print(f"Successfully wrote data to {hex(start)}.")
             else:
@@ -480,13 +544,10 @@ def main():
                 print("Option --mode is needed")
                 exit(0)
             if args.mode == "sej":
-                if not args.meid:
-                    print("Option --meid is needed")
-                    exit(0)
+                data=st2.memread(st2.hwcrypto.meid_addr,16)
                 # if not args.otp:
                 #    print("Option --otp is needed")
                 #    exit(0)
-                data = bytes.fromhex(args.meid)
             elif args.mode == "sej_aes_decrypt" or args.mode == "sej_aes_encrypt":
                 if not args.data:
                     print("Option --data is needed")

@@ -511,7 +511,8 @@ class Main(metaclass=LogBase):
             self.close()
         elif self.args["stage"]:
             if self.args["--filename"] is None:
-                stage1file = "payloads/generic_stage1_payload.bin"
+                pc = pathconfig()
+                stage1file = os.path.join(pc.get_payloads_path(), "generic_stage1_payload.bin")
             else:
                 stage1file = self.args["--filename"]
             if not os.path.exists(stage1file):

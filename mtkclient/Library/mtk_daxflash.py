@@ -317,13 +317,17 @@ class DAXFlash(metaclass=LogBase):
     def send_data(self, data):
         pkt2 = pack("<III", self.Cmd.MAGIC, self.DataType.DT_PROTOCOL_FLOW, len(data))
         if self.usbwrite(pkt2):
-            self.usbwrite(data)
+            bytestowrite = len(data)
+            pos = 0
+            while bytestowrite > 0:
+                if self.usbwrite(data[pos:pos + 64]):
+                    pos += 64
+                    bytestowrite -= 64
             status = self.status()
             if status == 0x0:
                 return True
             else:
-                if status != 0xC0070004:
-                    self.error(f"Error on sending data: {hex(status)}")
+                self.error(f"Error on sending data: {hex(status)}")
                 return False
 
     def compute_hash_pos(self, da2, bootldr):

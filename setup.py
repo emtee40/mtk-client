@@ -9,7 +9,7 @@ setup(
         "attrs",
     ],
     long_description=open("README.md").read(),
-    scripts=['mtk','stage2','mtkclient/Tools/brom_to_offs','mtkclient/Tools/da_parser'],
+    scripts=['mtk','stage2'],
     data_files = ['LICENSE','README.md'],
     long_description_content_type="text/markdown",
     url='https://github.com/bkerler/mtkclient',

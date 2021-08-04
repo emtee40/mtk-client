@@ -6,10 +6,16 @@ Once the mtk script is running, boot into brom mode by powering off device, pres
 vol up + power or vol down + power and connect the phone. Once detected by the tool,
 release the buttons.
 
+## Credits
+- kamakiri [xyzz]
+- linecode exploit [chimera]
+- Chaosmaster
+- All contributors
+
 ## Installation
 
 ### Use Re LiveDVD (everything ready to go):
-[Download Re Live DVD](https://drive.google.com/file/d/1aroCr2VaXON6fWB6G8R1sz8wMvSbleck/view?usp=sharing)
+[Download Re Live DVD](https://drive.google.com/file/d/1VUK0toC6I0jhJ4ZTFPREhSXFTkSe9_gl/view?usp=sharing)
 User: livedvd, Password:livedvd
 
 ### Use FireISO as LiveDVD:
@@ -174,35 +180,46 @@ If you want to use SP Flash tool afterwards, make sure you select "UART" in the 
 ./mtk plstage
 `` 
 
+### Leave stage2 and reboot
+`` 
+./stage2 reboot
+`` 
+
 ### Read rpmb in stage2 mode
 `` 
-./stage2 --rpmb
+./stage2 rpmb
 `` 
 
 ### Read preloader in stage2 mode
 `` 
-./stage2 --preloader
+./stage2 preloader
 `` 
 
 ### Read memory as hex data in stage2 mode
 `` 
-./stage2 --memread --start 0x0 --length 0x16
+./stage2 memread [start addr] [length]
 `` 
 
 ### Read memory to file in stage2 mode
 `` 
-./stage2 --memread --start 0x0 --length 0x16 --filename brom.bin
+./stage2 memread [start addr] [length] --filename filename.bin
 `` 
 
 ### Write hex data to memory in stage2 mode
 `` 
-./stage2 --memwrite --start 0x0 --data 12345678AABBCCDD
+./stage2 memwrite [start addr] --data [data as hexstring]
 `` 
 
 ### Write memory from file in stage2 mode
 `` 
-./stage2 --memwrite --start 0x0 --filename brom.bin
+./stage2 memwrite [start addr] --filename filename.bin
 `` 
+
+### Extract keys
+`` 
+./stage2 keys --mode [sej, dxcc]
+`` 
+For dxcc, you need to use plstage instead of stage
 
 ### Crash da in order to enter brom
 
