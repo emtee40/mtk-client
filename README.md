@@ -90,8 +90,8 @@ sudo reboot
 ### Windows
 
 #### Install python + git
-- Install python 3.9 and git from Microsoft Store
-
+- Install python 3.9 and git
+- If you install python from microsoft store, "python setup.py install" will fail, but that step isn't required.
 - WIN+R ```cmd```
 
 #### Grab files and install
