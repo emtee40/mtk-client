@@ -105,7 +105,7 @@ class Kamakiri(metaclass=LogBase):
     def exploit2(self, payload, payloadaddr=None, loader=None, mode=3):
         # noinspection PyProtectedMember
         try:
-            self.mtk.port.cdc.device.reset()
+            # self.mtk.port.cdc.device.reset()
             if self.linecode is None:
                 self.linecode = self.mtk.port.cdc.device.ctrl_transfer(0xA1, 0x21, 0, 0, 7) + array.array('B', [0])
             ptr_send = unpack("<I", self.da_read(self.mtk.config.chipconfig.send_ptr[0][1], 4))[0] + 8

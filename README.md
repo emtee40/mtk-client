@@ -95,11 +95,11 @@ cd mtkclient
 pip3 install -r requirements.txt
 ```
 
-#### Get latest zadig (>=2.5) and install WinUSB driver
-- Get from https://zadig.akeo.ie
-- Start zadig, select Options -> List all devices
-- Connect powered off device via usb, and in list choose device with USB ID "0E8D""0003"
-- Select WinUSB and press Button "Replace Driver"
+#### Get latest UsbDk 64-Bit
+- Install normal MTK Serial Port driver (or use default Windows COM Port one, make sure no exclamation is seen)
+- Get from https://github.com/daynix/UsbDk under Releases
+- Just install
+- Test on device connect using "UsbDkController -n" if you see a device with 0x0E8D 0x0003
 
 
 ## Compile payloads (optional)

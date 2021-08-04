@@ -40,6 +40,7 @@ class PLTools(metaclass=LogBase):
         setup.sej_base = self.mtk.config.chipconfig.sej_base
         setup.cqdma_base = self.mtk.config.chipconfig.cqdma_base
         setup.ap_dma_mem = self.mtk.config.chipconfig.ap_dma_mem
+        setup.meid_addr = self.mtk.config.chipconfig.meid_addr
         self.hwcrypto=hwcrypto(setup,loglevel)
 
         self.pathconfig = pathconfig()

@@ -10,6 +10,7 @@ import time
 import inspect
 import traceback
 import array
+import usb.backend.libusb0
 import usb.backend.libusb1
 from enum import Enum
 from binascii import hexlify
@@ -58,7 +59,7 @@ class usb_class(metaclass=LogBase):
             windows_dir = None
             try:
                 # add pygame folder to Windows DLL search paths
-                windows_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)),"..","Windows")
+                windows_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", "Windows")
                 try:
                     os.add_dll_directory(windows_dir)
                 except Exception:
@@ -77,10 +78,13 @@ class usb_class(metaclass=LogBase):
         self.stopbits = None
         self.databits = None
         self.interface = None
+        self.ctrl_interface = None
         self.parity = None
         self.baudrate = None
         self.EP_IN = None
         self.EP_OUT = None
+        self.CTRL_IN = None
+        self.CTRL_OUT = None
         self.configuration = None
         self.device = None
         self.loglevel = loglevel
@@ -107,10 +111,10 @@ class usb_class(metaclass=LogBase):
             self.backend.lib.libusb_set_option(self.backend.ctx, 1)
 
     def verify_data(self, data, pre="RX:"):
-        if self.__logger.level==logging.DEBUG:
+        if self.__logger.level == logging.DEBUG:
             frame = inspect.currentframe()
             stack_trace = traceback.format_stack(frame)
-            td=[]
+            td = []
             for trace in stack_trace:
                 if not "verify_data" in trace and not "Port" in trace:
                     td.append(trace)
@@ -244,7 +248,9 @@ class usb_class(metaclass=LogBase):
             data_or_wLength=0)
         self.debug("Linecoding set, {}b sent".format(wlen))
 
-    def connect(self, EP_IN=-1, EP_OUT=-1):
+    def connect(self, EP_IN=-1, EP_OUT=-1, CTRL_IN=-1, CTRL_OUT=-1):
+        vid = 0xE8D
+        pid = 0x3
         if self.connected:
             self.close()
             self.connected = False
@@ -262,20 +268,29 @@ class usb_class(metaclass=LogBase):
         if self.device is None:
             self.debug("Couldn't detect the device. Is it connected ?")
             return False
-        # try:
-        #    self.device.set_configuration()
-        # except:
-        #    pass
 
         try:
-            self.configuration = self.device.get_active_configuration()
-        except:
-            self.device = usb.core.find(idVendor=vid, idProduct=pid, backend=self.backend)
-            self.configuration = self.device.get_active_configuration()
-            pass
+            if self.device is not None:
+                self.configuration = self.device.get_active_configuration()
+        except usb.core.USBError as e:
+                if e.strerror == "Configuration not set":
+                    self.device.set_configuration()
+                    self.configuration = self.device.get_active_configuration()
+                if e.errno == 13:
+                    self.backend = usb.backend.libusb0.get_backend()
+                    self.device = usb.core.find(idVendor=vid, idProduct=pid, backend=self.backend)
+
         if self.interface == -1:
             for interfacenum in range(0, self.configuration.bNumInterfaces):
                 itf = usb.util.find_descriptor(self.configuration, bInterfaceNumber=interfacenum)
+                try:
+                    if self.device.is_kernel_driver_active(interfacenum):
+                        self.debug("Detaching kernel driver")
+                        self.device.detach_kernel_driver(interfacenum)
+                except Exception as err:
+                    self.debug("No kernel driver supported: " + str(err))
+
+                usb.util.claim_interface(self.device, interfacenum)
                 if self.devclass != -1:
                     if itf.bInterfaceClass == self.devclass:  # MassStorage
                         self.interface = interfacenum
@@ -288,30 +303,23 @@ class usb_class(metaclass=LogBase):
         if self.interface > self.configuration.bNumInterfaces:
             print("Invalid interface, max number is %d" % self.configuration.bNumInterfaces)
             return False
+
         if self.interface != -1:
             itf = usb.util.find_descriptor(self.configuration, bInterfaceNumber=self.interface)
-            try:
-                if self.device.is_kernel_driver_active(self.interface):
-                    self.debug("Detaching kernel driver")
-                    self.device.detach_kernel_driver(self.interface)
-            except Exception as err:
-                self.debug("No kernel driver supported: " + str(err))
-
-            usb.util.claim_interface(self.device, self.interface)
             if EP_OUT == -1:
                 self.EP_OUT = usb.util.find_descriptor(itf,
                                                        # match the first OUT endpoint
                                                        custom_match=lambda e: \
-                                                       usb.util.endpoint_direction(e.bEndpointAddress) ==
-                                                       usb.util.ENDPOINT_OUT)
+                                                           usb.util.endpoint_direction(e.bEndpointAddress) ==
+                                                           usb.util.ENDPOINT_OUT)
             else:
                 self.EP_OUT = EP_OUT
             if EP_IN == -1:
                 self.EP_IN = usb.util.find_descriptor(itf,
                                                       # match the first OUT endpoint
                                                       custom_match=lambda e: \
-                                                      usb.util.endpoint_direction(e.bEndpointAddress) ==
-                                                      usb.util.ENDPOINT_IN)
+                                                          usb.util.endpoint_direction(e.bEndpointAddress) ==
+                                                          usb.util.ENDPOINT_IN)
             else:
                 self.EP_IN = EP_IN
 
@@ -327,7 +335,7 @@ class usb_class(metaclass=LogBase):
             try:
                 self.device.reset()
                 if not self.device.is_kernel_driver_active(self.interface):
-                    #self.device.attach_kernel_driver(self.interface) #Do NOT uncomment
+                    # self.device.attach_kernel_driver(self.interface) #Do NOT uncomment
                     self.device.attach_kernel_driver(0)
                 if reset:
                     self.device.reset()
@@ -340,7 +348,7 @@ class usb_class(metaclass=LogBase):
 
     def write(self, command, pktsize=None):
         if pktsize is None:
-            pktsize=self.EP_OUT.wMaxPacketSize
+            pktsize = self.EP_OUT.wMaxPacketSize
         if isinstance(command, str):
             command = bytes(command, 'utf-8')
         pos = 0
@@ -385,9 +393,9 @@ class usb_class(metaclass=LogBase):
         ep_read = self.EP_IN.read
         while len(rxBuffer) == 0:
             try:
-                length=ep_read(buffer, timeout)
+                length = ep_read(buffer, timeout)
                 extend(buffer[:length])
-                if len(rxBuffer)>0:
+                if len(rxBuffer) > 0:
                     return rxBuffer
             except usb.core.USBError as e:
                 error = str(e.strerror)
@@ -418,6 +426,7 @@ class usb_class(metaclass=LogBase):
     class deviceclass:
         vid = 0
         pid = 0
+
         def __init__(self, vid, pid):
             self.vid = vid
             self.pid = pid
@@ -429,7 +438,7 @@ class usb_class(metaclass=LogBase):
 
     def usbwrite(self, data, pktsize=None):
         if pktsize is None:
-            pktsize=len(data)
+            pktsize = len(data)
         size = self.write(data, pktsize)
         # port->flush()
         return size
@@ -450,10 +459,10 @@ class usb_class(metaclass=LogBase):
 
     def rword(self, count=1, little=False):
         rev = "<" if little else ">"
-        data=[]
+        data = []
         for _ in range(count):
-            v=self.usbread(2)
-            if len(v)==0:
+            v = self.usbread(2)
+            if len(v) == 0:
                 return data
             data.append(unpack(rev + "H", v)[0])
         if count == 1:
@@ -467,16 +476,16 @@ class usb_class(metaclass=LogBase):
         if size is None:
             size = resplen
         res = bytearray()
-        timeout=0
-        while len(res)<resplen:
+        timeout = 0
+        while len(res) < resplen:
             res.extend(self.read(size))
-            if len(res)==resplen:
+            if len(res) == resplen:
                 break
-            if len(res)==0:
+            if len(res) == 0:
                 time.sleep(0.005)
-                if timeout==4:
+                if timeout == 4:
                     return res
-                timeout+=1
+                timeout += 1
         return res
 
 
@@ -561,6 +570,7 @@ class scsi:
         self.vid = vid
         self.pid = pid
         self.interface = interface
+        self.ctrlinterface = None
         self.Debug = False
         self.usb = None
         self.loglevel = loglevel
