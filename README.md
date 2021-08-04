@@ -50,6 +50,7 @@ sudo udevadm control -R
 ```
 Make sure to reboot after adding the user to dialout/plugdev.
 
+---------------------------------------------------------------------------------------------------------------
 
 ### Windows
 
@@ -71,7 +72,8 @@ pip3 install -r requirements.txt
 - Test on device connect using "UsbDkController -n" if you see a device with 0x0E8D 0x0003
 - Works fine under Windows 10 and 11 :D
 
-## Use kamakiri (optional, only needed for mt6260 or older)
+---------------------------------------------------------------------------------------------------------------
+### Use kamakiri (optional, only needed for mt6260 or older)
 
 - For linux (kamakiri attack), you need to recompile your linux kernel using this kernel patch :
 ```
@@ -109,23 +111,8 @@ See Setup/kernels for ready-to-use kernel setups
 sudo reboot
 ```
 
-## Compile payloads (optional)
 
-### Install gcc armeabi compiler
-
-```
-sudo apt-get install gcc-arm-none-eabi
-```
-
-### Compile
-
-See src/readme.build for detailed instructions.
-
-```
-cd src
-make
-```
-
+---------------------------------------------------------------------------------------------------------------
 
 ## Usage
 
@@ -156,7 +143,7 @@ If it's successful, please add an issue over here and append the bootrom in orde
 ### Dump preloader
 - Device has to be in bootrom mode and preloader has to be intact on the device
 ```
-./mtk dumppreloader --ptype=["amonet","kamakiri","kamakiri2","hashimoto"] [--filename=preloader.bin]
+./mtk dumppreloader [--ptype=["amonet","kamakiri","kamakiri2","hashimoto"]] [--filename=preloader.bin]
 ```
 
 
@@ -297,7 +284,28 @@ Erase boot partition (use --preloader for brom)
 ./mtk e boot
 ```
 
-### I need logs !
+---------------------------------------------------------------------------------------------------------------
+
+## Compile payloads (optional)
+
+### Install gcc armeabi compiler
+
+```
+sudo apt-get install gcc-arm-none-eabi
+```
+
+### Compile
+
+See src/readme.build for detailed instructions.
+
+```
+cd src
+make
+```
+---------------------------------------------------------------------------------------------------------------
+
+
+### I have issues ....... please send logs and full console details !
 
 - Run the mtk tool with --debugmode. Log will be written to log.txt (hopefully)
 
