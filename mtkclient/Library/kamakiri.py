@@ -87,14 +87,17 @@ class Kamakiri(metaclass=LogBase):
             ptr_da = self.mtk.config.chipconfig.brom_register_access[0][1]
         if ptr_da is None:
             assert "Unknown cpu config. Please try to dump brom and send to the author"
+        # 0x40404000
         for i in range(3):
             self.kamakiri2(ptr_da + 8 - 3 + i)
 
         if address < 0x40:
+            # 0x0
             for i in range(4):
                 self.kamakiri2(ptr_da - 6 + (4 - i))
             return self.mtk.preloader.brom_register_access(address, length, data, check_result)
         else:
+            # 0x00000040
             for i in range(3):
                 self.kamakiri2(ptr_da - 5 + (3 - i))
             return self.mtk.preloader.brom_register_access(address - 0x40, length, data, check_result)
@@ -149,6 +152,8 @@ class Kamakiri(metaclass=LogBase):
                 self.mtk = self.mtk.crasher(args=args, readsocid=readsocid, enforcecrash=enforcecrash,
                                             display=False)
                 self.info("Test mode, testing " + hex(startaddr) + "...")
+                if self.linecode is None:
+                    self.linecode = self.mtk.port.cdc.device.ctrl_transfer(0xA1, 0x21, 0, 0, 7) + array.array('B', [0])
                 found, startaddr = self.newbrute(startaddr)
                 if found:
                     filename = args["--filename"]
@@ -161,6 +166,7 @@ class Kamakiri(metaclass=LogBase):
                     self.dump_brom2(startaddr, filename)
                     break
                 else:
+                    print("Please dis- and reconnect device to brom mode to continue ...")
                     self.mtk.port.close()
         return True
 
