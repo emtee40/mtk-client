@@ -78,13 +78,10 @@ class usb_class(metaclass=LogBase):
         self.stopbits = None
         self.databits = None
         self.interface = None
-        self.ctrl_interface = None
         self.parity = None
         self.baudrate = None
         self.EP_IN = None
         self.EP_OUT = None
-        self.CTRL_IN = None
-        self.CTRL_OUT = None
         self.configuration = None
         self.device = None
         self.loglevel = loglevel
@@ -248,7 +245,7 @@ class usb_class(metaclass=LogBase):
             data_or_wLength=0)
         self.debug("Linecoding set, {}b sent".format(wlen))
 
-    def connect(self, EP_IN=-1, EP_OUT=-1, CTRL_IN=-1, CTRL_OUT=-1):
+    def connect(self, EP_IN=-1, EP_OUT=-1):
         vid = 0xE8D
         pid = 0x3
         if self.connected:
