@@ -43,8 +43,8 @@ python3 setup.py install
 
 #### Install rules
 ```
-sudo adduser $USER dialout
-sudo adduser $USER plugdev
+sudo usermod -a -G plugdev $USER
+sudo usermod -a -G dialout $USER
 sudo cp Setup/Linux/*.rules /etc/udev/rules.d
 sudo udevadm control -R
 ```
