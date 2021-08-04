@@ -103,10 +103,9 @@ pip3 install -r requirements.txt
 
 #### Get latest UsbDk 64-Bit
 - Install normal MTK Serial Port driver (or use default Windows COM Port one, make sure no exclamation is seen)
-- Get from https://github.com/daynix/UsbDk under Releases
-- Just install
+- Get usbdk installer (.msi) from https://github.com/daynix/UsbDk under Releases and install it
 - Test on device connect using "UsbDkController -n" if you see a device with 0x0E8D 0x0003
-
+- Works fine under Windows 10 and 11 :D
 
 ## Compile payloads (optional)
 
