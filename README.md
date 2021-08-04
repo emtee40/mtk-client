@@ -48,8 +48,30 @@ sudo adduser $USER plugdev
 sudo cp Setup/Linux/*.rules /etc/udev/rules.d
 sudo udevadm control -R
 ```
+Make sure to reboot after adding the user to dialout/plugdev.
 
-#### Use kamakiri (optional, only needed for mt6260 or older)
+
+### Windows
+
+#### Install python + git
+- Install python 3.9 and git
+- If you install python from microsoft store, "python setup.py install" will fail, but that step isn't required.
+- WIN+R ```cmd```
+
+#### Grab files and install
+```
+git clone https://github.com/bkerler/mtkclient
+cd mtkclient
+pip3 install -r requirements.txt
+```
+
+#### Get latest UsbDk 64-Bit
+- Install normal MTK Serial Port driver (or use default Windows COM Port one, make sure no exclamation is seen)
+- Get usbdk installer (.msi) from [here](https://github.com/daynix/UsbDk/releases/) and install it
+- Test on device connect using "UsbDkController -n" if you see a device with 0x0E8D 0x0003
+- Works fine under Windows 10 and 11 :D
+
+## Use kamakiri (optional, only needed for mt6260 or older)
 
 - For linux (kamakiri attack), you need to recompile your linux kernel using this kernel patch :
 ```
@@ -87,26 +109,6 @@ See Setup/kernels for ready-to-use kernel setups
 sudo reboot
 ```
 
-### Windows
-
-#### Install python + git
-- Install python 3.9 and git
-- If you install python from microsoft store, "python setup.py install" will fail, but that step isn't required.
-- WIN+R ```cmd```
-
-#### Grab files and install
-```
-git clone https://github.com/bkerler/mtkclient
-cd mtkclient
-pip3 install -r requirements.txt
-```
-
-#### Get latest UsbDk 64-Bit
-- Install normal MTK Serial Port driver (or use default Windows COM Port one, make sure no exclamation is seen)
-- Get usbdk installer (.msi) from https://github.com/daynix/UsbDk under Releases and install it
-- Test on device connect using "UsbDkController -n" if you see a device with 0x0E8D 0x0003
-- Works fine under Windows 10 and 11 :D
-
 ## Compile payloads (optional)
 
 ### Install gcc armeabi compiler
@@ -143,6 +145,13 @@ If you want to use SP Flash tool afterwards, make sure you select "UART" in the 
 ```
 ./mtk dumpbrom --ptype=["amonet","kamakiri","hashimoto"] [--filename=brom.bin]
 ```
+
+For to dump unknown bootroms, use brute option :
+```
+./mtk brute
+```
+If it's successful, please add an issue over here and append the bootrom in order to add full support.
+
 
 ### Dump preloader
 - Device has to be in bootrom mode and preloader has to be intact on the device
