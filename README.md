@@ -24,7 +24,7 @@ User: livedvd, Password:livedvd
 
 ## Install
 
-### Linux
+### Linux - (Ubuntu recommended, no patched kernel needed except for kamakiri)
 
 #### Install python >=3.8, git and other deps
 
