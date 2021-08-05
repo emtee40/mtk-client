@@ -394,7 +394,7 @@ class usb_class(metaclass=LogBase):
                 extend(buffer[:length])
                 if len(rxBuffer) > 0:
                     if self.loglevel == logging.DEBUG:
-                        self.verify_data(rxBuffer, "RX:")
+                        self.verify_data(bytearray(rxBuffer), "RX:")
                     return rxBuffer
             except usb.core.USBError as e:
                 error = str(e.strerror)
