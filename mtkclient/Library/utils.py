@@ -15,11 +15,11 @@ import copy
 try:
     from capstone import *
 except ImportError:
-    print("Capstone library is missing.")
+    print("Capstone library is missing (optional).")
 try:
     from keystone import *
 except ImportError:
-    print("Keystone library is missing.")
+    print("Keystone library is missing (optional).")
 
 
 from struct import unpack, pack
