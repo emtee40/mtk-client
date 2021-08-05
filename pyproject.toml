@@ -5,10 +5,7 @@ requires = [
     "pyusb",
     "docopt",
     "pycryptodome",
-    "unicorn",
     "colorama",
-    "usb",
-    "capstone",
-    "keystone-engine",
+    "usb"
 ]
 build-backend = "setuptools.build_meta"

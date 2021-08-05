@@ -116,143 +116,37 @@ sudo reboot
 
 ## Usage
 
-### Bypass SLA, DAA and SBC (using generic_patcher_payload)
-`` 
-./mtk payload
-`` 
-If you want to use SP Flash tool afterwards, make sure you select "UART" in the settings, not "USB".
-
-### Dump brom
-- Device has to be in bootrom mode, or da mode has to be crashed to enter damode
-- if no option is given, either kamakiri or da will be used (da for insecure targets)
-- if "kamakiri" is used as an option, kamakiri is enforced
-- Valid options are : "kamakiri" (via usb_ctrl_handler attack), "amonet" (via gcpu)
-  and "hashimoto" (via cqdma)
-
-```
-./mtk dumpbrom --ptype=["amonet","kamakiri","hashimoto"] [--filename=brom.bin]
-```
-
-For to dump unknown bootroms, use brute option :
-```
-./mtk brute
-```
-If it's successful, please add an issue over here and append the bootrom in order to add full support.
-
-
-### Dump preloader
-- Device has to be in bootrom mode and preloader has to be intact on the device
-```
-./mtk dumppreloader [--ptype=["amonet","kamakiri","kamakiri2","hashimoto"]] [--filename=preloader.bin]
-```
-
-
-### Run original/patched preloader and disable sbc
-- Boot in Brom or crash to Brom
-```
-./mtk plstage --preloader=preloader.bin
-```
-
-### Read memory using patched preloader
-- Boot in Brom or crash to Brom
-```
-./mtk peek [addr] [length] --preloader=patched_preloader.bin
-```
-
-### Run custom payload
-
-```
-./mtk payload --payload=payload.bin [--var1=var1] [--wdt=wdt] [--uartaddr=addr] [--da_addr=addr] [--brom_addr=addr]
-```
-
-### Run stage2 in bootrom
-`` 
-./mtk stage
-`` 
-
-### Run stage2 in preloader
-`` 
-./mtk plstage
-`` 
-
-### Leave stage2 and reboot
-`` 
-./stage2 reboot
-`` 
-
-### Read rpmb in stage2 mode
-`` 
-./stage2 rpmb
-`` 
-
-### Read preloader in stage2 mode
-`` 
-./stage2 preloader
-`` 
-
-### Read memory as hex data in stage2 mode
-`` 
-./stage2 memread [start addr] [length]
-`` 
-
-### Read memory to file in stage2 mode
-`` 
-./stage2 memread [start addr] [length] --filename filename.bin
-`` 
-
-### Write hex data to memory in stage2 mode
-`` 
-./stage2 memwrite [start addr] --data [data as hexstring]
-`` 
-
-### Write memory from file in stage2 mode
-`` 
-./stage2 memwrite [start addr] --filename filename.bin
-`` 
-
-### Extract keys
-`` 
-./stage2 keys --mode [sej, dxcc]
-`` 
-For dxcc, you need to use plstage instead of stage
-
-### Crash da in order to enter brom
-
-```
-./mtk crash [--vid=vid] [--pid=pid] [--interface=interface]
-```
-
 ### Read flash
 
 Dump boot partition to filename boot.bin via preloader
 
 ```
-./mtk r boot boot.bin
+python mtk r boot boot.bin
 ```
 
 Dump boot partition to filename boot.bin via bootrom
 
 ```
-./mtk r boot boot.bin [--preloader=Loader/Preloader/your_device_preloader.bin]
+python mtk r boot boot.bin [--preloader=Loader/Preloader/your_device_preloader.bin]
 ```
 
 
 Read full flash to filename flash.bin (use --preloader for brom)
 
 ```
-./mtk rf flash.bin
+python mtk rf flash.bin
 ```
 
 Dump all partitions to directory "out". (use --preloader for brom)
 
 ```
-./mtk rl out
+python mtk rl out
 ```
 
 Show gpt (use --preloader for brom)
 
 ```
-./mtk printgpt
+python mtk printgpt
 ```
 
 
@@ -262,29 +156,145 @@ Show gpt (use --preloader for brom)
 Write filename boot.bin to boot partition
 
 ```
-./mtk w boot boot.bin
+python mtk w boot boot.bin
 ```
 
 Write filename flash.bin as full flash (currently only works in da mode)
 
 ```
-./mtk wf flash.bin
+python mtk wf flash.bin
 ```
 
 Write all files in directory "out" to the flash partitions
 
 ```
-./mtk wl out
+python mtk wl out
 ```
 
 ### Erase flash
 
 Erase boot partition (use --preloader for brom)
 ```
-./mtk e boot
+python mtk e boot
 ```
 
 ---------------------------------------------------------------------------------------------------------------
+
+### Bypass SLA, DAA and SBC (using generic_patcher_payload)
+`` 
+python mtk payload
+`` 
+If you want to use SP Flash tool afterwards, make sure you select "UART" in the settings, not "USB".
+
+### Dump preloader
+- Device has to be in bootrom mode and preloader has to be intact on the device
+```
+python mtk dumppreloader [--ptype=["amonet","kamakiri","kamakiri2","hashimoto"]] [--filename=preloader.bin]
+```
+
+### Dump brom
+- Device has to be in bootrom mode, or da mode has to be crashed to enter damode
+- if no option is given, either kamakiri or da will be used (da for insecure targets)
+- if "kamakiri" is used as an option, kamakiri is enforced
+- Valid options are : "kamakiri" (via usb_ctrl_handler attack), "amonet" (via gcpu)
+  and "hashimoto" (via cqdma)
+
+```
+python mtk dumpbrom --ptype=["amonet","kamakiri","hashimoto"] [--filename=brom.bin]
+```
+
+For to dump unknown bootroms, use brute option :
+```
+python mtk brute
+```
+If it's successful, please add an issue over here and append the bootrom in order to add full support.
+
+---------------------------------------------------------------------------------------------------------------
+
+### Crash da in order to enter brom
+
+```
+python mtk crash [--vid=vid] [--pid=pid] [--interface=interface]
+```
+
+### Read memory using patched preloader
+- Boot in Brom or crash to Brom
+```
+python mtk peek [addr] [length] --preloader=patched_preloader.bin
+```
+
+### Run custom payload
+
+```
+python mtk payload --payload=payload.bin [--var1=var1] [--wdt=wdt] [--uartaddr=addr] [--da_addr=addr] [--brom_addr=addr]
+```
+
+---------------------------------------------------------------------------------------------------------------
+## Stage2 usage
+### Run python mtk stage (brom) or mtk plstage (preloader)
+
+#### Run stage2 in bootrom
+`` 
+python mtk stage
+`` 
+
+#### Run stage2 in preloader
+`` 
+python mtk plstage
+`` 
+
+#### Run stage2 plstage in bootrom
+- Boot in Brom or crash to Brom
+```
+python mtk plstage --preloader=preloader.bin
+```
+
+### Use stage2 tool
+
+
+### Leave stage2 and reboot
+`` 
+python stage2 reboot
+`` 
+
+### Read rpmb in stage2 mode
+`` 
+python stage2 rpmb
+`` 
+
+### Read preloader in stage2 mode
+`` 
+python stage2 preloader
+`` 
+
+### Read memory as hex data in stage2 mode
+`` 
+python stage2 memread [start addr] [length]
+`` 
+
+### Read memory to file in stage2 mode
+`` 
+python stage2 memread [start addr] [length] --filename filename.bin
+`` 
+
+### Write hex data to memory in stage2 mode
+`` 
+python stage2 memwrite [start addr] --data [data as hexstring]
+`` 
+
+### Write memory from file in stage2 mode
+`` 
+python stage2 memwrite [start addr] --filename filename.bin
+`` 
+
+### Extract keys
+`` 
+python stage2 keys --mode [sej, dxcc]
+`` 
+For dxcc, you need to use plstage instead of stage
+
+---------------------------------------------------------------------------------------------------------------
+
 
 ## Compile payloads (optional)
 
