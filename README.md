@@ -14,12 +14,9 @@ release the buttons.
 
 ## Installation
 
-### Use Re LiveDVD (everything ready to go):
-[Download Re Live DVD](https://drive.google.com/file/d/1VUK0toC6I0jhJ4ZTFPREhSXFTkSe9_gl/view?usp=sharing)
+### Use Re LiveDVD (everything ready to go, based on Ubuntu):
+[Download Re Live DVD V2](https://drive.google.com/file/d/1VUK0toC6I0jhJ4ZTFPREhSXFTkSe9_gl/view?usp=sharing)
 User: livedvd, Password:livedvd
-
-### Use FireISO as LiveDVD:
-[Download FireIso Live DVD](https://github.com/amonet-kamakiri/fireiso/releases/tag/v2.0.0)
 
 
 ## Install
