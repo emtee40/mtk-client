@@ -258,7 +258,7 @@ class DAXFlash(metaclass=LogBase):
             self.progpos=pos
         prog = round(float(pos) / float(total) * float(100), 2)
         if pos != total:
-            if prog > self.prog:
+            if prog != self.prog:
                 if display:
                     tdiff=t0-self.progtime
                     datasize=(pos-self.progpos)/1024/1024
