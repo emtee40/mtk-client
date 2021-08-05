@@ -22,6 +22,13 @@ setup(
         "Operating System :: OS Independent",
     ],
     license='MIT License',
+    install_requires=[
+    'colorama',
+    'docopt',
+    'usb',
+    'pyusb',
+    'pycryptodome'
+    ],
     author='B. Kerler',
     author_email='info@revskills.de',
     description='Mediatek reverse engineering and flashing tools',

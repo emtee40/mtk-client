@@ -3,19 +3,12 @@ requires = [
     "setuptools>=42",
     "wheel",
     "pyusb",
-    "pyserial",
     "docopt",
     "pycryptodome",
     "unicorn",
     "colorama",
-    "scrypt",
     "usb",
     "capstone",
-    "enum34",
-    "argparse",
-    "pyelftools",
-    "asn1",
     "keystone-engine",
-    "asn1crypto"
 ]
 build-backend = "setuptools.build_meta"
