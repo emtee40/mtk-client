@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from setuptools import setup, find_packages
 import os
 
@@ -5,9 +6,6 @@ setup(
     name='mtkclient',
     version='1.4',
     packages=find_packages(),
-    install_requires=[
-        "attrs",
-    ],
     long_description=open("README.md").read(),
     scripts=['mtk','stage2'],
     data_files = ['LICENSE','README.md'],
