@@ -333,7 +333,6 @@ class Preloader(metaclass=LogBase):
             res = self.usbread(1)
             if res == self.Cmd.GET_BL_VER.value:
                 # We are in boot rom ...
-                self.info("BROM mode detected.")
                 self.mtk.config.blver = -2
                 return -2
             else:
@@ -525,6 +524,7 @@ class Preloader(metaclass=LogBase):
             res = self.usbread(1)
             if res == self.Cmd.GET_BL_VER.value:
                 self.usbwrite(self.Cmd.GET_ME_ID.value)  # 0xE1
+                self.info("BROM mode detected.")
                 if self.usbread(1) == self.Cmd.GET_ME_ID.value:
                     length = unpack(">I", self.usbread(4))[0]
                     self.mtk.config.meid = self.usbread(length)
@@ -533,6 +533,8 @@ class Preloader(metaclass=LogBase):
                         return self.mtk.config.meid
                     else:
                         self.error("Error on get_meid: " + self.eh.status(status))
+        else:
+            self.info("Preloader mode detected.")
         return b""
 
     def get_socid(self):
