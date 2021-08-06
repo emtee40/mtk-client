@@ -191,11 +191,9 @@ class DAXFlash(metaclass=LogBase):
             self.usbwrite(data)
             time.sleep(0.0002)
             status=self.status()
-            if status == 0x40040005 or status == 0:  # STATUS_COMPLETE
-                return True
-            return False
+            return status
         except:
-            return False
+            return -1
 
     def send(self, data, datatype=DataType.DT_PROTOCOL_FLOW):
         if isinstance(data, int):
@@ -515,7 +513,9 @@ class DAXFlash(metaclass=LogBase):
                 while status == 0x40040004:  # STATUS_CONTINUE
                     # it receive some data maybe sleep in ms time,
                     time.sleep(self.status() / 1000.0)
-                    return self.ack()
+                    status = self.ack()
+                if status == 0x40040005:  # STATUS_COMPLETE
+                    return True
         return False
 
     def get_chip_id(self):
@@ -775,7 +775,7 @@ class DAXFlash(metaclass=LogBase):
                         while bytestoread > 0:
                             magic, datatype, slength = unpack("<III", self.usbread(4 + 4 + 4))
                             tmp = self.usbread(slength)
-                            if not self.ack():
+                            if self.ack() != 0:
                                 break
                             wf.write(tmp)
                             bytestoread -= len(tmp)
@@ -791,7 +791,7 @@ class DAXFlash(metaclass=LogBase):
                 while length > 0:
                     tmp = self.recv()
                     buffer.extend(tmp)
-                    if not self.ack():
+                    if self.ack() != 0:
                         break
                     if display:
                         self.show_progress("Read", length - bytestoread, length, display)
