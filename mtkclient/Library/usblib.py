@@ -78,7 +78,6 @@ class usb_class(metaclass=LogBase):
         self.stopbits = None
         self.databits = None
         self.interface = None
-        self.ctrl_interface = None
         self.parity = None
         self.baudrate = None
         self.EP_IN = None
@@ -284,8 +283,7 @@ class usb_class(metaclass=LogBase):
                 if self.devclass != -1:
                     if itf.bInterfaceClass == self.devclass:  # MassStorage
                         self.interface = interfacenum
-                    if itf.bInterfaceClass == 0x2:
-                        self.ctrl_interface = interfacenum
+                        break
                 else:
                     self.interface = interfacenum
                     break
@@ -479,7 +477,8 @@ class usb_class(metaclass=LogBase):
         res = bytearray()
         timeout = 0
         while len(res) < resplen:
-            res.extend(self.read(size))
+            v=self.read(size)
+            res.extend(v)
             if len(res) == resplen:
                 break
             if len(res) == 0:
@@ -487,6 +486,8 @@ class usb_class(metaclass=LogBase):
                 if timeout == 4:
                     return res
                 timeout += 1
+            elif len(v)==0:
+                break
         return res
 
 
