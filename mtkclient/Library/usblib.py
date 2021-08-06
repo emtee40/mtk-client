@@ -136,7 +136,7 @@ class usb_class(metaclass=LogBase):
                 self.debug(pre + hexlify(data).decode('utf-8'))
         else:
             if logging.DEBUG >= self.__logger.level:
-                self.debug(pre + data)
+                self.debug(pre + hexlify(data).decode('utf-8'))
         return data
 
     def getInterfaceCount(self):
