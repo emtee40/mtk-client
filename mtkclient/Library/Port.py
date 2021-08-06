@@ -64,10 +64,39 @@ class Port(metaclass=LogBase):
         self.info("Device detected :)")
         return True
 
-    def handshake(self, maxtries=None, loop=0):
-        counter = 0
+    def run_handshake(self):
+        tries = 100
+        i = 0
         startcmd = [b"\xa0", b"\x0a", b"\x50", b"\x05"]
         length = len(startcmd)
+        while i < length and tries > 0:
+            if self.cdc.device.write(self.cdc.EP_OUT, startcmd[i]):
+                time.sleep(0.005)
+                try:
+                    v = self.cdc.device.read(self.cdc.EP_IN, 64, None)
+                    if len(v) == 1:
+                        if v[0] == ~(startcmd[i][0]) & 0xFF:
+                            i += 1
+                        else:
+                            i = 0
+                            self.cdc.setbreak()
+                            self.cdc.setLineCoding(self.config.baudrate)
+                            tries -= 1
+                except Exception as serr:
+                    self.debug(str(serr))
+                    i = 0
+                    time.sleep(0.005)
+
+            """
+            if len(v) < 1:
+                self.debug("Timeout")
+                i = 0
+                time.sleep(0.005)
+            """
+        return True
+
+    def handshake(self, maxtries=None, loop=0):
+        counter = 0
 
         while not self.cdc.connected:
             try:
@@ -80,38 +109,12 @@ class Port(metaclass=LogBase):
                     # self.cdc.setLineCoding(19200)
                     # self.cdc.setcontrollinestate(RTS=True,DTR=True)
                     # self.cdc.setbreak()
-                    tries = 100
-                    i = 0
+                    if self.run_handshake():
+                        print()
+                        self.info("Device detected :)")
+                        return True
                     # self.cdc.setLineCoding(115200)
                     # self.cdc.setbreak()
-
-                    while i < length and tries > 0:
-                        if self.cdc.device.write(self.cdc.EP_OUT, startcmd[i]):
-                            time.sleep(0.005)
-                            try:
-                                v = self.cdc.device.read(self.cdc.EP_IN, 64, None)
-                                if len(v) == 1:
-                                    if v[0] == ~(startcmd[i][0]) & 0xFF:
-                                        i += 1
-                                    else:
-                                        i = 0
-                                        self.cdc.setbreak()
-                                        self.cdc.setLineCoding(self.config.baudrate)
-                                        tries -= 1
-                            except Exception as serr:
-                                self.debug(str(serr))
-                                i = 0
-                                time.sleep(0.005)
-
-                        """
-                        if len(v) < 1:
-                            self.debug("Timeout")
-                            i = 0
-                            time.sleep(0.005)
-                        """
-                    print()
-                    self.info("Device detected :)")
-                    return True
                 else:
                     sys.stdout.write('.')
                     if loop >= 20:

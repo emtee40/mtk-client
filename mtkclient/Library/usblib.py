@@ -287,7 +287,6 @@ class usb_class(metaclass=LogBase):
                 except Exception as err:
                     self.debug("No kernel driver supported: " + str(err))
 
-                usb.util.claim_interface(self.device, interfacenum)
                 if self.devclass != -1:
                     if itf.bInterfaceClass == self.devclass:  # MassStorage
                         self.interface = interfacenum
@@ -302,6 +301,7 @@ class usb_class(metaclass=LogBase):
             return False
 
         if self.interface != -1:
+            usb.util.claim_interface(self.device, self.interface)
             itf = usb.util.find_descriptor(self.configuration, bInterfaceNumber=self.interface)
             if EP_OUT == -1:
                 self.EP_OUT = usb.util.find_descriptor(itf,
@@ -330,7 +330,7 @@ class usb_class(metaclass=LogBase):
     def close(self, reset=False):
         if self.connected:
             try:
-                self.device.reset()
+                # self.device.reset()
                 if not self.device.is_kernel_driver_active(self.interface):
                     # self.device.attach_kernel_driver(self.interface) #Do NOT uncomment
                     self.device.attach_kernel_driver(0)
