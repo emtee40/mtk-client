@@ -43,9 +43,9 @@ class Preloader(metaclass=LogBase):
         I2C_WRITE8_EX = b"\xB8"  # READY
         """
         / Boot-loader resposne from BLDR_CMD_READY (0xB8)
-        STATUS_READY				0x00		// secure RO is found and ready to serve
-        STATUS_SECURE_RO_NOT_FOUND  0x01		// secure RO is not found: first download? => dead end...
-        STATUS_SUSBDL_NOT_SUPPORTED	0x02		// BL didn't enable Secure USB DL
+        STATUS_READY                0x00        // secure RO is found and ready to serve
+        STATUS_SECURE_RO_NOT_FOUND  0x01        // secure RO is not found: first download? => dead end...
+        STATUS_SUSBDL_NOT_SUPPORTED 0x02        // BL didn't enable Secure USB DL
         """
         I2C_READ8_EX = b"\xB9"
         I2C_SET_SPEED_EX = b"\xBA"
@@ -113,10 +113,16 @@ class Preloader(metaclass=LogBase):
             self.info("Status: Waiting for PreLoader VCOM, please reconnect mobile to brom mode")
         else:
             self.info("Status: Waiting for PreLoader VCOM, please connect mobile")
-        if not self.mtk.port.handshake(maxtries=maxtries):
-            if display:
-                self.error("Status: Handshake failed, please retry")
-            self.mtk.port.close()
+        res = False
+        tries = 0
+        while not res and tries<10:
+            res=self.mtk.port.handshake(maxtries=maxtries)
+            if not res:
+                if display:
+                    self.error("Status: Handshake failed, please retry")
+                self.mtk.port.close()
+                tries+=1
+        if tries==10:
             return False
 
         if not self.echo(self.Cmd.GET_HW_CODE.value):  # 0xFD
@@ -333,6 +339,7 @@ class Preloader(metaclass=LogBase):
             res = self.usbread(1)
             if res == self.Cmd.GET_BL_VER.value:
                 # We are in boot rom ...
+                self.info("BROM mode detected.")
                 self.mtk.config.blver = -2
                 return -2
             else:
@@ -524,7 +531,6 @@ class Preloader(metaclass=LogBase):
             res = self.usbread(1)
             if res == self.Cmd.GET_BL_VER.value:
                 self.usbwrite(self.Cmd.GET_ME_ID.value)  # 0xE1
-                self.info("BROM mode detected.")
                 if self.usbread(1) == self.Cmd.GET_ME_ID.value:
                     length = unpack(">I", self.usbread(4))[0]
                     self.mtk.config.meid = self.usbread(length)
@@ -533,8 +539,6 @@ class Preloader(metaclass=LogBase):
                         return self.mtk.config.meid
                     else:
                         self.error("Error on get_meid: " + self.eh.status(status))
-        else:
-            self.info("Preloader mode detected.")
         return b""
 
     def get_socid(self):

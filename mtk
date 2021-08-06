@@ -9,15 +9,16 @@ Usage:
     mtk.py [--debugmode]
     mtk.py [--gpt-num-part-entries=number] [--gpt-part-entry-size=number] [--gpt-part-entry-start-lba=number]
     mtk.py [--sectorsize=bytes]
-    mtk.py printgpt [--memory=memtype] [--lun=lun] [--preloader=filename] [--loader=filename] [--debugmode] [--vid=vid] [--pid=pid] 
-    mtk.py gpt <filename> [--memory=memtype] [--lun=lun] [--preloader=filename] [--loader=filename] [--debugmode] [--vid=vid] [--pid=pid] 
-    mtk.py r <partitionname> <filename> [--parttype=parttype] [--memory=memtype] [--lun=lun] [--preloader=filename] [--payload=filename] [--loader=filename] [--debugmode] [--vid=vid] [--pid=pid] [--var1=var1]  [--ptype=ptype]
-    mtk.py rl <directory> [--memory=memtype] [--parttype=parttype] [--lun=lun] [--skip=partnames] [--preloader=filename] [--payload=filename] [--loader=filename] [--debugmode] [--vid=vid] [--pid=pid] [--var1=var1]  [--ptype=ptype]
-    mtk.py rf <filename> [--memory=memtype] [--parttype=parttype] [--lun=lun] [--preloader=filename] [--loader=filename] [--payload=filename] [--debugmode] [--vid=vid] [--pid=pid] [--var1=var1]  [--ptype=ptype]
-    mtk.py rs <start_sector> <sectors> <filename> [--parttype=parttype] [--lun=lun] [--preloader=filename] [--loader=filename] [--payload=filename] [--debugmode] [--vid=vid] [--pid=pid] [--var1=var1]  [--ptype=ptype]
-    mtk.py w <partitionname> <filename> [--parttype=parttype] [--memory=memtype] [--lun=lun] [--preloader=filename] [--loader=filename] [--payload=filename] [--debugmode] [--vid=vid] [--pid=pid] [--var1=var1]  [--ptype=ptype]
-    mtk.py e <partitionname> [--parttype=parttype] [--memory=memtype] [--lun=lun] [--preloader=filename] [--loader=filename] [--payload=filename] [--debugmode] [--vid=vid] [--pid=pid] [--var1=var1]  [--ptype=ptype]
-    mtk.py footer <filename> [--memory=memtype] [--lun=lun] [--preloader=filename] [--loader=filename] [--payload=filename] [--debugmode] [--vid=vid] [--pid=pid] [--var1=var1] 
+    mtk.py printgpt [--memory=memtype] [--lun=lun] [--preloader=filename] [--loader=filename] [--debugmode] [--vid=vid] [--pid=pid]
+    mtk.py gpt <filename> [--memory=memtype] [--lun=lun] [--preloader=filename] [--loader=filename] [--debugmode] [--vid=vid] [--pid=pid]
+    mtk.py r <partitionname> <filename> [--parttype=parttype] [--memory=memtype] [--lun=lun] [--preloader=filename] [--payload=filename] [--loader=filename] [--debugmode] [--vid=vid] [--pid=pid] [--var1=var1] [--ptype=ptype]
+    mtk.py rl <directory> [--memory=memtype] [--parttype=parttype] [--lun=lun] [--skip=partnames] [--preloader=filename] [--payload=filename] [--loader=filename] [--debugmode] [--vid=vid] [--pid=pid] [--var1=var1] [--ptype=ptype]
+    mtk.py rf <filename> [--memory=memtype] [--parttype=parttype] [--lun=lun] [--preloader=filename] [--loader=filename] [--payload=filename] [--debugmode] [--vid=vid] [--pid=pid] [--var1=var1] [--ptype=ptype]
+    mtk.py rs <start_sector> <sectors> <filename> [--parttype=parttype] [--lun=lun] [--preloader=filename] [--loader=filename] [--payload=filename] [--debugmode] [--vid=vid] [--pid=pid] [--var1=var1] [--ptype=ptype]
+    mtk.py w <partitionname> <filename> [--parttype=parttype] [--memory=memtype] [--lun=lun] [--preloader=filename] [--loader=filename] [--payload=filename] [--debugmode] [--vid=vid] [--pid=pid] [--var1=var1] [--ptype=ptype]
+    mtk.py wf <filename> [--parttype=parttype] [--memory=memtype] [--lun=lun] [--preloader=filename] [--loader=filename] [--payload=filename] [--debugmode] [--vid=vid] [--pid=pid] [--var1=var1] [--ptype=ptype]
+    mtk.py e <partitionname> [--parttype=parttype] [--memory=memtype] [--lun=lun] [--preloader=filename] [--loader=filename] [--payload=filename] [--debugmode] [--vid=vid] [--pid=pid] [--var1=var1] [--ptype=ptype]
+    mtk.py footer <filename> [--memory=memtype] [--lun=lun] [--preloader=filename] [--loader=filename] [--payload=filename] [--debugmode] [--vid=vid] [--pid=pid] [--var1=var1]
     mtk.py reset [--debugmode] [--vid=vid] [--pid=pid]
     mtk.py dumpbrom [--filename=filename] [--ptype=ptype] [--crash] [--skipwdt] [--wdt=wdt] [--var1=var1] [--da_addr=addr] [--brom_addr=addr] [--uartaddr=addr] [--debugmode] [--vid=vid] [--pid=pid] [--interface=interface] [--socid]
     mtk.py dumppreloader [--filename=filename] [--ptype=ptype] [--crash] [--skipwdt] [--wdt=wdt] [--var1=var1] [--da_addr=addr] [--brom_addr=addr] [--uartaddr=addr] [--debugmode] [--vid=vid] [--pid=pid] [--interface=interface] [--socid]
@@ -200,14 +201,11 @@ class Mtk(metaclass=LogBase):
         if self.args["--ptype"] is not None:
             ptype = self.args["--ptype"]
         if plt.runpayload(filename=payloadfile, ptype=ptype):
-            #if os.name == 'nt':
-            time.sleep(0.2)
             mtk.port.run_handshake()
-            #else:
-            #    mtk.port.close()
-            #    mtk = Mtk(loader=args["--loader"], loglevel=self.__logger.level, vid=vid, pid=pid,
-            #              interface=interface, args=args)
-            #    mtk.preloader.init(args=args, readsocid=readsocid)
+            #mtk.port.close()
+            #mtk = Mtk(loader=args["--loader"], loglevel=self.__logger.level, vid=vid, pid=pid,
+            #          interface=interface, args=args)
+            #mtk.preloader.init(args=args, readsocid=readsocid)
             return mtk
         else:
             self.error("Error on running kamakiri payload")
@@ -259,12 +257,12 @@ class Main(metaclass=LogBase):
                 idx = data.find(b"MTK_BLOADER_INFO")
                 if idx != -1:
                     filename = data[idx + 0x1B:idx + 0x1B + 0x30].rstrip(b"\x00").decode('utf-8')
-                if preloader is not None:
-                    pfilename = os.path.join(mtk.pathconfig.get_loader_path(), "Preloader", filename)
-                    if not os.path.exists(pfilename):
-                        with open(pfilename, "wb") as wf:
-                            wf.write(preloader)
-                            self.info(f"Successfully extracted preloader for this device to: {pfilename}")
+                    if preloader is not None:
+                        pfilename = os.path.join(mtk.pathconfig.get_loader_path(), "Preloader", filename)
+                        if not os.path.exists(pfilename):
+                            with open(pfilename, "wb") as wf:
+                                wf.write(preloader)
+                                print(f"Successfully extracted preloader for this device to: {pfilename}")
                 return preloader
         except:
             return None
@@ -620,22 +618,6 @@ class Main(metaclass=LogBase):
             else:
                 mtk.port.close()
                 return False
-        elif self.args["payload"]:
-            if mtk.preloader.init(args=self.args, readsocid=readsocid):
-                mtk = mtk.crasher(args=self.args, readsocid=readsocid, enforcecrash=enforcecrash)
-                plt = PLTools(mtk, self.__logger.level)
-                payloadfile = self.args["--payload"]
-                if payloadfile is None:
-                    if mtk.config.chipconfig.loader is None:
-                        payloadfile = os.path.join(mtk.pathconfig.get_payloads_path(), "generic_patcher_payload.bin")
-                    else:
-                        payloadfile = os.path.join(mtk.pathconfig.get_payloads_path(), mtk.config.chipconfig.loader)
-                ptype = ""
-                if self.args["--ptype"] is not None:
-                    ptype = self.args["--ptype"]
-                plt.runpayload(filename=payloadfile, ptype=ptype)
-            mtk.port.close()
-            self.close()
         elif self.args["gettargetconfig"]:
             if mtk.preloader.init(args=self.args, readsocid=readsocid):
                 self.info("Getting target info...")
@@ -648,9 +630,13 @@ class Main(metaclass=LogBase):
                 if mtk.config.target_config["daa"]:
                     mtk = mtk.bypass_security(args=self.args, vid=vid, pid=pid, interface=interface,
                                               readsocid=readsocid, enforcecrash=enforcecrash)
+                    self.info("Device is protected.")
                     if mtk is not None:
-                        if preloader is None:
-                            preloader=self.dump_preloader_ram(mtk)
+                        meid = mtk.preloader.get_meid()
+                        if meid:
+                            self.info("Device is in BROM mode. Trying to dump preloader.")
+                            if preloader is None:
+                                preloader=self.dump_preloader_ram(mtk)
                 else:
                     self.info("Device is unprotected.")
                     meid = mtk.preloader.get_meid()
@@ -928,6 +914,23 @@ class Main(metaclass=LogBase):
                 self.close()
             elif self.args["reset"]:
                 mtk.daloader.close()
+                self.close()
+            else:  #self.args["payload"]:
+                if mtk.preloader.init(args=self.args, readsocid=readsocid):
+                    mtk = mtk.crasher(args=self.args, readsocid=readsocid, enforcecrash=enforcecrash)
+                    plt = PLTools(mtk, self.__logger.level)
+                    payloadfile = self.args["--payload"]
+                    if payloadfile is None:
+                        if mtk.config.chipconfig.loader is None:
+                            payloadfile = os.path.join(mtk.pathconfig.get_payloads_path(),
+                                                       "generic_patcher_payload.bin")
+                        else:
+                            payloadfile = os.path.join(mtk.pathconfig.get_payloads_path(), mtk.config.chipconfig.loader)
+                    ptype = ""
+                    if self.args["--ptype"] is not None:
+                        ptype = self.args["--ptype"]
+                    plt.runpayload(filename=payloadfile, ptype=ptype)
+                mtk.port.close()
                 self.close()
 
 
