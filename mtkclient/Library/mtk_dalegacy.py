@@ -880,12 +880,13 @@ class DALegacy(metaclass=LogBase):
                                 self.daconfig.flashsize = self.sdc["m_sdmmc_ua_size"]
                         elif self.daconfig.flashtype == "nor":
                             self.daconfig.flashsize = self.nor["m_nor_flash_size"]
-                        self.info("Reconnecting to preloader")
-                        self.set_usb_cmd()
-                        self.mtk.port.close()
-                        time.sleep(2)
-                        if self.mtk.port.cdc.connect():
-                            self.info("Connected to preloader")
+                        if os.name != "nt":
+                            self.info("Reconnecting to preloader")
+                            self.set_usb_cmd()
+                            self.mtk.port.close()
+                            time.sleep(2)
+                            if self.mtk.port.cdc.connect():
+                                self.info("Connected to preloader")
                         self.check_usb_cmd()
                         return True
                 return False
