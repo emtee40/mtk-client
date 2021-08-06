@@ -66,14 +66,17 @@ class Port(metaclass=LogBase):
 
     def run_handshake(self):
         tries = 100
+        EP_OUT = self.cdc.EP_OUT.write
+        EP_IN = self.cdc.EP_IN.read
+        maxinsize=self.cdc.EP_IN.wMaxPacketSize
         i = 0
         startcmd = [b"\xa0", b"\x0a", b"\x50", b"\x05"]
         length = len(startcmd)
         while i < length and tries > 0:
-            if self.cdc.device.write(self.cdc.EP_OUT, startcmd[i]):
+            if EP_OUT(startcmd[i]):
                 time.sleep(0.005)
                 try:
-                    v = self.cdc.device.read(self.cdc.EP_IN, 64, None)
+                    v = EP_IN(maxinsize)
                     if len(v) == 1:
                         if v[0] == ~(startcmd[i][0]) & 0xFF:
                             i += 1

@@ -159,10 +159,8 @@ class DAXFlash(metaclass=LogBase):
         self.prog = 0
         self.progpos = 0
         self.mtk = mtk
-        self.hwcode = self.mtk.config.hwcode
         self.loglevel = loglevel
         self.patch = False
-        self.generatekeys = generatekeys
         self.sram = None
         self.dram = None
         self.emmc = None
@@ -183,17 +181,19 @@ class DAXFlash(metaclass=LogBase):
         self.daconfig = daconfig
         self.partition = Partition(self.mtk, self.readflash, self.read_pmt, loglevel)
 
-    def ack(self):
+    def ack(self, rstatus=True):
         try:
             tmp = pack("<III", self.Cmd.MAGIC, self.DataType.DT_PROTOCOL_FLOW, 4)
             self.usbwrite(tmp)
             data = pack("<I", 0)
             self.usbwrite(data)
-            time.sleep(0.0002)
-            status=self.status()
-            return status
+            if rstatus:
+                status=self.status()
+                return status
+            return True
         except:
             return -1
+
 
     def send(self, data, datatype=DataType.DT_PROTOCOL_FLOW):
         if isinstance(data, int):
@@ -223,13 +223,23 @@ class DAXFlash(metaclass=LogBase):
         tmp = b""
         status = None
         try:
-            tmp = self.usbread(4 + 4 + 4)
+            bytestoread=4+4+4
+            while bytestoread>0:
+                tmp+=self.usbread(bytestoread)
+                bytestoread-=len(tmp)
+
             magic, datatype, length = unpack("<III", tmp)
-            tmp2 = self.usbread(length)
-            status = unpack("<"+str(length//4)+"I", tmp2)[0]
+
+            bytestoread=length
+            tmp=b""
+            while bytestoread>0:
+                tmp+=self.usbread(length)
+                bytestoread -= len(tmp)
+
+            status = unpack("<"+str(length//4)+"I", tmp)[0]
         except:
             self.error("Failed to get status : "+hexlify(tmp).decode('utf-8'))
-            status=-1
+            exit(1)
         return status
 
     def read_pmt(self):
@@ -946,6 +956,7 @@ class DAXFlash(metaclass=LogBase):
                     # sig_len = self.daconfig.da[stage]["m_sig_len"]
                     bootldr.seek(offset)
                     da2 = bootldr.read(size)
+                    loaded = False
                     loaded = self.boot_to(address, da2)
 
                     if loaded:

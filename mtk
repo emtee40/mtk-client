@@ -618,6 +618,22 @@ class Main(metaclass=LogBase):
             else:
                 mtk.port.close()
                 return False
+        elif self.args["payload"]:
+            if mtk.preloader.init(args=self.args, readsocid=readsocid):
+                mtk = mtk.crasher(args=self.args, readsocid=readsocid, enforcecrash=enforcecrash)
+                plt = PLTools(mtk, self.__logger.level)
+                payloadfile = self.args["--payload"]
+                if payloadfile is None:
+                    if mtk.config.chipconfig.loader is None:
+                        payloadfile = os.path.join(mtk.pathconfig.get_payloads_path(), "generic_patcher_payload.bin")
+                    else:
+                        payloadfile = os.path.join(mtk.pathconfig.get_payloads_path(), mtk.config.chipconfig.loader)
+                ptype = ""
+                if self.args["--ptype"] is not None:
+                    ptype = self.args["--ptype"]
+                plt.runpayload(filename=payloadfile, ptype=ptype)
+            mtk.port.close()
+            self.close()
         elif self.args["gettargetconfig"]:
             if mtk.preloader.init(args=self.args, readsocid=readsocid):
                 self.info("Getting target info...")
@@ -914,23 +930,6 @@ class Main(metaclass=LogBase):
                 self.close()
             elif self.args["reset"]:
                 mtk.daloader.close()
-                self.close()
-            else:  #self.args["payload"]:
-                if mtk.preloader.init(args=self.args, readsocid=readsocid):
-                    mtk = mtk.crasher(args=self.args, readsocid=readsocid, enforcecrash=enforcecrash)
-                    plt = PLTools(mtk, self.__logger.level)
-                    payloadfile = self.args["--payload"]
-                    if payloadfile is None:
-                        if mtk.config.chipconfig.loader is None:
-                            payloadfile = os.path.join(mtk.pathconfig.get_payloads_path(),
-                                                       "generic_patcher_payload.bin")
-                        else:
-                            payloadfile = os.path.join(mtk.pathconfig.get_payloads_path(), mtk.config.chipconfig.loader)
-                    ptype = ""
-                    if self.args["--ptype"] is not None:
-                        ptype = self.args["--ptype"]
-                    plt.runpayload(filename=payloadfile, ptype=ptype)
-                mtk.port.close()
                 self.close()
 
 

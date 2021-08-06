@@ -381,14 +381,16 @@ class usb_class(metaclass=LogBase):
         self.verify_data(bytearray(command), "TX:")
         return True
 
-    def read(self, length=0x80, timeout=None):
+    def read(self, maxlength=None, timeout=None):
+        if maxlength==None:
+            maxlength=self.EP_IN.wMaxPacketSize
         if self.loglevel == logging.DEBUG:
-            self.debug(inspect.currentframe().f_back.f_code.co_name + ":" + hex(length))
+            self.debug(inspect.currentframe().f_back.f_code.co_name + ":" + hex(maxlength))
         rxBuffer = array.array('B')
         extend = rxBuffer.extend
         if timeout is None:
             timeout = self.timeout
-        buffer = self.buffer[:length]
+        buffer = self.buffer[:maxlength]
         ep_read = self.EP_IN.read
         while len(rxBuffer) == 0:
             try:
@@ -482,7 +484,7 @@ class usb_class(metaclass=LogBase):
             if len(res) == resplen:
                 break
             if len(res) == 0:
-                time.sleep(0.005)
+                time.sleep(0.001)
                 if timeout == 4:
                     return res
                 timeout += 1
