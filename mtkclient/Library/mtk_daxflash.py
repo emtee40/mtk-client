@@ -770,7 +770,7 @@ class DAXFlash(metaclass=LogBase):
                             magic, datatype, slength = unpack("<III", self.usbread(4 + 4 + 4))
                             tmp = self.usbread(slength)
                             self.ack()
-                            time.sleep(0.0002)
+                            time.sleep(0.001)
                             if self.status() != 0:
                                 break
                             wf.write(tmp)
