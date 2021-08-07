@@ -685,7 +685,7 @@ class Main(metaclass=LogBase):
                     print(f"Dumped GPT from to {sfilename}")
                     sfilename = os.path.join(directory, f"gpt_backup.bin")
                     with open(sfilename, "wb") as wf:
-                        wf.write(data[mtk.daconfig.pagesize:])
+                        wf.write(data[mtk.daloader.daconfig.pagesize:])
                     print(f"Dumped Backup GPT to {sfilename}")
                 mtk.daloader.close()
                 self.close()
