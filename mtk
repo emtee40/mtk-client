@@ -770,7 +770,7 @@ class Main(metaclass=LogBase):
                         self.info(f"Dumping partition {str(partition.name)} with sector count {str(partition.sectors)} " +
                                   f"as {filename}.")
                         mtk.daloader.readflash(addr=partition.sector * mtk.daloader.daconfig.pagesize,
-                                               length=partition.sectors * mtk.daconfig.pagesize, filename=filename,
+                                               length=partition.sectors * mtk.daloader.daconfig.pagesize, filename=filename,
                                                parttype=parttype)
                 mtk.daloader.close()
                 self.close()
