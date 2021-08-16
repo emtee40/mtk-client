@@ -141,20 +141,30 @@ hwconfig = {
         damode=damodes.XFLASH,
         dacode=0x0992,
         name="MT0992"),
-    0x2601: chipconfig(  # var1
-        # uart
-        # brom_payload_addr
+    0x2601: chipconfig(
+        var1=0xA, # Smartwatch, confirmed
         watchdog=0x10007000,
-        da_payload_addr=0x2007000,
-        # gcpu_base
-        # sej_base
+        uart=0x11005000,
+        brom_payload_addr=0x100A00,
+        da_payload_addr=0x2008000,
+        # pl_payload_addr=0x801E0000,
+        # no gcpu_base =0x10210000,
+        # sej_base =0x1000A000,  # hacc
         # no dxcc
-        # cqdma_base
-        # ap_dma_mem
-        # blacklist
+        # no cqdma_base
+        # no ap_dma_mem
+        blacklist=[(0x11141F0C,0x0),(0x11144BC4, 0x0)],
+        blacklist_count=0x00000008,
+        send_ptr=(0x11141f4c,0xba68),
+        ctrl_buffer=0x11142BE0,
+        cmd_handler=0x0040C5AF,
+        brom_register_access=(0x40bd48,0xbefc),
+        meid_addr=0x11142C34,
+        has_socid=False,
         dacode=0x2601,
         damode=damodes.DEFAULT,  #
-        name="MT2601"),
+        name="MT2601",
+        loader="mt2601_payload.bin"),
     0x3967: chipconfig(  # var1
         # watchdog
         # uart
@@ -195,7 +205,7 @@ hwconfig = {
         # no cqdma_base
         # no ap_dma_mem
         blacklist=[(0xE003FC83, 0)],
-        send_ptr=(0x700044b0, 0xfff058ec),
+        send_ptr=(0x700044b0, 0x700058EC),
         ctrl_buffer=0x700041A8,
         cmd_handler=0x700061F6,
         damode=damodes.DEFAULT,
