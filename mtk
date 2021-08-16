@@ -934,5 +934,5 @@ class Main(metaclass=LogBase):
 
 
 if __name__ == '__main__':
-    print("MTK Flash/Exploit Client V1.41 (c) B.Kerler 2020-2021")
+    print("MTK Flash/Exploit Client V1.42 (c) B.Kerler 2020-2021")
     mtk = Main().run()
