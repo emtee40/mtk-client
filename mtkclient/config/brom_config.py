@@ -194,10 +194,10 @@ hwconfig = {
         # no dxcc
         # no cqdma_base
         # no ap_dma_mem
-        blacklist=[(0xF7FF9A00, 0)],
+        blacklist=[(0xE003FC83, 0)],
         send_ptr=(0x700044b0, 0xfff058ec),
-        ctrl_buffer=0xFFF020DB,
-        cmd_handler=0xFFF07001,
+        ctrl_buffer=0x700041A8,
+        cmd_handler=0x700061F6,
         damode=damodes.DEFAULT,
         dacode=0x6261,
         name="MT6261",
