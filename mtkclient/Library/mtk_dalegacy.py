@@ -521,27 +521,26 @@ class DALegacy(metaclass=LogBase):
             self.prog = 0
             self.progtime = time.time()
             self.progpos = pos
-        try:
-            prog = round(float(pos) / float(total) * float(100), 1)
-            if pos != total:
-                if prog > self.prog:
-                    if display:
-                        tdiff = t0 - self.progtime
-                        datasize = (pos - self.progpos) / 1024 / 1024
-                        throughput = datasize / tdiff
-                        print_progress(prog, 100, prefix='Progress:',
-                                       suffix=prefix + ' (Sector %d of %d) %0.2f MB/s' %
-                                              (pos // self.daconfig.pagesize,
-                                               total // self.daconfig.pagesize,
-                                               throughput), bar_length=50)
-                        self.prog = prog
-                        self.progpos = pos
-                        self.progtime = t0
-        except:
-            pass
-        else:
+        prog = round(float(pos) / float(total) * float(100), 1)
+        if prog > self.prog:
             if display:
-                print_progress(100, 100, prefix='Progress:', suffix='Complete', bar_length=50)
+                tdiff = t0 - self.progtime
+                datasize = (pos - self.progpos) // 1024 // 1024
+                if datasize!=0:
+                    try:
+                        throughput = datasize // tdiff
+                    except:
+                        throughput = 0
+                else:
+                    throughput = 0
+                print_progress(prog, 100, prefix='Progress:',
+                               suffix=prefix + ' (Sector %d of %d) %0.2f MB/s' %
+                                      (pos // self.daconfig.pagesize,
+                                       total // self.daconfig.pagesize,
+                                       throughput), bar_length=50)
+                self.prog = prog
+                self.progpos = pos
+                self.progtime = t0
 
     def read_pmt(self):  # A5
         class GptEntries:
@@ -888,8 +887,9 @@ class DALegacy(metaclass=LogBase):
                             self.set_usb_cmd()
                             self.mtk.port.close()
                             time.sleep(2)
-                            if self.mtk.port.cdc.connect():
-                                self.info("Connected to preloader")
+                            while not self.mtk.port.cdc.connect():
+                                time.sleep(0.5)
+                            self.info("Connected to preloader")
                         self.check_usb_cmd()
                         return True
                 return False

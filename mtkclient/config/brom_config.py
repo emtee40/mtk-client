@@ -147,7 +147,7 @@ hwconfig = {
         uart=0x11005000,
         brom_payload_addr=0x100A00,
         da_payload_addr=0x2008000,
-        # pl_payload_addr=0x801E0000,
+        pl_payload_addr=0x2008000,
         # no gcpu_base =0x10210000,
         # sej_base =0x1000A000,  # hacc
         # no dxcc
