@@ -897,7 +897,7 @@ class Main(metaclass=LogBase):
                 if parttype == "user" or parttype is None:
                     i = 0
                     for partfilename in filenames:
-                        partition = partfilename[partfilename.rfind("/") + 1:]
+                        partition = os.path.basename(partfilename)
                         if ".bin" in partition[-4:] or ".img" in partition[-4:] or ".mbn" in partition[-4:]:
                             partition = partition[:-4]
                         i += 1
@@ -923,7 +923,7 @@ class Main(metaclass=LogBase):
                     pos = 0
                     for partfilename in filenames:
                         size = os.stat(partfilename).st_size
-                        partition = partfilename[partfilename.rfind("/") + 1:]
+                        partition = partition = os.path.basename(partfilename)
                         if ".bin" in partition[-4:] or ".img" in partition[-4:] or ".mbn" in partition[-4:]:
                             partition = partition[:-4]
                         mtk.daloader.writeflash(addr=pos, length=size, filename=partfilename, partitionname=partition,
