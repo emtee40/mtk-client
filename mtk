@@ -901,6 +901,7 @@ class Main(metaclass=LogBase):
                         partition = os.path.splitext(partition)[0]
                         i += 1
                         if partition == "gpt":
+                            self.info(f"Writing partition {partition}")
                             mtk.daloader.writeflash(addr=0,
                                                     length=os.stat(partfilename).st_size,
                                                     filename=partfilename,
@@ -924,6 +925,7 @@ class Main(metaclass=LogBase):
                         size = os.stat(partfilename).st_size
                         partition = os.path.basename(partfilename)
                         partition = os.path.splitext(partition)[0]
+                        self.info(f"Writing filename {partfilename}")
                         mtk.daloader.writeflash(addr=pos, length=size, filename=partfilename, partitionname=partition,
                                                 parttype=parttype)
                         print(f"Wrote {partfilename} to sector {str(pos // 0x200)} with " +
