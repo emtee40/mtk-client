@@ -898,8 +898,7 @@ class Main(metaclass=LogBase):
                     i = 0
                     for partfilename in filenames:
                         partition = os.path.basename(partfilename)
-                        if ".bin" in partition[-4:] or ".img" in partition[-4:] or ".mbn" in partition[-4:]:
-                            partition = partition[:-4]
+                        partition = os.path.splitext(partition)[0]
                         i += 1
                         if partition == "gpt":
                             mtk.daloader.writeflash(addr=0,
@@ -923,9 +922,8 @@ class Main(metaclass=LogBase):
                     pos = 0
                     for partfilename in filenames:
                         size = os.stat(partfilename).st_size
-                        partition = partition = os.path.basename(partfilename)
-                        if ".bin" in partition[-4:] or ".img" in partition[-4:] or ".mbn" in partition[-4:]:
-                            partition = partition[:-4]
+                        partition = os.path.basename(partfilename)
+                        partition = os.path.splitext(partition)[0]
                         mtk.daloader.writeflash(addr=pos, length=size, filename=partfilename, partitionname=partition,
                                                 parttype=parttype)
                         print(f"Wrote {partfilename} to sector {str(pos // 0x200)} with " +
