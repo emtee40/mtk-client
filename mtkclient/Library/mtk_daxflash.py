@@ -8,7 +8,7 @@ import hashlib
 from binascii import hexlify
 from struct import pack, unpack
 from mtkclient.Library.utils import LogBase, print_progress, logsetup
-from mtkclient.Library.error import ErrorHandler
+from mtkclient.Library.error import ErrorHandler, ErrorCodes_XFlash
 from mtkclient.Library.daconfig import EMMC_PartitionType, UFS_PartitionType, DaStorage
 from mtkclient.Library.partition import Partition
 
@@ -160,7 +160,6 @@ class DAXFlash(metaclass=LogBase):
         self.progpos = 0
         self.mtk = mtk
         self.loglevel = loglevel
-        self.patch = False
         self.sram = None
         self.dram = None
         self.emmc = None
@@ -264,7 +263,11 @@ class DAXFlash(metaclass=LogBase):
         if status == 0:
             return True
         else:
-            self.error(f"Error on sending parameter, status {hex(status)}.")
+            if status in ErrorCodes_XFlash:
+                errorstring=ErrorCodes_XFlash[status]
+                self.error(f"Error on sending parameter: {errorstring}")
+            else:
+                self.error(f"Error on sending parameter, status {hex(status)}.")
         return False
 
     def show_progress(self, prefix, pos, total, display=True):
@@ -346,7 +349,11 @@ class DAXFlash(metaclass=LogBase):
             if status == 0x0:
                 return True
             else:
-                self.error(f"Error on sending data: {hex(status)}")
+                if status in ErrorCodes_XFlash:
+                    errorstring = ErrorCodes_XFlash[status]
+                    self.error(f"Error on sending data: {errorstring}")
+                else:
+                    self.error(f"Error on sending data, status {hex(status)}.")
                 return False
 
     def compute_hash_pos(self, da2, bootldr):
@@ -410,7 +417,7 @@ class DAXFlash(metaclass=LogBase):
             self.write(addr + i, unpack("<I", value))
         return True
 
-    def boot_to(self, at_address, da):  # =0x40000000
+    def boot_to(self, at_address, da, display=True):  # =0x40000000
         if self.send(self.Cmd.BOOT_TO):
             if self.status() == 0:
                 param = pack("<QQ", at_address, len(da))
@@ -422,6 +429,14 @@ class DAXFlash(metaclass=LogBase):
                             status = self.status()
                             if status == 0x434E5953:
                                 return True
+                            else:
+                                if status in ErrorCodes_XFlash:
+                                    errorstring = ErrorCodes_XFlash[status]
+                                    if display:
+                                        self.error(f"Error on boot to: {errorstring}")
+                                else:
+                                    if display:
+                                        self.error(f"Error on boot to, status {hex(status)}.")
         return False
 
     def get_connection_agent(self):
@@ -430,6 +445,13 @@ class DAXFlash(metaclass=LogBase):
         status = self.status()
         if status == 0x0:
             return res
+        else:
+            if status in ErrorCodes_XFlash:
+                errorstring=ErrorCodes_XFlash[status]
+                self.error(f"Error on getting connection agent: {errorstring}")
+            else:
+                self.error(f"Error on getting connection agent, status {hex(status)}.")
+        return None
 
     """
     def get_dram_type(self):
@@ -528,6 +550,12 @@ class DAXFlash(metaclass=LogBase):
                     status = self.ack()
                 if status == 0x40040005:  # STATUS_COMPLETE
                     return True
+                else:
+                    if status in ErrorCodes_XFlash:
+                        errorstring = ErrorCodes_XFlash[status]
+                        self.error(f"Error on sending formatting: {errorstring}")
+                    else:
+                        self.error(f"Error on sending formatting, status {hex(status)}.")
         return False
 
     def get_chip_id(self):
@@ -728,6 +756,12 @@ class DAXFlash(metaclass=LogBase):
             plen = Packetlen()
             plen.write_packet_length, plen.read_packet_length = unpack("<II", resp)
             return plen
+        else:
+            if status in ErrorCodes_XFlash:
+                errorstring=ErrorCodes_XFlash[status]
+                self.error(f"Error on getting packet length: {errorstring}")
+            else:
+                self.error(f"Error on getting packet length, status {hex(status)}.")
         return None
 
     def cmd_write_data(self, addr, size, storage=DaStorage.MTK_DA_STORAGE_EMMC,
@@ -758,6 +792,12 @@ class DAXFlash(metaclass=LogBase):
                 status = self.status()
                 if status == 0x0:
                     return True
+                else:
+                    if status in ErrorCodes_XFlash:
+                        errorstring = ErrorCodes_XFlash[status]
+                        self.error(f"Error on reading data: {errorstring}")
+                    else:
+                        self.error(f"Error on reading data, status {hex(status)}.")
         return False
 
     def readflash(self, addr, length, filename, parttype=None, display=True):
@@ -958,7 +998,6 @@ class DAXFlash(metaclass=LogBase):
                     # sig_len = self.daconfig.da[stage]["m_sig_len"]
                     bootldr.seek(offset)
                     da2 = bootldr.read(size)
-                    loaded = False
                     loaded = self.boot_to(address, da2)
 
                     if loaded:
