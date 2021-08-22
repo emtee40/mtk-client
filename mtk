@@ -296,6 +296,7 @@ class Main(metaclass=LogBase):
         else:
             self.__logger.setLevel(logging.INFO)
         interface = -1
+        self.debug(" ".join(sys.argv))
         # pagesize = getint(self.args["--sectorsize"])
         mtk = Mtk(loader=self.args["--loader"], loglevel=self.__logger.level, vid=vid, pid=pid, interface=interface,
                   args=self.args)
