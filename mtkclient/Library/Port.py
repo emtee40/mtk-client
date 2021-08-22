@@ -76,6 +76,13 @@ class Port(metaclass=LogBase):
                 if self.cdc.connected and self.run_handshake():
                     return True
                 else:
+                    if loop == 5:
+                        sys.stdout.write('\n')
+                        self.info("Hint:\n\nPower off the phone before connecting.\n" + \
+                                  "For brom mode, press and hold vol up, vol dwn, or all hw buttons and " + \
+                                  "connect usb.\n" +
+                                  "For preloader mode, don't press any hw button and connect usb.\n")
+                        sys.stdout.write('\n')
                     if loop >= 10:
                         sys.stdout.write('.')
                     if loop >= 20:
