@@ -861,13 +861,17 @@ class Main(metaclass=LogBase):
                         res = mtk.daloader.detect_partition(self.args, partition, parttype)
                         if res[0]:
                             rpartition = res[1]
-                            mtk.daloader.writeflash(addr=rpartition.sector * mtk.daloader.daconfig.pagesize,
+                            if mtk.daloader.writeflash(addr=rpartition.sector * mtk.daloader.daconfig.pagesize,
                                                     length=rpartition.sectors * mtk.daloader.daconfig.pagesize,
                                                     filename=partfilename,
-                                                    partitionname=partition, parttype=parttype)
-                            print(
-                                f"Wrote {partfilename} to sector {str(rpartition.sector)} with " +
-                                f"sector count {str(rpartition.sectors)}.")
+                                                    partitionname=partition, parttype=parttype):
+                                print(
+                                    f"Wrote {partfilename} to sector {str(rpartition.sector)} with " +
+                                    f"sector count {str(rpartition.sectors)}.")
+                            else:
+                                print(
+                                    f"Failed to write {partfilename} to sector {str(rpartition.sector)} with " +
+                                    f"sector count {str(rpartition.sectors)}.")
                         else:
                             self.error(f"Error: Couldn't detect partition: {partition}\nAvailable partitions:")
                             for rpartition in res[1]:
@@ -876,9 +880,12 @@ class Main(metaclass=LogBase):
                     pos = 0
                     for partfilename in filenames:
                         size = os.stat(partfilename).st_size
-                        mtk.daloader.writeflash(addr=pos, length=size, filename=partfilename, partitionname=partitionname,
-                                                parttype=parttype)
-                        print(f"Wrote {partfilename} to sector {str(pos // 0x200)} with " +
+                        if mtk.daloader.writeflash(addr=pos, length=size, filename=partfilename, partitionname=partitionname,
+                                                parttype=parttype):
+                            print(f"Wrote {partfilename} to sector {str(pos // 0x200)} with " +
+                                  f"sector count {str(size)}.")
+                        else:
+                            print(f"Failed to write {partfilename} to sector {str(pos // 0x200)} with " +
                               f"sector count {str(size)}.")
                         psize = size // 0x200 * 0x200
                         if size % 0x200 != 0:
@@ -902,21 +909,28 @@ class Main(metaclass=LogBase):
                         i += 1
                         if partition == "gpt":
                             self.info(f"Writing partition {partition}")
-                            mtk.daloader.writeflash(addr=0,
+                            if mtk.daloader.writeflash(addr=0,
                                                     length=os.stat(partfilename).st_size,
                                                     filename=partfilename,
-                                                    partitionname=partition, parttype=parttype)
+                                                    partitionname=partition, parttype=parttype):
+                                print(f"Wrote {partition} to sector {str(0)}")
+                            else:
+                                print(f"Failed to write {partition} to sector {str(0)}")
                             continue
                         res = mtk.daloader.detect_partition(self.args, partition, parttype)
                         if res[0]:
                             rpartition = res[1]
-                            mtk.daloader.writeflash(addr=rpartition.sector * mtk.daloader.daconfig.pagesize,
+                            if mtk.daloader.writeflash(addr=rpartition.sector * mtk.daloader.daconfig.pagesize,
                                                     length=rpartition.sectors * mtk.daloader.daconfig.pagesize,
                                                     filename=partfilename,
-                                                    partitionname=partition, parttype=parttype)
-                            print(
-                                f"Wrote {partfilename} to sector {str(rpartition.sector)} with " +
-                                f"sector count {str(rpartition.sectors)}.")
+                                                    partitionname=partition, parttype=parttype):
+                                print(
+                                    f"Wrote {partfilename} to sector {str(rpartition.sector)} with " +
+                                    f"sector count {str(rpartition.sectors)}.")
+                            else:
+                                print(
+                                    f"Failed to write {partfilename} to sector {str(rpartition.sector)} with " +
+                                    f"sector count {str(rpartition.sectors)}.")
                         else:
                             self.error(f"Error: Couldn't detect partition: {partition}\n, skipping")
                 else:
@@ -926,10 +940,13 @@ class Main(metaclass=LogBase):
                         partition = os.path.basename(partfilename)
                         partition = os.path.splitext(partition)[0]
                         self.info(f"Writing filename {partfilename}")
-                        mtk.daloader.writeflash(addr=pos, length=size, filename=partfilename, partitionname=partition,
-                                                parttype=parttype)
-                        print(f"Wrote {partfilename} to sector {str(pos // 0x200)} with " +
-                              f"sector count {str(size)}.")
+                        if mtk.daloader.writeflash(addr=pos, length=size, filename=partfilename, partitionname=partition,
+                                                parttype=parttype):
+                            print(f"Wrote {partfilename} to sector {str(pos // 0x200)} with " +
+                                  f"sector count {str(size)}.")
+                        else:
+                            print(f"Failed to write {partfilename} to sector {str(pos // 0x200)} with " +
+                                  f"sector count {str(size)}.")
                         psize = size // 0x200 * 0x200
                         if size % 0x200 != 0:
                             psize += 0x200
@@ -947,12 +964,16 @@ class Main(metaclass=LogBase):
                         res = mtk.daloader.detect_partition(self.args, partition, parttype)
                         if res[0]:
                             rpartition = res[1]
-                            mtk.daloader.formatflash(addr=rpartition.sector * mtk.daloader.daconfig.pagesize,
+                            if mtk.daloader.formatflash(addr=rpartition.sector * mtk.daloader.daconfig.pagesize,
                                                      length=rpartition.sectors * mtk.daloader.daconfig.pagesize,
-                                                     partitionname=partition, parttype=parttype)
-                            print(
-                                f"Formatted sector {str(rpartition.sector)} with " +
-                                f"sector count {str(rpartition.sectors)}.")
+                                                     partitionname=partition, parttype=parttype):
+                                print(
+                                    f"Formatted sector {str(rpartition.sector)} with " +
+                                    f"sector count {str(rpartition.sectors)}.")
+                            else:
+                                                                print(
+                                    f"Failed to format sector {str(rpartition.sector)} with " +
+                                    f"sector count {str(rpartition.sectors)}.")
                         else:
                             self.error(f"Error: Couldn't detect partition: {partition}\nAvailable partitions:")
                             for rpartition in res[1]:
@@ -972,12 +993,15 @@ class Main(metaclass=LogBase):
                 pos = 0
                 for partfilename in filenames:
                     size = os.stat(partfilename).st_size // 0x200 * 0x200
-                    mtk.daloader.writeflash(addr=pos,
+                    if mtk.daloader.writeflash(addr=pos,
                                             length=size,
                                             filename=partfilename,
-                                            partitionname=None, parttype=parttype)
-                    print(f"Wrote {partfilename} to sector {str(pos // 0x200)} with " +
-                          f"sector count {str(size // 0x200)}.")
+                                            partitionname=None, parttype=parttype):
+                        print(f"Wrote {partfilename} to sector {str(pos // 0x200)} with " +
+                            f"sector count {str(size // 0x200)}.")
+                    else:
+                        print(f"Failed to write {partfilename} to sector {str(pos // 0x200)} with " +
+                            f"sector count {str(size // 0x200)}.")
                 mtk.daloader.close()
                 self.close()
             elif self.args["reset"]:
