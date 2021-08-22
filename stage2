@@ -57,6 +57,7 @@ class Stage2(metaclass=LogBase):
         self.setup.write32 = self.write32
         self.setup.writemem = self.memwrite
         self.setup.meid_addr = self.config.chipconfig.meid_addr
+        self.setup.socid_addr = self.config.chipconfig.socid_addr
         self.hwcrypto = hwcrypto(self.setup, self.loglevel)
         return True
 
@@ -350,38 +351,40 @@ class Stage2(metaclass=LogBase):
 
     def keys(self, data=b"", otp=None, mode="dxcc"):
         # self.hwcrypto.disable_range_blacklist("cqdma",self.cmd_C8)
+        keyinfo=""
         if mode == "dxcc":
             rpmbkey = self.hwcrypto.aes_hwcrypt(btype="dxcc",mode="rpmb")
             fdekey = self.hwcrypto.aes_hwcrypt(btype="dxcc",mode="fde")
             tfdekey = self.hwcrypto.aes_hwcrypt(btype="dxcc",mode="itrustee-fde")
             platkey, provkey = self.hwcrypto.aes_hwcrypt(btype="dxcc",mode="prov")
-            print("\nKeys :\n-----------------------------------------")
-            print("RPMB: " + hexlify(rpmbkey).decode('utf-8'))
-            print("FDE : " + hexlify(fdekey).decode('utf-8'))
-            print("iTrustee-FDE: " + hexlify(tfdekey).decode('utf-8'))
-            print("Platform: " + hexlify(platkey).decode('utf-8'))
-            print("Provisioning: " + hexlify(provkey).decode('utf-8'))
-            print()
+            keyinfo+="\nKeys :\n-----------------------------------------\n"
+            keyinfo+="RPMB: " + hexlify(rpmbkey).decode('utf-8')+"\n"
+            keyinfo+="FDE : " + hexlify(fdekey).decode('utf-8')+"\n"
+            keyinfo+="iTrustee-FDE: " + hexlify(tfdekey).decode('utf-8')+"\n"
+            keyinfo+="Platform: " + hexlify(platkey).decode('utf-8')+"\n"
+            keyinfo+="Provisioning: " + hexlify(provkey).decode('utf-8')+"\n"
+            keyinfo+="\n"
         elif mode == "sej":
             rpmbkey = self.hwcrypto.aes_hwcrypt(mode="rpmb", data=data, otp=otp, btype="sej")
-            print("\nKeys :\n-----------------------------------------")
-            print("RPMB: " + hexlify(rpmbkey).decode('utf-8'))
-            print()
+            keyinfo+="\nKeys :\n-----------------------------------------\n"
+            keyinfo+="RPMB: " + hexlify(rpmbkey).decode('utf-8')
+            keyinfo+="\n"
         elif mode == "sej_aes_decrypt":
             dec_data = self.hwcrypto.aes_hwcrypt(mode="cbc", data=data, btype="sej", encrypt=False)
-            print()
-            print("Data: " + hexlify(dec_data).decode('utf-8'))
-            print()
+            keyinfo+="\n"
+            keyinfo+="Data: " + hexlify(dec_data).decode('utf-8')
+            keyinfo+="\n"
         elif mode == "sej_aes_encrypt":
             enc_data = self.hwcrypto.aes_hwcrypt(mode="cbc", data=data, btype="sej", encrypt=False)
-            print()
-            print("Data: " + hexlify(enc_data).decode('utf-8'))
-            print()
+            keyinfo+="\n"
+            keyinfo+="Data: " + hexlify(enc_data).decode('utf-8')
+            keyinfo+="\n"
         elif mode == "dxcc_sha256":
             sha256val = self.hwcrypto.aes_hwcrypt(mode="sha256", data=data, btype="dxcc")
-            print()
-            print("SHA256: " + hexlify(sha256val).decode('utf-8'))
-            print()
+            keyinfo+="\n"
+            keyinfo+="SHA256: " + hexlify(sha256val).decode('utf-8')
+            keyinfo+="\n"
+        return keyinfo
 
     def reboot(self):
         print("Rebooting..")
@@ -412,7 +415,8 @@ cmds = {
     "reboot": 'Reboot phone',
     "memread": "Read memory [Example: memread --start 0 --length 0x10]",
     "memwrite": "Write memory [Example: memwrite --start 0x200000 --data 11223344",
-    "keys": "Extract rpmb and fde key"
+    "keys": "Extract rpmb and fde key",
+    "seccfg": "Generate unlock config"
 }
 
 info = "MTK Stage2 client (c) B.Kerler 2021"
@@ -540,11 +544,18 @@ def main():
             else:
                 print(f"Failed to write data to {hex(start)}.")
         elif cmd == "keys":
+            keyinfo=""
+            if st2.hwcrypto.meid_addr:
+                meid = st2.memread(st2.hwcrypto.meid_addr, 16)
+                keyinfo+=f"MEID: {hexlify(meid).decode('utf-8')}\n"
+            if st2.hwcrypto.socid_addr:
+                socid = st2.memread(st2.hwcrypto.socid_addr, 32)
+                keyinfo += f"SOCID: {hexlify(socid).decode('utf-8')}\n"
             if args.mode is None:
                 print("Option --mode is needed")
                 exit(0)
             if args.mode == "sej":
-                data=st2.memread(st2.hwcrypto.meid_addr,16)
+                data = meid
                 # if not args.otp:
                 #    print("Option --otp is needed")
                 #    exit(0)
@@ -557,9 +568,46 @@ def main():
                 data = b""
             # otp_hisense=bytes.fromhex("486973656E736500000000000000000000000000000000000000000000000000")
             # st2.jump(0x223449)
-            st2.keys(data=data, mode=args.mode, otp=args.otp)
+            keyinfo+=st2.keys(data=data, mode=args.mode, otp=args.otp)
+            print(keyinfo)
+            with open("keys.txt","w") as wf:
+                wf.write(keyinfo)
+                print("Wrote keys to keys.txt")
         elif cmd == "reboot":
             st2.reboot()
+        elif cmd == "seccfg":
+            with open("seccfg.bin", "wb") as wf:
+                seccfg_ver = 4
+                seccfg_size = 0x3C
+                lock_state = 3
+                """
+                LKS_DEFAULT = 0x01
+                LKS_MP_DEFAULT = 0x02
+                LKS_UNLOCK = 0x03
+                LKS_LOCK = 0x04
+                LKS_VERIFIED = 0x05
+                LKS_CUSTOM = 0x06
+                """
+                critical_lock_state = 1
+                """
+                LKCS_UNLOCK = 0x01
+                LKCS_LOCK = 0x02
+                """
+                sboot_runtime = 0
+                """
+                SBOOT_RUNTIME_OFF = 0
+                SBOOT_RUNTIME_ON  = 1
+                """
+                seccfg_data = pack("<IIIIIII", 0x4D4D4D4D, seccfg_ver, seccfg_size, lock_state,
+                                   critical_lock_state, sboot_runtime, 0x45454545)
+                dec_hash = hashlib.sha256(seccfg_data).digest()
+                enc_hash = st2.keys(data=dec_hash, mode="sej_aes_encrypt")
+                data = seccfg_data + enc_hash
+                data += b"\x00" * (0x200 - len(data))
+                wf.write(data)
+            print("Successfully wrote seccfg.")
+    st2.close()
+
     st2.close()
 
 

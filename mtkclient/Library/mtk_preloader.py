@@ -201,7 +201,7 @@ class Preloader(metaclass=LogBase):
         if self.display:
             if meid != b"":
                 self.info("ME_ID:\t\t\t" + hexlify(meid).decode('utf-8').upper())
-        if readsocid or self.config.chipconfig.has_socid:
+        if readsocid or self.config.chipconfig.socid_addr:
             socid = self.get_socid()
             if len(socid) >= 16:
                 with open(os.path.join("logs", "socid"), "wb") as wf:
