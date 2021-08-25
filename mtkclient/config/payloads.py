@@ -8,7 +8,7 @@ class pathconfig:
         self.scriptpath = os.path.dirname(curscript)
 
     def get_loader_path(self):
-        return os.path.join(self.scriptpath,"..","Loader")
+        return os.path.abspath(os.path.join(self.scriptpath,"..","Loader"))
 
     def get_payloads_path(self):
-        return os.path.join(self.scriptpath,"..","payloads")
+        return os.path.abspath(os.path.join(self.scriptpath,"..","payloads"))

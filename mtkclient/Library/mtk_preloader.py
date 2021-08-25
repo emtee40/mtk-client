@@ -190,13 +190,13 @@ class Preloader(metaclass=LogBase):
             self.setreg_disablewatchdogtimer(self.config.hwcode)  # D4
         if self.display:
             self.info("HW code:\t\t\t" + hex(self.config.hwcode))
-            with open(os.path.join("logs", "hwcode"), "w") as wf:
+            with open(os.path.join("logs", "hwcode.txt"), "w") as wf:
                 wf.write(hex(self.config.hwcode))
         self.config.target_config = self.get_target_config(self.display)
         blver=self.get_blver()
         meid = self.get_meid()
         if len(meid) >= 16:
-            with open(os.path.join("logs", "meid"), "wb") as wf:
+            with open(os.path.join("logs", "meid.txt"), "wb") as wf:
                 wf.write(hexlify(meid))
         if self.display:
             if meid != b"":
@@ -204,7 +204,7 @@ class Preloader(metaclass=LogBase):
         if readsocid or self.config.chipconfig.socid_addr:
             socid = self.get_socid()
             if len(socid) >= 16:
-                with open(os.path.join("logs", "socid"), "wb") as wf:
+                with open(os.path.join("logs", "socid.txt"), "wb") as wf:
                     wf.write(hexlify(socid))
             if self.display:
                 if socid != b"":

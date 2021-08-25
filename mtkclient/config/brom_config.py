@@ -149,7 +149,7 @@ hwconfig = {
         da_payload_addr=0x2008000,
         pl_payload_addr=0x2008000,
         # no gcpu_base =0x10210000,
-        # sej_base =0x1000A000,  # hacc
+        sej_base =0x1000A000,  # hacc
         # no dxcc
         # no cqdma_base
         # no ap_dma_mem
@@ -901,7 +901,6 @@ hwconfig = {
         cqdma_base=0x11B30000,
         ap_dma_mem=0x11000000 + 0x1A0,  # AP_DMA_I2C_2_RX_MEM_ADDR
         # no dxcc
-        # no dxcc
         sej_base=0x1000A000,
         blacklist=[(0x00102870, 0x0),(0x00107070, 0x0)],
         blacklist_count=0x0000000A,
@@ -924,8 +923,8 @@ hwconfig = {
         da_payload_addr=0x201000,  #
         pl_payload_addr=0x40200000,
         # gcpu_base=0x10050000, #
-        # dxcc_base=0x10210000, #
-        # sej_base=0x1000a000,  # hacc
+        dxcc_base=0x10210000,
+        sej_base=0x1000a000,  # hacc
         # cqdma_base=0x10212000, #
         # ap_dma_mem=0x11000a80 + 0x1a0,  # todo check
         blacklist=[(0x00102844, 0x0),(0x00106B54, 0x0)],
@@ -995,7 +994,8 @@ hwconfig = {
         # brom_payload_addr
         # da_payload_addr
         # gcpu_base
-        # sej_base
+        dxcc_base=0x10210000,
+        sej_base=0x1000a000,  # hacc
         # cqdma_base
         # ap_dma_mem
         # blacklist
@@ -1036,8 +1036,8 @@ hwconfig = {
         da_payload_addr=0x201000,
         pl_payload_addr=0x40200000,
         #gcpu_base=0x10050000,
-        #dxcc_base=0x10210000,
-        #sej_base=0x1000a000,  # hacc
+        dxcc_base=0x10210000,
+        sej_base=0x1000a000,  # hacc
         #cqdma_base=0x10212000,
         #ap_dma_mem=0x11000a80 + 0x1a0,  # todo check
         blacklist=[(0x102848, 0x0), (0x00106B60, 0x0)],
@@ -1050,7 +1050,7 @@ hwconfig = {
         socid_addr=0x102BA8,
         damode=damodes.XFLASH,
         dacode=0x6893,
-        name="MT6893/MT6891Z",
+        name="MT6893",
         description="Dimensity 1200",
         loader="mt6893_payload.bin"),
     # Dimensity 1100 - MT6891 Realme Q3 Pro

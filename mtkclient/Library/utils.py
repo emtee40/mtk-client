@@ -11,6 +11,7 @@ import shutil
 import stat
 import colorama
 import copy
+import time
 
 try:
     from capstone import *
@@ -21,8 +22,47 @@ try:
 except ImportError:
     print("Keystone library is missing (optional).")
 
-
 from struct import unpack, pack
+
+
+class progress:
+    def __init__(self, pagesize):
+        self.progtime = 0
+        self.prog = 0
+        self.progpos = 0
+        self.pagesize = pagesize
+
+    def show_progress(self, prefix, pos, total, display=True):
+        t0 = time.time()
+        prog = round(float(pos) / float(total) * float(100), 2)
+        if prog == 0:
+            self.prog = 0
+            self.progtime = time.time()
+            self.progpos = pos
+            print_progress(prog, 100, prefix='Progress:',
+                           suffix=prefix + ' (Sector %d of %d) %0.2f MB/s' %
+                                  (pos // self.pagesize,
+                                   total // self.pagesize,
+                                   0), bar_length=50)
+        if prog > self.prog:
+            if display:
+                tdiff = t0 - self.progtime
+                datasize = (pos - self.progpos) / 1024 / 1024
+                if datasize != 0 and tdiff != 0:
+                    try:
+                        throughput = datasize / tdiff
+                    except:
+                        throughput = 0
+                else:
+                    throughput = 0
+                print_progress(prog, 100, prefix='Progress:',
+                               suffix=prefix + ' (Sector %d of %d) %0.2f MB/s' %
+                                      (pos // self.pagesize,
+                                       total // self.pagesize,
+                                       throughput), bar_length=50)
+                self.prog = prog
+                self.progpos = pos
+                self.progtime = t0
 
 
 class structhelper:
@@ -53,7 +93,7 @@ class structhelper:
         return dat
 
     def shorts(self, shorts):
-        dat = unpack("<" + str(shorts) + "H", self.data[self.pos:self.pos + 2*shorts])
+        dat = unpack("<" + str(shorts) + "H", self.data[self.pos:self.pos + 2 * shorts])
         self.pos += 2 * shorts
         return dat
 
@@ -73,6 +113,7 @@ class structhelper:
 
     def seek(self, pos):
         self.pos = pos
+
 
 def do_tcp_server(client, arguments, handler):
     def tcpprint(arg):
@@ -241,8 +282,10 @@ class ColorFormatter(logging.Formatter):
         # now we can let standart formatting take care of the rest
         return super(ColorFormatter, self).format(new_record, *args, **kwargs)
 
+
 def revdword(value):
     return unpack(">I", pack("<I", value))[0]
+
 
 def logsetup(self, logger, loglevel):
     self.info = logger.info
@@ -258,6 +301,7 @@ def logsetup(self, logger, loglevel):
         logger.setLevel(logging.INFO)
     self.loglevel = loglevel
     return logger
+
 
 class LogBase(type):
     debuglevel = logging.root.level

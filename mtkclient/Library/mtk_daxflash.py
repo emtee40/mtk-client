@@ -7,10 +7,11 @@ import os
 import hashlib
 from binascii import hexlify
 from struct import pack, unpack
-from mtkclient.Library.utils import LogBase, print_progress, logsetup
+from mtkclient.Library.utils import LogBase, progress, logsetup
 from mtkclient.Library.error import ErrorHandler, ErrorCodes_XFlash
 from mtkclient.Library.daconfig import EMMC_PartitionType, UFS_PartitionType, DaStorage
 from mtkclient.Library.partition import Partition
+from mtkclient.config.payloads import pathconfig
 
 def find_binary(data, strf, pos=0):
     t = strf.split(b".")
@@ -41,6 +42,7 @@ def find_binary(data, strf, pos=0):
             offsets.append(pre)
             pre += 1
     return -1
+
 
 class NandExtension:
     # uni=0, multi=1
@@ -155,9 +157,6 @@ class DAXFlash(metaclass=LogBase):
         self.debug = self.__logger.debug
         self.error = self.__logger.error
         self.warning = self.__logger.warning
-        self.progtime = 0
-        self.prog = 0
-        self.progpos = 0
         self.mtk = mtk
         self.loglevel = loglevel
         self.sram = None
@@ -179,6 +178,8 @@ class DAXFlash(metaclass=LogBase):
         self.rword = self.mtk.port.rword
         self.daconfig = daconfig
         self.partition = Partition(self.mtk, self.readflash, self.read_pmt, loglevel)
+        self.progress = progress(self.daconfig.pagesize)
+        self.pathconfig = pathconfig()
 
     def ack(self, rstatus=True):
         try:
@@ -186,13 +187,13 @@ class DAXFlash(metaclass=LogBase):
             self.usbwrite(tmp)
             data = pack("<I", 0)
             self.usbwrite(data)
+            # time.sleep(0.0001)
             if rstatus:
-                status=self.status()
+                status = self.status()
                 return status
             return True
         except:
             return -1
-
 
     def send(self, data, datatype=DataType.DT_PROTOCOL_FLOW):
         if isinstance(data, int):
@@ -219,26 +220,21 @@ class DAXFlash(metaclass=LogBase):
         return data
 
     def status(self):
-        tmp = b""
         status = None
+        bytestoread = 4 + 4 + 4
+        hdr = self.usbread(bytestoread)
+        magic, datatype, length = unpack("<III", hdr)
+        if magic != 0xFEEEEEEF:
+            self.error("Status error")
+            return -1
+        tmp = self.usbread(length)
         try:
-            bytestoread=4+4+4
-            while bytestoread>0:
-                tmp+=self.usbread(bytestoread)
-                bytestoread-=len(tmp)
-
-            magic, datatype, length = unpack("<III", tmp)
-
-            bytestoread=length
-            tmp=b""
-            while bytestoread>0:
-                tmp+=self.usbread(length)
-                bytestoread -= len(tmp)
-
-            status = unpack("<"+str(length//4)+"I", tmp)[0]
+            status = unpack("<" + str(length // 4) + "I", tmp)[0]
+            if status == 0xFEEEEEEF:
+                return 0
         except:
-            self.error("Failed to get status : "+hexlify(tmp).decode('utf-8'))
-            exit(1)
+            status = status
+            pass
         return status
 
     def read_pmt(self):
@@ -250,7 +246,7 @@ class DAXFlash(metaclass=LogBase):
         for param in params:
             pkt = pack("<III", self.Cmd.MAGIC, self.DataType.DT_PROTOCOL_FLOW, len(param))
             if self.usbwrite(pkt):
-                #time.sleep(0.05)
+                # time.sleep(0.05)
                 length = len(param)
                 pos = 0
                 while length > 0:
@@ -264,38 +260,12 @@ class DAXFlash(metaclass=LogBase):
             return True
         else:
             if status in ErrorCodes_XFlash:
-                errorstring=ErrorCodes_XFlash[status]
+                errorstring = ErrorCodes_XFlash[status]
                 self.error(f"Error on sending parameter: {errorstring}")
             else:
                 self.error(f"Error on sending parameter, status {hex(status)}.")
         return False
 
-    def show_progress(self, prefix, pos, total, display=True):
-        t0 = time.time()
-        if pos == 0:
-            self.prog = 0
-            self.progtime = time.time()
-            self.progpos = pos
-        prog = round(float(pos) / float(total) * float(100), 1)
-        if prog > self.prog:
-            if display:
-                tdiff = t0 - self.progtime
-                datasize = (pos - self.progpos) // 1024 // 1024
-                if datasize!=0:
-                    try:
-                        throughput = datasize // tdiff
-                    except:
-                        throughput = 0
-                else:
-                    throughput = 0
-                print_progress(prog, 100, prefix='Progress:',
-                               suffix=prefix + ' (Sector %d of %d) %0.2f MB/s' %
-                                      (pos // self.daconfig.pagesize,
-                                       total // self.daconfig.pagesize,
-                                       throughput), bar_length=50)
-                self.prog = prog
-                self.progpos = pos
-                self.progtime = t0
 
     def send_devctrl(self, cmd, param=None, status=None):
         if status is None:
@@ -447,7 +417,7 @@ class DAXFlash(metaclass=LogBase):
             return res
         else:
             if status in ErrorCodes_XFlash:
-                errorstring=ErrorCodes_XFlash[status]
+                errorstring = ErrorCodes_XFlash[status]
                 self.error(f"Error on getting connection agent: {errorstring}")
             else:
                 self.error(f"Error on getting connection agent, status {hex(status)}.")
@@ -594,7 +564,7 @@ class DAXFlash(metaclass=LogBase):
             return sram, dram
         return None, None
 
-    def get_emmc_info(self):
+    def get_emmc_info(self, display=True):
         resp = self.send_devctrl(self.Cmd.GET_EMMC_INFO)
         if self.status() == 0:
             class EmmcInfo:
@@ -624,7 +594,7 @@ class DAXFlash(metaclass=LogBase):
             emmc.fwver = unpack("<Q", resp[pos:pos + 8])[0]
             pos += 8
             emmc.unknown = resp[pos:]
-            if emmc.type != 0:
+            if emmc.type != 0 and display:
                 self.info(f"EMMC FWVer:      {hex(emmc.fwver)}")
                 self.info(f"EMMC CID:        {hexlify(emmc.cid).decode('utf-8')}")
                 self.info(f"EMMC Boot1 Size: {hex(emmc.boot1_size)}")
@@ -758,14 +728,14 @@ class DAXFlash(metaclass=LogBase):
             return plen
         else:
             if status in ErrorCodes_XFlash:
-                errorstring=ErrorCodes_XFlash[status]
+                errorstring = ErrorCodes_XFlash[status]
                 self.error(f"Error on getting packet length: {errorstring}")
             else:
                 self.error(f"Error on getting packet length, status {hex(status)}.")
         return None
 
     def cmd_write_data(self, addr, size, storage=DaStorage.MTK_DA_STORAGE_EMMC,
-                      parttype=EMMC_PartitionType.MTK_DA_EMMC_PART_USER):
+                       parttype=EMMC_PartitionType.MTK_DA_EMMC_PART_USER):
         if self.send(self.Cmd.WRITE_DATA):
             if self.status() == 0:
                 # storage: emmc:1,slc,nand,nor,ufs
@@ -801,24 +771,10 @@ class DAXFlash(metaclass=LogBase):
         return False
 
     def readflash(self, addr, length, filename, parttype=None, display=True):
-        if self.daconfig.flashtype == "nor":
-            storage = DaStorage.MTK_DA_STORAGE_NOR
-        elif self.daconfig.flashtype == "nand":
-            storage = DaStorage.MTK_DA_STORAGE_NAND
-        elif self.daconfig.flashtype == "ufs":
-            storage = DaStorage.MTK_DA_STORAGE_UFS
-            if parttype == EMMC_PartitionType.MTK_DA_EMMC_PART_USER:
-                parttype = UFS_PartitionType.UFS_LU3
-        elif self.daconfig.flashtype == "sdc":
-            storage = DaStorage.MTK_DA_STORAGE_SDMMC
-        else:
-            storage = DaStorage.MTK_DA_STORAGE_EMMC
-
-        part_info = self.partitiontype_and_size(storage, parttype, length)
-        if not part_info:
+        partinfo = self.getstorage(parttype, length)
+        if not partinfo:
             return False
-        storage, parttype, length = part_info
-
+        storage, parttype, length = partinfo
         if self.cmd_read_data(addr=addr, size=length, storage=storage, parttype=parttype):
             bytestoread = length
             if filename != "":
@@ -826,13 +782,16 @@ class DAXFlash(metaclass=LogBase):
                     with open(filename, "wb") as wf:
                         while bytestoread > 0:
                             magic, datatype, slength = unpack("<III", self.usbread(4 + 4 + 4))
-                            tmp = self.usbread(slength)
-                            if self.ack() != 0:
-                                break
-                            wf.write(tmp)
-                            bytestoread -= len(tmp)
-                            if display:
-                                self.show_progress("Read", length-bytestoread, length, display)
+                            if magic == 0xFEEEEEEF:
+                                tmp = self.usbread(slength)
+                                wf.write(tmp)
+                                bytestoread -= len(tmp)
+                                if self.ack() != 0:
+                                    return False
+                                if display:
+                                    self.progress.show_progress("Read", length - bytestoread, length, display)
+                            else:
+                                return False
 
                 except Exception as err:
                     self.error("Couldn't write to " + filename + ". Error: " + str(err))
@@ -846,7 +805,7 @@ class DAXFlash(metaclass=LogBase):
                     if self.ack() != 0:
                         break
                     if display:
-                        self.show_progress("Read", length - bytestoread, length, display)
+                        self.progress.show_progress("Read", length - bytestoread, length, display)
                     length -= len(tmp)
                 return buffer
         return False
@@ -859,7 +818,7 @@ class DAXFlash(metaclass=LogBase):
         self.mtk.port.close()
         return False
 
-    def writeflash(self, addr, length, filename, partitionname, offset=0, parttype=None, display=True):
+    def getstorage(self, parttype, length):
         if self.daconfig.flashtype == "nor":
             storage = DaStorage.MTK_DA_STORAGE_NOR
         elif self.daconfig.flashtype == "nand":
@@ -874,22 +833,25 @@ class DAXFlash(metaclass=LogBase):
             storage = DaStorage.MTK_DA_STORAGE_EMMC
 
         part_info = self.partitiontype_and_size(storage, parttype, length)
-        if not part_info:
-            return False
-        storage, parttype, length = part_info
+        return part_info
 
-        #self.send_devctrl(self.Cmd.START_DL_INFO)
+    def writeflash(self, addr, length, filename, partitionname, offset=0, parttype=None, display=True):
+        partinfo = self.getstorage(parttype, length)
+        if not partinfo:
+            return False
+        storage, parttype, length = partinfo
+        # self.send_devctrl(self.Cmd.START_DL_INFO)
         plen = self.get_packet_length()
         bytestowrite = length
         write_packet_size = plen.write_packet_length
-        if self.cmd_write_data(addr,length,storage,parttype):
+        if self.cmd_write_data(addr, length, storage, parttype):
             try:
                 with open(filename, "rb") as rf:
                     pos = 0
                     rf.seek(offset)
                     while bytestowrite > 0:
                         if display:
-                            self.show_progress("Write", length - bytestowrite, length, display)
+                            self.progress.show_progress("Write", length - bytestowrite, length, display)
                         dsize = min(write_packet_size, bytestowrite)
                         data = bytearray(rf.read(dsize))
                         checksum = sum(data) & 0xFFFF
@@ -901,7 +863,7 @@ class DAXFlash(metaclass=LogBase):
                         pos += dsize
                     if self.status() == 0x0:
                         self.send_devctrl(self.Cmd.CC_OPTIONAL_DOWNLOAD_ACT)
-                        self.show_progress("Write", length, length, display)
+                        self.progress.show_progress("Write", length, length, display)
                         return True
             except Exception as e:
                 self.error(str(e))
@@ -976,13 +938,32 @@ class DAXFlash(metaclass=LogBase):
             self.set_battery_opt(0x2)
             self.set_checksum_level(0x0)
             connagent = self.get_connection_agent()
+            emmc_info=self.get_emmc_info(False)
+            self.info("DRAM config needed for : " + hexlify(emmc_info.cid[:8]).decode('utf-8'))
             # dev_fw_info=self.get_dev_fw_info()
             # dramtype = self.get_dram_type()
             stage = None
             if connagent == b"brom":
                 stage = 2
                 if self.daconfig.emi is None:
-                    self.warning("No preloader given. Operation may fail due to missing dram setup.")
+                    self.info("No preloader given. Searching for preloader")
+                    found = False
+                    for root, dirs, files in os.walk(os.path.join(self.pathconfig.get_loader_path(), 'Preloader')):
+                        for file in files:
+                            with open(os.path.join(root, file), "rb") as rf:
+                                data = rf.read()
+                                if emmc_info.cid[:8] in data:
+                                    preloader = os.path.join(root, file)
+                                    print("Detected preloader: " + preloader)
+                                    self.daconfig.extract_emi(preloader,False)
+                                    found = True
+                                    if not self.send_emi(self.daconfig.emi):
+                                        return False
+                                    break
+                                if found:
+                                    break
+                    if not found:
+                        self.warning("No preloader given. Operation may fail due to missing dram setup.")
                 else:
                     if not self.send_emi(self.daconfig.emi):
                         return False
@@ -1021,10 +1002,10 @@ class DAXFlash(metaclass=LogBase):
                             self.daconfig.flashsize = [self.ufs.lu0_size, self.ufs.lu1_size, self.ufs.lu2_size]
                         self.chipid = self.get_chip_id()
                         self.randomid = self.get_random_id()
-                        #if self.get_da_stor_life_check() == 0x0:
+                        # if self.get_da_stor_life_check() == 0x0:
                         cid = self.get_chip_id()
-                        self.info("DA-CODE      : 0x%X", (cid.hw_code<<4)+(cid.hw_code>>4))
-                        open(os.path.join("logs", "hwcode.txt"), "w").write(hex(cid.hw_code))
+                        self.info("DA-CODE      : 0x%X", (cid.hw_code << 4) + (cid.hw_code >> 4))
+                        open(os.path.join("logs", "hwcode.txt"), "w").write(hex(self.config.hwcode))
                         return True
                     else:
                         self.error("Error on booting to da (xflash)")

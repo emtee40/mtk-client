@@ -396,7 +396,7 @@ class usb_class(metaclass=LogBase):
         return True
 
     def read(self, maxlength=None, timeout=None):
-        if maxlength==None:
+        if maxlength is None:
             maxlength=self.EP_IN.wMaxPacketSize
         if self.loglevel == logging.DEBUG:
             self.debug(inspect.currentframe().f_back.f_code.co_name + ":" + hex(maxlength))

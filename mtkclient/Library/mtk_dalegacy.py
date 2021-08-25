@@ -5,10 +5,9 @@ import sys
 import logging
 import os
 import time
-import array
 from struct import pack, unpack
 from binascii import hexlify
-from mtkclient.Library.utils import LogBase, print_progress, read_object, logsetup
+from mtkclient.Library.utils import LogBase, progress, read_object, logsetup
 from mtkclient.Library.error import ErrorHandler
 from mtkclient.Library.daconfig import DaStorage, EMMC_PartitionType
 from mtkclient.Library.partition import Partition
@@ -492,9 +491,6 @@ class DALegacy(metaclass=LogBase):
 
     def __init__(self, mtk, daconfig, loglevel=logging.INFO):
         self.__logger = logsetup(self, self.__logger, loglevel)
-        self.prog = 0
-        self.progpos = 0
-        self.progtime = 0
         self.emmc = None
         self.nand = None
         self.nor = None
@@ -513,34 +509,8 @@ class DALegacy(metaclass=LogBase):
         self.sectorsize = self.daconfig.pagesize
         self.totalsectors = self.daconfig.flashsize
         self.partition = Partition(self.mtk, self.readflash, self.read_pmt, loglevel)
+        self.progress = progress(self.daconfig.pagesize)
         self.pathconfig = pathconfig()
-
-    def show_progress(self, prefix, pos, total, display=True):
-        t0 = time.time()
-        if pos == 0:
-            self.prog = 0
-            self.progtime = time.time()
-            self.progpos = pos
-        prog = round(float(pos) / float(total) * float(100), 1)
-        if prog > self.prog:
-            if display:
-                tdiff = t0 - self.progtime
-                datasize = (pos - self.progpos) // 1024 // 1024
-                if datasize!=0:
-                    try:
-                        throughput = datasize // tdiff
-                    except:
-                        throughput = 0
-                else:
-                    throughput = 0
-                print_progress(prog, 100, prefix='Progress:',
-                               suffix=prefix + ' (Sector %d of %d) %0.2f MB/s' %
-                                      (pos // self.daconfig.pagesize,
-                                       total // self.daconfig.pagesize,
-                                       throughput), bar_length=50)
-                self.prog = prog
-                self.progpos = pos
-                self.progtime = t0
 
     def read_pmt(self):  # A5
         class GptEntries:
@@ -725,14 +695,14 @@ class DALegacy(metaclass=LogBase):
             self.info("DRAM config needed for : " + hexlify(draminfo).decode('utf-8'))
             if self.daconfig.emi is None:
                 found = False
-                for root, dirs, files in os.walk(os.path.join(self.pathconfig.get_payloads_path(), 'Preloader')):
+                for root, dirs, files in os.walk(os.path.join(self.pathconfig.get_loader_path(), 'Preloader')):
                     for file in files:
                         with open(os.path.join(root, file), "rb") as rf:
                             data = rf.read()
                             if pdram[0] in data or pdram[1] in data:
                                 preloader = os.path.join(root, file)
                                 print("Detected preloader: " + preloader)
-                                self.daconfig.emi = self.daconfig.extract_emi
+                                self.daconfig.extract_emi(preloader,True)
                                 found = True
                                 break
                     if found:
@@ -1036,7 +1006,7 @@ class DALegacy(metaclass=LogBase):
         if filename != "":
             with open(filename, "rb") as rf:
                 rf.seek(offset)
-                self.show_progress("Write", 0, 100, display)
+                self.progress.show_progress("Write", 0, 100, display)
                 self.usbwrite(self.Cmd.SDMMC_WRITE_DATA_CMD)
                 self.usbwrite(pack(">B", storage))
                 self.usbwrite(pack(">B", parttype))
@@ -1057,9 +1027,9 @@ class DALegacy(metaclass=LogBase):
                     if self.usbread(1) != self.Rsp.CONT_CHAR:
                         self.error("Data ack failed for sdmmc_write_data")
                         return False
-                    self.show_progress("Write",offset,length,display)
+                    self.progress.show_progress("Write",offset,length,display)
                     offset += count
-                self.show_progress("Write", 100, 100, display)
+                self.progress.show_progress("Write", 100, 100, display)
                 return True
 
     def sdmmc_write_image(self, addr, length, filename, display=True):
@@ -1077,7 +1047,7 @@ class DALegacy(metaclass=LogBase):
                     ack = unpack(">B", self.usbread(1))[0]
                     if ack == self.Rsp.ACK[0]:
                         self.usbwrite(self.Rsp.ACK)
-                self.show_progress("Write", 0, 100, display)
+                self.progress.show_progress("Write", 0, 100, display)
                 checksum = 0
                 bytestowrite = length
                 while bytestowrite > 0:
@@ -1085,7 +1055,7 @@ class DALegacy(metaclass=LogBase):
                     for i in range(0, size, 0x400):
                         data = bytearray(rf.read(size))
                         pos = length - bytestowrite
-                        self.show_progress("Write", pos, length, display)
+                        self.progress.show_progress("Write", pos, length, display)
                         if self.usbwrite(data):
                             bytestowrite -= size
                             if bytestowrite == 0:
@@ -1101,7 +1071,7 @@ class DALegacy(metaclass=LogBase):
                                     return True
                                 else:
                                     self.usbwrite(self.Rsp.ACK)
-                self.show_progress("Write", 100, 100, display)
+                self.progress.show_progress("Write", 100, 100, display)
                 return True
         return True
 
@@ -1228,7 +1198,7 @@ class DALegacy(metaclass=LogBase):
             self.usbread(4)
             self.daconfig.readsize = self.daconfig.flashsize // self.daconfig.pagesize * (
                     self.daconfig.pagesize + self.daconfig.sparesize)
-        self.show_progress("Read",0,100,display)
+        self.progress.show_progress("Read",0,100,display)
         if filename != "":
             with open(filename, "wb") as wf:
                 bytestoread = length
@@ -1241,8 +1211,8 @@ class DALegacy(metaclass=LogBase):
                     checksum = unpack(">H", self.usbread(1)+self.usbread(1))[0]
                     self.debug("Checksum: %04X" % checksum)
                     self.usbwrite(self.Rsp.ACK)
-                    self.show_progress("Read", length-bytestoread, length, display)
-                self.show_progress("Read", 100, 100, display)
+                    self.progress.show_progress("Read", length-bytestoread, length, display)
+                self.progress.show_progress("Read", 100, 100, display)
                 return True
         else:
             buffer = bytearray()
@@ -1256,6 +1226,6 @@ class DALegacy(metaclass=LogBase):
                 checksum = unpack(">H", self.usbread(2))[0]
                 self.debug("Checksum: %04X" % checksum)
                 self.usbwrite(self.Rsp.ACK)
-                self.show_progress("Read", length-bytestoread, length, display)
-            self.show_progress("Read", 100, 100, display)
+                self.progress.show_progress("Read", length-bytestoread, length, display)
+            self.progress.show_progress("Read", 100, 100, display)
             return buffer

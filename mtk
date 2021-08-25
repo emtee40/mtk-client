@@ -17,7 +17,7 @@ Usage:
     mtk.py rs <start_sector> <sectors> <filename> [--parttype=parttype] [--lun=lun] [--preloader=filename] [--loader=filename] [--payload=filename] [--debugmode] [--vid=vid] [--pid=pid] [--var1=var1] [--ptype=ptype]
     mtk.py w <partitionname> <filename> [--parttype=parttype] [--memory=memtype] [--lun=lun] [--preloader=filename] [--loader=filename] [--payload=filename] [--debugmode] [--vid=vid] [--pid=pid] [--var1=var1] [--ptype=ptype]
     mtk.py wf <filename> [--parttype=parttype] [--memory=memtype] [--lun=lun] [--preloader=filename] [--loader=filename] [--payload=filename] [--debugmode] [--vid=vid] [--pid=pid] [--var1=var1] [--ptype=ptype]
-    mtk.py wl <directory> [--memory=memtype] [--parttype=parttype] [--lun=lun] [--skip=partnames] [--preloader=filename] [--payload=filename] [--loader=filename] [--debugmode] [--vid=vid] [--pid=pid] [--var1=var1] [--generatekeys=keymode] [--ptype=ptype]
+    mtk.py wl <directory> [--memory=memtype] [--parttype=parttype] [--lun=lun] [--skip=partnames] [--preloader=filename] [--payload=filename] [--loader=filename] [--debugmode] [--vid=vid] [--pid=pid] [--var1=var1] [--ptype=ptype]
     mtk.py e <partitionname> [--parttype=parttype] [--memory=memtype] [--lun=lun] [--preloader=filename] [--loader=filename] [--payload=filename] [--debugmode] [--vid=vid] [--pid=pid] [--var1=var1] [--ptype=ptype]
     mtk.py footer <filename> [--memory=memtype] [--lun=lun] [--preloader=filename] [--loader=filename] [--payload=filename] [--debugmode] [--vid=vid] [--pid=pid] [--var1=var1]
     mtk.py reset [--debugmode] [--vid=vid] [--pid=pid]
@@ -80,7 +80,6 @@ Options:
     --socid                            Read Soc ID
     --startpartition=startpartition    Option for plstage - Boot to (lk, tee1)
 """
-
 import os
 import sys
 import logging
@@ -214,7 +213,7 @@ class Mtk(metaclass=LogBase):
         return self
 
 
-def parse_preloader(preloader):
+def parse_preloader(mtk, preloader):
     with open(preloader, "rb") as rf:
         magic = unpack("<I", rf.read(4))[0]
         if magic == 0x014D4D4D:
@@ -229,7 +228,7 @@ def parse_preloader(preloader):
             rf.seek(jump_offset)
             dadata = rf.read(dasize - jump_offset)
         else:
-            daaddr = 0x201000
+            daaddr = mtk.config.chipconfig.da_payload_addr
             rf.seek(0)
             dadata = rf.read()
         return daaddr, dadata
@@ -295,8 +294,8 @@ class Main(metaclass=LogBase):
             self.__logger.setLevel(logging.DEBUG)
         else:
             self.__logger.setLevel(logging.INFO)
-        interface = -1
         self.debug(" ".join(sys.argv))
+        interface = -1
         # pagesize = getint(self.args["--sectorsize"])
         mtk = Mtk(loader=self.args["--loader"], loglevel=self.__logger.level, vid=vid, pid=pid, interface=interface,
                   args=self.args)
@@ -358,9 +357,9 @@ class Main(metaclass=LogBase):
                 filename = self.args["--filename"]
             if self.args["--preloader"] is not None:
                 preloader = self.args["--preloader"]
-                if os.path.exists(preloader):
-                    daaddr, dadata = parse_preloader(preloader)
-                    if mtk.preloader.init(args=self.args, readsocid=readsocid):
+                if mtk.preloader.init(args=self.args, readsocid=readsocid):
+                    if os.path.exists(preloader):
+                        daaddr, dadata = parse_preloader(mtk,preloader)
                         if mtk.config.target_config["daa"]:
                             mtk = mtk.bypass_security(args=self.args, vid=vid, pid=pid, interface=interface,
                                                       readsocid=readsocid, enforcecrash=enforcecrash)
@@ -456,7 +455,7 @@ class Main(metaclass=LogBase):
             else:
                 filename = self.args["--filename"]
             if os.path.exists(preloader):
-                daaddr, dadata = parse_preloader(preloader)
+                daaddr, dadata = parse_preloader(mtk, preloader)
             if mtk.preloader.init(args=self.args, readsocid=readsocid):
                 if mtk.config.target_config["daa"]:
                     mtk = mtk.bypass_security(args=self.args, vid=vid, pid=pid, interface=interface,
@@ -712,6 +711,8 @@ class Main(metaclass=LogBase):
                     exit(1)
                 if parttype == "user" or parttype is None:
                     i = 0
+                    self.info("Requesting available partitions ....")
+                    gpttable = mtk.daloader.get_partition_data(self.args, parttype=parttype)
                     for partition in partitions:
                         partfilename = filenames[i]
                         i += 1
@@ -720,24 +721,34 @@ class Main(metaclass=LogBase):
                                                    length=0x16000,
                                                    filename=partfilename, parttype=parttype)
                             continue
-                        res = mtk.daloader.detect_partition(self.args, partition, parttype)
-                        if res[0]:
-                            rpartition = res[1]
-                            mtk.daloader.readflash(addr=rpartition.sector * mtk.daloader.daconfig.pagesize,
-                                                   length=rpartition.sectors * mtk.daloader.daconfig.pagesize,
-                                                   filename=partfilename, parttype=parttype)
-                            print(f"Dumped sector {str(rpartition.sector)} with sector count " +
-                                  f"{str(rpartition.sectors)} as {partfilename}.")
                         else:
-                            self.error(f"Error: Couldn't detect partition: {partition}\nAvailable partitions:")
-                            for rpartition in res[1]:
-                                self.info(rpartition.name)
+                            rpartition = None
+                            for gptentry in gpttable:
+                                if gptentry.name.lower()==partition.lower():
+                                    rpartition=gptentry
+                                    break
+                            if rpartition is not None:
+                                self.info(f"Dumping partition {rpartition.name}")
+                                if mtk.daloader.readflash(addr=rpartition.sector * mtk.daloader.daconfig.pagesize,
+                                                       length=rpartition.sectors * mtk.daloader.daconfig.pagesize,
+                                                       filename=partfilename, parttype=parttype):
+                                    self.info(f"Dumped sector {str(rpartition.sector)} with sector count " +
+                                          f"{str(rpartition.sectors)} as {partfilename}.")
+                                else:
+                                    self.info(f"Failed to dump sector {str(rpartition.sector)} with sector count " +
+                                          f"{str(rpartition.sectors)} as {partfilename}.")
+                            else:
+                                self.error(f"Error: Couldn't detect partition: {partition}\nAvailable partitions:")
+                                for rpartition in gpttable:
+                                    self.info(rpartition.name)
                 else:
                     i = 0
                     for partfilename in filenames:
                         pos = 0
-                        mtk.daloader.readflash(addr=pos, length=0xFFFFFFFF, filename=partfilename, parttype=parttype)
-                        print(f"Dumped partition {str(partitionname)} as {partfilename}.")
+                        if mtk.daloader.readflash(addr=pos, length=0xFFFFFFFF, filename=partfilename, parttype=parttype):
+                            print(f"Dumped partition {str(partitionname)} as {partfilename}.")
+                        else:
+                            print(f"Failed to dump partition {str(partitionname)} as {partfilename}.")
                         i += 1
                 mtk.daloader.close()
                 self.close()
@@ -792,8 +803,10 @@ class Main(metaclass=LogBase):
                 else:
                     length = mtk.daloader.daconfig.flashsize
                 print(f"Dumping sector 0 with flash size {hex(length)} as {filename}.")
-                mtk.daloader.readflash(addr=0, length=length, filename=filename, parttype=parttype)
-                print(f"Dumped sector 0 with flash size {hex(length)} as {filename}.")
+                if mtk.daloader.readflash(addr=0, length=length, filename=filename, parttype=parttype):
+                    print(f"Dumped sector 0 with flash size {hex(length)} as {filename}.")
+                else:
+                    print(f"Failed to dump sector 0 with flash size {hex(length)} as {filename}.")
                 mtk.daloader.close()
                 self.close()
             elif self.args["rs"]:
@@ -801,10 +814,12 @@ class Main(metaclass=LogBase):
                 sectors = getint(self.args["<sectors>"])
                 filename = self.args["<filename>"]
                 parttype = self.args["--parttype"]
-                mtk.daloader.readflash(addr=start * mtk.daloader.daconfig.pagesize,
+                if mtk.daloader.readflash(addr=start * mtk.daloader.daconfig.pagesize,
                                        length=sectors * mtk.daloader.daconfig.pagesize,
-                                       filename=filename, parttype=parttype)
-                print(f"Dumped sector {str(start)} with sector count {str(sectors)} as {filename}.")
+                                       filename=filename, parttype=parttype):
+                    print(f"Dumped sector {str(start)} with sector count {str(sectors)} as {filename}.")
+                else:
+                    print(f"Failed to dump sector {str(start)} with sector count {str(sectors)} as {filename}.")
                 mtk.daloader.close()
                 self.close()
             elif self.args["footer"]:
@@ -863,9 +878,9 @@ class Main(metaclass=LogBase):
                         if res[0]:
                             rpartition = res[1]
                             if mtk.daloader.writeflash(addr=rpartition.sector * mtk.daloader.daconfig.pagesize,
-                                                    length=rpartition.sectors * mtk.daloader.daconfig.pagesize,
-                                                    filename=partfilename,
-                                                    partitionname=partition, parttype=parttype):
+                                                       length=rpartition.sectors * mtk.daloader.daconfig.pagesize,
+                                                       filename=partfilename,
+                                                       partitionname=partition, parttype=parttype):
                                 print(
                                     f"Wrote {partfilename} to sector {str(rpartition.sector)} with " +
                                     f"sector count {str(rpartition.sectors)}.")
@@ -881,13 +896,14 @@ class Main(metaclass=LogBase):
                     pos = 0
                     for partfilename in filenames:
                         size = os.stat(partfilename).st_size
-                        if mtk.daloader.writeflash(addr=pos, length=size, filename=partfilename, partitionname=partitionname,
-                                                parttype=parttype):
+                        if mtk.daloader.writeflash(addr=pos, length=size, filename=partfilename,
+                                                   partitionname=partitionname,
+                                                   parttype=parttype):
                             print(f"Wrote {partfilename} to sector {str(pos // 0x200)} with " +
                                   f"sector count {str(size)}.")
                         else:
                             print(f"Failed to write {partfilename} to sector {str(pos // 0x200)} with " +
-                              f"sector count {str(size)}.")
+                                  f"sector count {str(size)}.")
                         psize = size // 0x200 * 0x200
                         if size % 0x200 != 0:
                             psize += 0x200
@@ -911,9 +927,9 @@ class Main(metaclass=LogBase):
                         if partition == "gpt":
                             self.info(f"Writing partition {partition}")
                             if mtk.daloader.writeflash(addr=0,
-                                                    length=os.stat(partfilename).st_size,
-                                                    filename=partfilename,
-                                                    partitionname=partition, parttype=parttype):
+                                                       length=os.stat(partfilename).st_size,
+                                                       filename=partfilename,
+                                                       partitionname=partition, parttype=parttype):
                                 print(f"Wrote {partition} to sector {str(0)}")
                             else:
                                 print(f"Failed to write {partition} to sector {str(0)}")
@@ -922,9 +938,9 @@ class Main(metaclass=LogBase):
                         if res[0]:
                             rpartition = res[1]
                             if mtk.daloader.writeflash(addr=rpartition.sector * mtk.daloader.daconfig.pagesize,
-                                                    length=rpartition.sectors * mtk.daloader.daconfig.pagesize,
-                                                    filename=partfilename,
-                                                    partitionname=partition, parttype=parttype):
+                                                       length=rpartition.sectors * mtk.daloader.daconfig.pagesize,
+                                                       filename=partfilename,
+                                                       partitionname=partition, parttype=parttype):
                                 print(
                                     f"Wrote {partfilename} to sector {str(rpartition.sector)} with " +
                                     f"sector count {str(rpartition.sectors)}.")
@@ -941,8 +957,9 @@ class Main(metaclass=LogBase):
                         partition = os.path.basename(partfilename)
                         partition = os.path.splitext(partition)[0]
                         self.info(f"Writing filename {partfilename}")
-                        if mtk.daloader.writeflash(addr=pos, length=size, filename=partfilename, partitionname=partition,
-                                                parttype=parttype):
+                        if mtk.daloader.writeflash(addr=pos, length=size, filename=partfilename,
+                                                   partitionname=partition,
+                                                   parttype=parttype):
                             print(f"Wrote {partfilename} to sector {str(pos // 0x200)} with " +
                                   f"sector count {str(size)}.")
                         else:
@@ -966,13 +983,13 @@ class Main(metaclass=LogBase):
                         if res[0]:
                             rpartition = res[1]
                             if mtk.daloader.formatflash(addr=rpartition.sector * mtk.daloader.daconfig.pagesize,
-                                                     length=rpartition.sectors * mtk.daloader.daconfig.pagesize,
-                                                     partitionname=partition, parttype=parttype):
+                                                        length=rpartition.sectors * mtk.daloader.daconfig.pagesize,
+                                                        partitionname=partition, parttype=parttype):
                                 print(
                                     f"Formatted sector {str(rpartition.sector)} with " +
                                     f"sector count {str(rpartition.sectors)}.")
                             else:
-                                                                print(
+                                print(
                                     f"Failed to format sector {str(rpartition.sector)} with " +
                                     f"sector count {str(rpartition.sectors)}.")
                         else:
@@ -982,7 +999,8 @@ class Main(metaclass=LogBase):
                 else:
                     pos = 0
                     for partitionname in partitions:
-                        mtk.daloader.formatflash(addr=pos, length=0xF000000, partitionname=partitionname, parttype=parttype,
+                        mtk.daloader.formatflash(addr=pos, length=0xF000000, partitionname=partitionname,
+                                                 parttype=parttype,
                                                  display=True)
                         print(f"Formatted sector {str(pos // 0x200)}")
                 mtk.daloader.close()
@@ -995,14 +1013,14 @@ class Main(metaclass=LogBase):
                 for partfilename in filenames:
                     size = os.stat(partfilename).st_size // 0x200 * 0x200
                     if mtk.daloader.writeflash(addr=pos,
-                                            length=size,
-                                            filename=partfilename,
-                                            partitionname=None, parttype=parttype):
+                                               length=size,
+                                               filename=partfilename,
+                                               partitionname=None, parttype=parttype):
                         print(f"Wrote {partfilename} to sector {str(pos // 0x200)} with " +
-                            f"sector count {str(size // 0x200)}.")
+                              f"sector count {str(size // 0x200)}.")
                     else:
                         print(f"Failed to write {partfilename} to sector {str(pos // 0x200)} with " +
-                            f"sector count {str(size // 0x200)}.")
+                              f"sector count {str(size // 0x200)}.")
                 mtk.daloader.close()
                 self.close()
             elif self.args["reset"]:
@@ -1011,5 +1029,5 @@ class Main(metaclass=LogBase):
 
 
 if __name__ == '__main__':
-    print("MTK Flash/Exploit Client V1.42 (c) B.Kerler 2018-2021")
+    print("MTK Flash/Exploit Client V1.41 (c) B.Kerler 2018-2021")
     mtk = Main().run()

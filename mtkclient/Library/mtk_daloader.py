@@ -55,6 +55,16 @@ class DAloader(metaclass=LogBase):
                     return [True, partition]
         return [False, fpartitions]
 
+    def get_partition_data(self, arguments, parttype=None):
+        fpartitions = []
+        data, guid_gpt = self.da.partition.get_gpt(int(arguments["--gpt-num-part-entries"]),
+                                                   int(arguments["--gpt-part-entry-size"]),
+                                                   int(arguments["--gpt-part-entry-start-lba"]), parttype)
+        if guid_gpt is None:
+            return [False, fpartitions]
+        else:
+            return guid_gpt.partentries
+
     def get_gpt(self, arguments, parttype=None):
         fpartitions = []
         data, guid_gpt = self.da.partition.get_gpt(int(arguments["--gpt-num-part-entries"]),
