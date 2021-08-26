@@ -10,6 +10,20 @@ from mtkclient.Library.utils import LogBase, logsetup
 from mtkclient.Library.error import ErrorHandler
 from mtkclient.Library.utils import getint
 
+
+def calc_xflash_checksum(data):
+    checksum = 0
+    pos = 0
+    for i in range(0, len(data) // 4):
+        checksum += unpack("<I", data[i * 4:(i * 4) + 4])[0]
+        pos += 4
+    if len(data) % 4 != 0:
+        for i in range(4 - (len(data) % 4)):
+            checksum += data[pos]
+            pos += 1
+    return checksum & 0xFFFFFFFF
+
+
 class Preloader(metaclass=LogBase):
     class Rsp(Enum):
         NONE = b''
@@ -96,6 +110,9 @@ class Preloader(metaclass=LogBase):
     def __init__(self, mtk, loglevel=logging.INFO):
         self.mtk = mtk
         self.__logger = logsetup(self, self.__logger, loglevel)
+        self.info = self.__logger.info
+        self.debug = self.__logger.debug
+        self.error = self.__logger.error
         self.eh = ErrorHandler()
         self.gcpu = None
         self.config = mtk.config
@@ -115,14 +132,14 @@ class Preloader(metaclass=LogBase):
             self.info("Status: Waiting for PreLoader VCOM, please connect mobile")
         res = False
         tries = 0
-        while not res and tries<10:
-            res=self.mtk.port.handshake(maxtries=maxtries)
+        while not res and tries < 10:
+            res = self.mtk.port.handshake(maxtries=maxtries)
             if not res:
                 if display:
                     self.error("Status: Handshake failed, please retry")
                 self.mtk.port.close()
-                tries+=1
-        if tries==10:
+                tries += 1
+        if tries == 10:
             return False
 
         if not self.echo(self.Cmd.GET_HW_CODE.value):  # 0xFD
@@ -131,8 +148,8 @@ class Preloader(metaclass=LogBase):
             return False
         else:
             val = self.rdword()
-            self.config.hwcode = (val>>16)&0xFFFF
-            self.config.hwver = val&0xFFFF
+            self.config.hwcode = (val >> 16) & 0xFFFF
+            self.config.hwver = val & 0xFFFF
             self.config.init_hwcode(self.config.hwcode)
         da_address = args["--da_addr"]
         if da_address is not None:
@@ -194,7 +211,7 @@ class Preloader(metaclass=LogBase):
             with open(os.path.join("logs", "hwcode.txt"), "w") as wf:
                 wf.write(hex(self.config.hwcode))
         self.config.target_config = self.get_target_config(self.display)
-        blver=self.get_blver()
+        # blver = self.get_blver()
         meid = self.get_meid()
         if len(meid) >= 16:
             with open(os.path.join("logs", "meid.txt"), "wb") as wf:
@@ -260,59 +277,44 @@ class Preloader(metaclass=LogBase):
                 value += b"\x00"
             self.write32(addr + i, unpack("<I", value))
 
-    def run_ext_cmd(self, cmd=b"\xB1"):
+    def run_ext_cmd(self, cmd: bytes = b"\xB1"):
         self.usbwrite(self.Cmd.CMD_C8.value)
         assert self.usbread(1) == self.Cmd.CMD_C8.value
-        cmd = bytes([cmd])
         self.usbwrite(cmd)
         assert self.usbread(1) == cmd
         self.usbread(1)
         self.usbread(2)
 
     def jump_to_partition(self, partitionname):
-        if isinstance(partitionname,str):
-            partitionname=bytes(partitionname,'utf-8')[:64]
-        partitionname=partitionname+(64-len(partitionname))*b'\x00'
+        if isinstance(partitionname, str):
+            partitionname = bytes(partitionname, 'utf-8')[:64]
+        partitionname = partitionname + (64 - len(partitionname)) * b'\x00'
         if self.echo(self.Cmd.JUMP_TO_PARTITION.value):
             self.usbwrite(partitionname)
             status2 = self.rword()
             if status2 <= 0xFF:
                 return True
 
-    def calc_xflash_checksum(self, data):
-        checksum=0
-        pos=0
-        for i in range(0,len(data)//4):
-            checksum+=unpack("<I", data[i * 4:(i * 4) + 4])[0]
-            pos+=4
-        if len(data)%4!=0:
-            for i in range(4-(len(data)%4)):
-                checksum+=data[pos]
-                pos+=1
-        return checksum&0xFFFFFFFF
-
     def send_partition_data(self, partitionname, data):
-        checksum = self.calc_xflash_checksum(data)
-        if isinstance(partitionname,str):
-            partitionname=bytes(partitionname,'utf-8')[:64]
-        partitionname=partitionname+(64-len(partitionname))*b'\x00'
+        checksum = calc_xflash_checksum(data)
+        if isinstance(partitionname, str):
+            partitionname = bytes(partitionname, 'utf-8')[:64]
+        partitionname = partitionname + (64 - len(partitionname)) * b'\x00'
         if self.echo(self.Cmd.SEND_PARTITION_DATA.value):
             self.usbwrite(partitionname)
-            self.usbwrite(pack(">I",len(data)))
+            self.usbwrite(pack(">I", len(data)))
             status = self.rword()
             if status <= 0xFF:
                 length = len(data)
-                pos=0
+                pos = 0
                 while length > 0:
                     dsize = min(length, 0x200)
                     if not self.usbwrite(data[pos:pos + dsize]):
                         break
                     pos += dsize
                     length -= dsize
-                #self.usbwrite(data)
-                self.usbwrite(pack(">I",checksum))
-
-
+                # self.usbwrite(data)
+                self.usbwrite(pack(">I", checksum))
 
     def setreg_disablewatchdogtimer(self, hwcode):
         """
@@ -344,7 +346,7 @@ class Preloader(metaclass=LogBase):
                 self.mtk.config.blver = -2
                 return -2
             else:
-                self.mtk.config.blver=unpack("B", res)[0]
+                self.mtk.config.blver = unpack("B", res)[0]
                 return self.mtk.config.blver
         return -1
 
@@ -436,7 +438,7 @@ class Preloader(metaclass=LogBase):
 
     def uart1_set_baud(self, baudrate):
         if self.echo(self.Cmd.UART1_SET_BAUDRATE.value):
-            self.usbwrite(pack(">I",baudrate))
+            self.usbwrite(pack(">I", baudrate))
             status = self.rword()
             if status == 0:
                 return True
@@ -447,7 +449,7 @@ class Preloader(metaclass=LogBase):
     def send_root_cert(self, cert):
         gen_chksum, data = self.prepare_data(b"", cert)
         if self.echo(self.Cmd.SEND_CERT.value):
-            if self.echo(pack(">I",len(data))):
+            if self.echo(pack(">I", len(data))):
                 status = self.rword()
                 if 0x0 <= status <= 0xFF:
                     if not self.upload_data(cert, gen_chksum):
@@ -487,9 +489,9 @@ class Preloader(metaclass=LogBase):
 
     def brom_register_access(self, address, length, data=None, check_status=True):
         if data is None:
-            mode=0
+            mode = 0
         else:
-            mode=1
+            mode = 1
         self.mtk.port.echo(self.Cmd.brom_register_access.value)
         self.mtk.port.echo(pack(">I", mode))
         self.mtk.port.echo(pack(">I", address))
@@ -500,11 +502,11 @@ class Preloader(metaclass=LogBase):
         except:
             pass
 
-        if status!=0:
-            raise RuntimeError(f"status is {hex(status)}")
+        if status != 0:
+            raise RuntimeError(self.eh.status(status))
 
-        if mode==0:
-            data=self.mtk.port.usbread(length)
+        if mode == 0:
+            data = self.mtk.port.usbread(length)
         else:
             self.mtk.port.usbwrite(data[:length])
 
@@ -514,8 +516,8 @@ class Preloader(metaclass=LogBase):
                 status = unpack("<H", status)[0]
             except:
                 pass
-            if status!=0:
-                raise RuntimeError(f"status is {hex(status)}")
+            if status != 0:
+                raise RuntimeError(self.eh.status(status))
         return data
 
     def get_plcap(self):
@@ -567,14 +569,14 @@ class Preloader(metaclass=LogBase):
         return gen_chksum, data
 
     def upload_data(self, data, gen_chksum):
-        bytestowrite=len(data)
-        pos=0
-        while bytestowrite>0:
-            size=min(bytestowrite,64)
+        bytestowrite = len(data)
+        pos = 0
+        while bytestowrite > 0:
+            size = min(bytestowrite, 64)
             self.usbwrite(data[pos:pos + size])
-            bytestowrite-=size
-            pos+=size
-        #self.usbwrite(b"")
+            bytestowrite -= size
+            pos += size
+        # self.usbwrite(b"")
         try:
             checksum, status = self.rword(2)
             if gen_chksum != checksum and checksum != 0:
@@ -583,7 +585,7 @@ class Preloader(metaclass=LogBase):
             if 0 <= status <= 0xFF:
                 return True
             else:
-                self.error(f"upload_data failed with status: {hex(status)}")
+                self.error(f"upload_data failed with error: "+self.eh.status(status))
                 return False
         except Exception as e:
             self.error(f"upload_data resp error : " + str(e))

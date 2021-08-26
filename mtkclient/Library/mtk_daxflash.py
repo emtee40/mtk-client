@@ -8,7 +8,7 @@ import hashlib
 from binascii import hexlify
 from struct import pack, unpack
 from mtkclient.Library.utils import LogBase, progress, logsetup
-from mtkclient.Library.error import ErrorHandler, ErrorCodes_XFlash
+from mtkclient.Library.error import ErrorHandler
 from mtkclient.Library.daconfig import EMMC_PartitionType, UFS_PartitionType, DaStorage
 from mtkclient.Library.partition import Partition
 from mtkclient.config.payloads import pathconfig
@@ -259,11 +259,7 @@ class DAXFlash(metaclass=LogBase):
         if status == 0:
             return True
         else:
-            if status in ErrorCodes_XFlash:
-                errorstring = ErrorCodes_XFlash[status]
-                self.error(f"Error on sending parameter: {errorstring}")
-            else:
-                self.error(f"Error on sending parameter, status {hex(status)}.")
+            self.error(f"Error on sending parameter: {self.eh.status(status)}")
         return False
 
 
@@ -281,7 +277,7 @@ class DAXFlash(metaclass=LogBase):
                         else:
                             return self.send_param(param)
         if status[0] != 0xC0010004:
-            self.error("Error on sending dev ctrl 0x%X, status 0x%X" % (cmd, status[0]))
+            self.error(f"Error on sending dev ctrl {cmd}:"+self.eh.status(status[0]))
         return b""
 
     def set_reset_key(self, reset_key=0x68):
@@ -301,9 +297,12 @@ class DAXFlash(metaclass=LogBase):
 
     def send_emi(self, emi):
         if self.send(self.Cmd.INIT_EXT_RAM):
-            if self.status() == 0:
+            status=self.status()
+            if status==0:
                 if self.send(pack("<I", len(emi))):
                     return self.send_param([emi])
+            else:
+                self.error(f"Error on sending emi: {self.eh.status(status)}")
         return False
 
     def send_data(self, data):
@@ -319,11 +318,7 @@ class DAXFlash(metaclass=LogBase):
             if status == 0x0:
                 return True
             else:
-                if status in ErrorCodes_XFlash:
-                    errorstring = ErrorCodes_XFlash[status]
-                    self.error(f"Error on sending data: {errorstring}")
-                else:
-                    self.error(f"Error on sending data, status {hex(status)}.")
+                self.error(f"Error on sending data: {self.eh.status(status)}")
                 return False
 
     def compute_hash_pos(self, da2, bootldr):
@@ -349,7 +344,8 @@ class DAXFlash(metaclass=LogBase):
         res = []
         for pos in range(dwords):
             if self.send(self.Cmd.DOWNLOAD):
-                if self.status() == 0:
+                status=self.status()
+                if status==0x0:
                     param = pack("<I", addr + (pos * 4))
                     pkt1 = pack("<III", self.Cmd.MAGIC, self.DataType.DT_PROTOCOL_FLOW, len(param))
                     if self.usbwrite(pkt1):
@@ -358,6 +354,8 @@ class DAXFlash(metaclass=LogBase):
                             if dwords == 1:
                                 return val
                             res.append(val)
+                else:
+                    self.error(f"Error on download: {self.eh.status(status)}")
         return res
 
     def write(self, addr, dwords):
@@ -366,7 +364,8 @@ class DAXFlash(metaclass=LogBase):
         pos = 0
         for val in dwords:
             if self.send(self.Cmd.UPLOAD):
-                if self.status() == 0:
+                status=self.status()
+                if status==0x0:
                     param = pack("<II", addr + pos, val)
                     pkt1 = pack("<III", self.Cmd.MAGIC, self.DataType.DT_PROTOCOL_FLOW, len(param))
                     if self.usbwrite(pkt1):
@@ -375,6 +374,7 @@ class DAXFlash(metaclass=LogBase):
                             if len(dwords) == 1:
                                 return True
                 else:
+                    self.error(f"Error on upload: {self.eh.status(status)}")
                     return False
             pos += 4
         return True
@@ -400,13 +400,7 @@ class DAXFlash(metaclass=LogBase):
                             if status == 0x434E5953:
                                 return True
                             else:
-                                if status in ErrorCodes_XFlash:
-                                    errorstring = ErrorCodes_XFlash[status]
-                                    if display:
-                                        self.error(f"Error on boot to: {errorstring}")
-                                else:
-                                    if display:
-                                        self.error(f"Error on boot to, status {hex(status)}.")
+                                self.error(f"Error on boot to: {self.eh.status(status)}")
         return False
 
     def get_connection_agent(self):
@@ -416,11 +410,7 @@ class DAXFlash(metaclass=LogBase):
         if status == 0x0:
             return res
         else:
-            if status in ErrorCodes_XFlash:
-                errorstring = ErrorCodes_XFlash[status]
-                self.error(f"Error on getting connection agent: {errorstring}")
-            else:
-                self.error(f"Error on getting connection agent, status {hex(status)}.")
+            self.error(f"Error on getting connection agent: {self.eh.status(status)}")
         return None
 
     """
@@ -504,7 +494,8 @@ class DAXFlash(metaclass=LogBase):
         storage, parttype, length = part_info
 
         if self.send(self.Cmd.FORMAT):
-            if self.status() == 0:
+            status=self.status()
+            if status == 0:
                 # storage: emmc:1,slc,nand,nor,ufs
                 # section: boot,user of emmc:8, LU1, LU2
 
@@ -520,12 +511,9 @@ class DAXFlash(metaclass=LogBase):
                     status = self.ack()
                 if status == 0x40040005:  # STATUS_COMPLETE
                     return True
-                else:
-                    if status in ErrorCodes_XFlash:
-                        errorstring = ErrorCodes_XFlash[status]
-                        self.error(f"Error on sending formatting: {errorstring}")
-                    else:
-                        self.error(f"Error on sending formatting, status {hex(status)}.")
+
+            if status!=0x0:
+                self.error(f"Error on format: {self.eh.status(status)}")
         return False
 
     def get_chip_id(self):
@@ -540,13 +528,17 @@ class DAXFlash(metaclass=LogBase):
         data = self.send_devctrl(self.Cmd.GET_CHIP_ID)
         cid.hw_code, cid.hw_sub_code, cid.hw_version, cid.sw_version, cid.chip_evolution = unpack(">HHHHH",
                                                                                                   data[:(5 * 2)])
-        if self.status() == 0:
+        status=self.status()
+        if status == 0:
             return cid
+        else:
+            self.error(f"Error on getting chip id: {self.eh.status(status)}")
         return None
 
     def get_ram_info(self):
         resp = self.send_devctrl(self.Cmd.GET_RAM_INFO)
-        if self.status() == 0x0:
+        status=self.status()
+        if status == 0x0:
             class RamInfo:
                 type = 0
                 base_address = 0
@@ -562,11 +554,14 @@ class DAXFlash(metaclass=LogBase):
                                                                                                           resp)
 
             return sram, dram
+        else:
+            self.error(f"Error on getting ram info: {self.eh.status(status)}")
         return None, None
 
     def get_emmc_info(self, display=True):
         resp = self.send_devctrl(self.Cmd.GET_EMMC_INFO)
-        if self.status() == 0:
+        status=self.status()
+        if status == 0:
             class EmmcInfo:
                 type = 1  # emmc or sdmmc or none
                 block_size = 0x200
@@ -606,11 +601,14 @@ class DAXFlash(metaclass=LogBase):
                 self.info(f"EMMC RPMB Size:  {hex(emmc.rpmb_size)}")
                 self.info(f"EMMC USER Size:  {hex(emmc.user_size)}")
             return emmc
+        else:
+            self.error(f"Error on getting emmc info: {self.eh.status(status)}")
         return None
 
     def get_nand_info(self):
         resp = self.send_devctrl(self.Cmd.GET_NAND_INFO)
-        if self.status() == 0:
+        status=self.status()
+        if status == 0:
             class NandInfo:
                 type = 1  # slc, mlc, spi, none
                 page_size = 0
@@ -638,11 +636,14 @@ class DAXFlash(metaclass=LogBase):
                 self.info(f"NAND Avail:      {hex(nand.available_size)}")
                 self.info(f"NAND ID:         {hexlify(nand.nand_id).decode('utf-8')}")
             return nand
+        else:
+            self.error(f"Error on getting nand info: {self.eh.status(status)}")
         return None
 
     def get_nor_info(self):
         resp = self.send_devctrl(self.Cmd.GET_NOR_INFO)
-        if self.status() == 0:
+        status=self.status()
+        if status == 0:
             class NorInfo:
                 type = 1  # nor, none
                 page_size = 0
@@ -654,11 +655,14 @@ class DAXFlash(metaclass=LogBase):
                 self.info(f"NOR Pagesize: {hex(nor.page_size)}")
                 self.info(f"NOR Size:     {hex(nor.available_size)}")
             return nor
+        else:
+            self.error(f"Error on getting nor info: {self.eh.status(status)}")
         return None
 
     def get_ufs_info(self):
         resp = self.send_devctrl(self.Cmd.GET_UFS_INFO)
-        if self.status() == 0:
+        status=self.status()
+        if status == 0:
             class UfsInfo:
                 type = 1  # nor, none
                 block_size = 0
@@ -684,31 +688,45 @@ class DAXFlash(metaclass=LogBase):
                 self.mtk.config.pagesize = ufs.block_size
                 self.mtk.daloader.daconfig.pagesize = ufs.block_size
             return ufs
+        else:
+            self.error(f"Error on getting ufs info: {self.eh.status(status)}")
         return None
 
     def get_expire_date(self):
         res = self.send_devctrl(self.Cmd.GET_EXPIRE_DATE)
         if res != b"":
-            if self.status() == 0x0:
+            status=self.status()
+            if status == 0x0:
                 return res
+            else:
+                self.error(f"Error on getting expire date: {self.eh.status(status)}")
         return None
 
     def get_random_id(self):
         res = self.send_devctrl(self.Cmd.GET_RANDOM_ID)
-        if self.status() == 0:
+        status=self.status()
+        if status == 0:
             return res
+        else:
+            self.error(f"Error on getting random id: {self.eh.status(status)}")
         return None
 
     def get_hrid(self):
         res = self.send_devctrl(self.Cmd.GET_HRID)
-        if self.status() == 0:
+        status=self.status()
+        if status == 0:
             return res
+        else:
+            self.error(f"Error on getting hrid info: {self.eh.status(status)}")
         return None
 
     def get_dev_fw_info(self):
         res = self.send_devctrl(self.Cmd.GET_DEV_FW_INFO)
-        if self.status() == 0:
+        status=self.status()
+        if status == 0:
             return res
+        else:
+            self.error(f"Error on getting dev fw info: {self.eh.status(status)}")
         return None
 
     def get_da_stor_life_check(self):
@@ -727,17 +745,14 @@ class DAXFlash(metaclass=LogBase):
             plen.write_packet_length, plen.read_packet_length = unpack("<II", resp)
             return plen
         else:
-            if status in ErrorCodes_XFlash:
-                errorstring = ErrorCodes_XFlash[status]
-                self.error(f"Error on getting packet length: {errorstring}")
-            else:
-                self.error(f"Error on getting packet length, status {hex(status)}.")
+            self.error(f"Error on getting packet length: {self.eh.status(status)}")
         return None
 
     def cmd_write_data(self, addr, size, storage=DaStorage.MTK_DA_STORAGE_EMMC,
                        parttype=EMMC_PartitionType.MTK_DA_EMMC_PART_USER):
         if self.send(self.Cmd.WRITE_DATA):
-            if self.status() == 0:
+            status=self.status()
+            if status == 0:
                 # storage: emmc:1,slc,nand,nor,ufs
                 # section: boot,user of emmc:8, LU1, LU2
                 ne = NandExtension()
@@ -746,12 +761,15 @@ class DAXFlash(metaclass=LogBase):
                               ne.sys_slc_percent, ne.usr_slc_percent, ne.phy_max_size, 0x0)
                 if self.send_param(param):
                     return True
+            else:
+                self.error(f"Error on writing data: {self.eh.status(status)}")
         return False
 
     def cmd_read_data(self, addr, size, storage=DaStorage.MTK_DA_STORAGE_EMMC,
                       parttype=EMMC_PartitionType.MTK_DA_EMMC_PART_USER):
         if self.send(self.Cmd.READ_DATA):
-            if self.status() == 0:
+            status=self.status()
+            if status == 0:
                 # storage: emmc:1,slc,nand,nor,ufs
                 # section: boot,user of emmc:8, LU1, LU2
                 ne = NandExtension()
@@ -762,12 +780,8 @@ class DAXFlash(metaclass=LogBase):
                 status = self.status()
                 if status == 0x0:
                     return True
-                else:
-                    if status in ErrorCodes_XFlash:
-                        errorstring = ErrorCodes_XFlash[status]
-                        self.error(f"Error on reading data: {errorstring}")
-                    else:
-                        self.error(f"Error on reading data, status {hex(status)}.")
+            if status != 0x0:
+                self.error(f"Error on reading data: {self.eh.status(status)}")
         return False
 
     def readflash(self, addr, length, filename, parttype=None, display=True):
@@ -812,9 +826,12 @@ class DAXFlash(metaclass=LogBase):
 
     def close(self):
         if self.send(self.Cmd.SHUTDOWN):
-            if self.status() == 0:
+            status=self.status()
+            if status == 0:
                 self.mtk.port.close()
                 return True
+            else:
+                self.error(f"Error on sending shutdown: {self.eh.status(status)}")
         self.mtk.port.close()
         return False
 
@@ -861,10 +878,13 @@ class DAXFlash(metaclass=LogBase):
                             return False
                         bytestowrite -= dsize
                         pos += dsize
-                    if self.status() == 0x0:
+                    status=self.status()
+                    if status == 0x0:
                         self.send_devctrl(self.Cmd.CC_OPTIONAL_DOWNLOAD_ACT)
                         self.progress.show_progress("Write", length, length, display)
                         return True
+                    else:
+                        self.error(f"Error on writeflash: {self.eh.status(status)}")
             except Exception as e:
                 self.error(str(e))
                 return False

@@ -95,11 +95,11 @@ class hwcrypto(metaclass=LogBase):
             self.gcpu.init()
             self.gcpu.acquire()
             self.info("Disable Caches")
-            refreshcache(0xB1)
+            refreshcache(b"\xB1")
             self.info("GCPU Disable Range Blacklist")
             self.gcpu.disable_range_blacklist()
         elif btype == "cqdma":
             self.info("Disable Caches")
-            refreshcache(0xB1)
+            refreshcache(b"\xB1")
             self.info("CQDMA Disable Range Blacklist")
             self.cqdma.disable_range_blacklist()

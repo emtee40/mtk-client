@@ -367,7 +367,7 @@ class Main(metaclass=LogBase):
                         if mtk.preloader.send_da(daaddr, len(dadata), 0x100, dadata):
                             self.info(f"Sent preloader to {hex(daaddr)}, length {hex(len(dadata))}")
                             if mtk.preloader.jump_da(daaddr):
-                                self.info(f"PL Jumped to pl {hex(daaddr)}.")
+                                self.info(f"PL Jumped to daaddr {hex(daaddr)}.")
                                 time.sleep(2)
                                 mtk = Mtk(loader=self.args["--loader"], loglevel=self.__logger.level, vid=vid, pid=pid,
                                           interface=interface,
@@ -404,6 +404,7 @@ class Main(metaclass=LogBase):
                                         daaddr = mtk.config.chipconfig.pl_payload_addr
                                     else:
                                         daaddr = 0x40200000  # 0x40001000
+                                    self.info(f"\nSuccessfully connected to pl, loading stage2 at addr {hex(daaddr)}")
                                     if mtk.preloader.send_da(daaddr, len(dadata), 0x100, dadata):
                                         self.info(f"Sent da to {hex(daaddr)}, length {hex(len(dadata))}")
                                         mtk.preloader.get_hw_sw_ver()

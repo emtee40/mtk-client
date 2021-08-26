@@ -147,7 +147,7 @@ hwconfig = {
         uart=0x11005000,
         brom_payload_addr=0x100A00,
         da_payload_addr=0x2008000,
-        pl_payload_addr=0x2008000,
+        pl_payload_addr=0x81E00000, #
         # no gcpu_base =0x10210000,
         sej_base =0x1000A000,  # hacc
         # no dxcc
@@ -167,8 +167,9 @@ hwconfig = {
     0x3967: chipconfig(  # var1
         # watchdog
         # uart
-        # brom_payload_addr
+        brom_payload_addr=0x100A00,
         da_payload_addr=0x201000,
+        pl_payload_addr=0x40020000,
         # gcpu_base
         # sej_base
         # no dxcc
@@ -244,6 +245,7 @@ hwconfig = {
         uart=0x11002000,
         brom_payload_addr=0x100A00,  # todo: check
         da_payload_addr=0x201000,
+        pl_payload_addr=0x80001000, #
         gcpu_base=0x1020D000,
         sej_base=0x1000A000,
         # no dxcc
@@ -255,8 +257,8 @@ hwconfig = {
     0x6571: chipconfig(  # var1
         watchdog=0x10007400,
         # uart
-        da_payload_addr=0x2008000,
-        pl_payload_addr=0x801E0000,
+        da_payload_addr=0x2009000,
+        pl_payload_addr=0x80001000,
         # gcpu_base
         # sej_base
         # no dxcc
@@ -272,7 +274,7 @@ hwconfig = {
         uart=0x11005000,
         brom_payload_addr=0x10036A0,
         da_payload_addr=0x2008000,
-        pl_payload_addr=0x801E0000,
+        pl_payload_addr=0x81E00000, #
         # gcpu_base
         # sej_base
         # no dxcc
@@ -290,12 +292,13 @@ hwconfig = {
         name="MT6572",
         loader="mt6572_payload.bin"),
     0x6573: chipconfig(  # var1
-        watchdog=0x220,
+        watchdog=0x70025000,
         # uart
-        da_payload_addr=0x90005000,
+        da_payload_addr=0x90006000,
+        pl_payload_addr=0xf1020000,
         # gcpu_base
-        # sej_base
-        # dxcc_base
+        sej_base=0x7002A000,
+        # no dxcc
         # cqdma_base
         # ap_dma_mem
         # blacklist
@@ -303,27 +306,27 @@ hwconfig = {
         dacode=0x6573,
         name="MT6573/MT6260"),
     0x6575: chipconfig(  # var1
-        watchdog=0xC0000000,
+        watchdog=0xC0000000, #
         # uart
-        da_payload_addr=0xc2000000,
+        da_payload_addr=0xc2001000,
+        pl_payload_addr=0xc2058000,
         # gcpu_base
-        # sej_base
-        # dxcc_base
-        # cqdma_base
-        # ap_dma_mem
-        # blacklist
-        ap_dma_mem=0xC100119C,
         sej_base=0xC101A000,
+        # no dxcc
+        # cqdma_base
+        ap_dma_mem=0xC100119C,
+        # blacklist
         damode=damodes.DEFAULT,  #
         dacode=0x6575,
         name="MT6575/77"),
     0x6577: chipconfig(  # var1
         watchdog=0xC0000000,  # fixme
         uart=0xC1009000,
-        da_payload_addr=0xc2000000,
+        da_payload_addr=0xc2001000,
+        pl_payload_addr=0xc2058000,
         # gcpu_base
         sej_base=0xC101A000,
-        # dxcc_base
+        # no dxcc
         # cqdma_base
         ap_dma_mem=0xC100119C,
         # blacklist
@@ -335,7 +338,7 @@ hwconfig = {
                        uart=0x11005000,
                        brom_payload_addr=0x100A00,
                        da_payload_addr=0x201000,
-                       pl_payload_addr=0x80001000,
+                       pl_payload_addr=0x80001000, #
                        # no gcpu_base
                        sej_base=0x1000A000,
                        # dxcc_base
@@ -358,10 +361,10 @@ hwconfig = {
         uart=0x11002000,
         brom_payload_addr=0x100A00,
         da_payload_addr=0x201000,
-        pl_payload_addr=0x80001000,
+        pl_payload_addr=0x80001000, #
         gcpu_base=0x1101B000,
         sej_base=0x1000A000,
-        # dxcc_base
+        # no dxcc
         # no cqdma_base
         ap_dma_mem=0x11000000 + 0x320,  # AP_DMA_I2C_0_RX_MEM_ADDR
         blacklist=[(0x102788, 0x0),(0x00105BE4, 0x0)],
@@ -379,8 +382,8 @@ hwconfig = {
         watchdog=0x10000000,  # fixme
         uart=0x11006000,
         brom_payload_addr=0x100A00,
-        da_payload_addr=0x201000,
-        pl_payload_addr=0x80001000,
+        da_payload_addr=0x12001000,
+        pl_payload_addr=0x80001000, #
         gcpu_base=0x10210000,
         sej_base=0x1000A000,
         # no dxcc
@@ -395,7 +398,7 @@ hwconfig = {
         watchdog=0x10007000,
         uart=0x11002000,
         brom_payload_addr=0x100A00,
-        da_payload_addr=0x110000,
+        da_payload_addr=0x111000,
         pl_payload_addr=0x80001000,
         gcpu_base=0x10210000,
         sej_base=0x1000A000,
@@ -417,7 +420,7 @@ hwconfig = {
                        watchdog=0x10007000,
                        uart=0x11002000,
                        brom_payload_addr=0x100A00,
-                       da_payload_addr=0x110000,
+                       da_payload_addr=0x111000,
                        # gcpu_base
                        sej_base=0x1000A000,
                        # dxcc_base
@@ -441,7 +444,7 @@ hwconfig = {
         uart=0x11002000,
         brom_payload_addr=0x100A00,
         da_payload_addr=0x201000,
-        pl_payload_addr=0x40200000,
+        pl_payload_addr=0x40200000, #
         gcpu_base=0x10216000,
         sej_base=0x10008000,  # hacc
         # no dxcc
@@ -464,7 +467,7 @@ hwconfig = {
         uart=0x11002000,
         brom_payload_addr=0x100A00,
         da_payload_addr=0x201000,
-        pl_payload_addr=0x40200000,
+        pl_payload_addr=0x40200000, #
         gcpu_base=0x10216000,
         sej_base=0x10008000,
         # no dxcc
@@ -488,7 +491,7 @@ hwconfig = {
         uart=0x11002000,
         brom_payload_addr=0x100A00,
         da_payload_addr=0x201000,
-        pl_payload_addr=0x40200000,
+        pl_payload_addr=0x40200000, #
         gcpu_base=0x10050000,
         sej_base=0x1000A000,  # hacc
         dxcc_base=0x10210000,
@@ -512,6 +515,7 @@ hwconfig = {
         uart=0x11002000,
         brom_payload_addr=0x100A00,
         da_payload_addr=0x201000,
+        pl_payload_addr=0x40200000, #
         gcpu_base=0x10210000,
         sej_base=0x1000A000,  # hacc
         cqdma_base=0x10212C00,
@@ -524,8 +528,8 @@ hwconfig = {
         watchdog=0x10007000,
         uart=0x11002000,
         brom_payload_addr=0x100A00,
-        da_payload_addr=0x110000,
-        pl_payload_addr=0x40001000,
+        da_payload_addr=0x201000,   #
+        pl_payload_addr=0x40001000, #
         gcpu_base=0x10210000,
         sej_base=0x1000A000,  # hacc
         # no dxcc
@@ -541,7 +545,7 @@ hwconfig = {
         uart=0x11002000,
         brom_payload_addr=0x100A00,
         da_payload_addr=0x201000,
-        pl_payload_addr=0x40200000,
+        pl_payload_addr=0x40200000, #
         gcpu_base=0x10216000,
         sej_base=0x10008000,
         # no dxcc
@@ -564,9 +568,10 @@ hwconfig = {
         uart=0x11002000,
         brom_payload_addr=0x100A00,
         da_payload_addr=0x201000,
-        pl_payload_addr=0x40200000,
+        pl_payload_addr=0x40200000, #
         gcpu_base=0x10210000,
         sej_base=0x1000A000,  # hacc
+        # no dxcc
         cqdma_base=0x10212C00,
         ap_dma_mem=0x11000000 + 0x1A0,  # AP_DMA_I2C_1_RX_MEM_ADDR
         blacklist=[(0x10276C, 0x0),(0x00105704, 0x0)],
@@ -587,9 +592,10 @@ hwconfig = {
         uart=0x11002000,
         brom_payload_addr=0x100A00,
         da_payload_addr=0x201000,
-        pl_payload_addr=0x40200000,
+        pl_payload_addr=0x40200000, #
         gcpu_base=0x10210000,
         sej_base=0x1000A000,
+        # no dxcc
         cqdma_base=0x10212C00,
         ap_dma_mem=0x11000000 + 0x1A0,  # AP_DMA_I2C_1_RX_MEM_ADDR
         blacklist=[(0x102774, 0x0), (0x00105704, 0x0)],
@@ -604,42 +610,63 @@ hwconfig = {
         name="MT6757/MT6757D",
         description="Helio P20",
         loader="mt6757_payload.bin"),
-    0x688: chipconfig(  # var1
+    0x688: chipconfig(
+        #var1
         watchdog=0x10210000,
         uart=0x11020000,
-        brom_payload_addr=0x100A00,  # todo
+        brom_payload_addr=0x100A00,
         da_payload_addr=0x201000,
+        pl_payload_addr=0x40200000, #
         gcpu_base=0x10050000,
         sej_base=0x10080000,  # hacc
-        # no dxcc
+        dxcc_base=0x11240000,
         cqdma_base=0x10200000,
         ap_dma_mem=0x11000000 + 0x1A0,
         # blacklist
+        # blacklist_count
+        # send_ptr
+        # ctrl_buffer
+        # cmd_handler
+        # brom_Register_access
+        # meid_addr
         damode=damodes.XFLASH,
         dacode=0x6758,
-        name="MT6758"
+        name="MT6758",
+        description="Helio P30",
+        # loader
     ),
     0x507: chipconfig(  # var1
         watchdog=0x10210000,
         uart=0x11020000,
         brom_payload_addr=0x100A00,  # todo
         da_payload_addr=0x201000,
+        # pl_payload_addr
         gcpu_base=0x10210000,
         # sej_base
+        # dxcc_base
         # cqdma_base
         ap_dma_mem=0x1030000 + 0x1A0,  # todo
         # blacklist
+        # blacklist_count
+        # send_ptr
+        # ctrl_buffer
+        # cmd_handler
+        # brom_Register_access
+        # meid_addr
         damode=damodes.DEFAULT,
-        dacode=0x6759,  # todo
+        dacode=0x6758,
         name="MT6759",
-        description="Helio P30"),
+        description="Helio P30"
+        # loader
+    ),
+
     0x717: chipconfig(
         var1=0x25,
         watchdog=0x10007000,
         uart=0x11002000,
         brom_payload_addr=0x100A00,
         da_payload_addr=0x201000,
-        pl_payload_addr=0x40200000,
+        pl_payload_addr=0x40200000, #
         gcpu_base=0x10050000,
         sej_base=0x1000A000,  # hacc
         dxcc_base=0x10210000,
@@ -664,6 +691,7 @@ hwconfig = {
         uart=0x11002000,
         brom_payload_addr=0x100A00,
         da_payload_addr=0x201000,
+        pl_payload_addr=0x40200000, #
         gcpu_base=0x10050000,
         dxcc_base=0x10210000,
         sej_base=0x1000A000,  # hacc
@@ -688,7 +716,7 @@ hwconfig = {
         uart=0x11002000,
         brom_payload_addr=0x100A00,
         da_payload_addr=0x201000,
-        pl_payload_addr=0x40200000,
+        pl_payload_addr=0x40200000, #
         gcpu_base=0x10050000,  # not confirmed
         sej_base=0x1000a000,  # hacc
         dxcc_base=0x10210000,
@@ -708,12 +736,12 @@ hwconfig = {
         description="Helio P35/G35",
         loader="mt6765_payload.bin"),
     0x707: chipconfig(
-        var1=0x25,  # todo
+        var1=0x25,
         watchdog=0x10007000,
         uart=0x11002000,
         brom_payload_addr=0x100A00,
         da_payload_addr=0x201000,
-        pl_payload_addr=0x40200000,
+        pl_payload_addr=0x40200000, #
         gcpu_base=0x10050000,
         sej_base=0x1000A000,  # hacc
         dxcc_base=0x10210000,
@@ -730,7 +758,7 @@ hwconfig = {
         damode=damodes.XFLASH,
         dacode=0x6768,
         name="MT6768",
-        description="Helio P65/G85",
+        description="Helio P65/G85 k68v1",
         loader="mt6768_payload.bin"),
     0x788: chipconfig(
         var1=0xA,
@@ -738,7 +766,7 @@ hwconfig = {
         uart=0x11002000,
         brom_payload_addr=0x100A00,
         da_payload_addr=0x201000,
-        pl_payload_addr=0x40200000,
+        pl_payload_addr=0x40200000, #
         gcpu_base=0x10050000,
         sej_base=0x1000A000,  # hacc
         dxcc_base=0x10210000,  # dxcc_sec
@@ -773,7 +801,7 @@ hwconfig = {
                       uart=0x11002000,
                       brom_payload_addr=0x100A00,
                       da_payload_addr=0x201000,
-                      pl_payload_addr=0x40200000,
+                      pl_payload_addr=0x40200000, #
                       gcpu_base=0x10050000,
                       sej_base=0x1000a000,  # hacc
                       dxcc_base=0x10210000,
@@ -790,7 +818,7 @@ hwconfig = {
                       damode=damodes.XFLASH,
                       dacode=0x6779,
                       name="MT6779",
-                      description="Helio P90",
+                      description="Helio P90 k79v1",
                       loader="mt6779_payload.bin"),
     0x1066: chipconfig(
         # var1=0xA, #confirmed
@@ -823,7 +851,7 @@ hwconfig = {
                       uart=0x11002000,
                       brom_payload_addr=0x100A00,
                       da_payload_addr=0x201000,
-                      pl_payload_addr=0x40200000,
+                      pl_payload_addr=0x40200000, #
                       gcpu_base=0x10050000,
                       sej_base=0x1000A000,  # hacc
                       dxcc_base=0x10210000,
@@ -848,7 +876,7 @@ hwconfig = {
         uart=0x11002000,
         brom_payload_addr=0x100A00,
         da_payload_addr=0x110000,
-        pl_payload_addr=0x40200000,
+        pl_payload_addr=0x40200000, #
         gcpu_base=0x10210000,
         sej_base=0x1000A000,  # hacc
         # no dxcc
@@ -872,7 +900,7 @@ hwconfig = {
         uart=0x11002000,
         brom_payload_addr=0x100A00,
         da_payload_addr=0x201000,
-        pl_payload_addr=0x40200000,
+        pl_payload_addr=0x40200000, #
         gcpu_base=0x10210000,
         # no dxcc
         sej_base=0x1000A000,  # hacc
@@ -896,11 +924,11 @@ hwconfig = {
         uart=0x11020000,
         brom_payload_addr=0x100A00,
         da_payload_addr=0x201000,
-        pl_payload_addr=0x40200000,
+        pl_payload_addr=0x40200000, # not confirmed
         gcpu_base=0x10210000,
         cqdma_base=0x11B30000,
         ap_dma_mem=0x11000000 + 0x1A0,  # AP_DMA_I2C_2_RX_MEM_ADDR
-        # no dxcc
+        dxcc_base=0x11B20000,
         sej_base=0x1000A000,
         blacklist=[(0x00102870, 0x0),(0x00107070, 0x0)],
         blacklist_count=0x0000000A,
@@ -921,12 +949,12 @@ hwconfig = {
         uart=0x11002000,
         brom_payload_addr=0x100A00,  #
         da_payload_addr=0x201000,  #
-        pl_payload_addr=0x40200000,
-        # gcpu_base=0x10050000, #
+        pl_payload_addr=0x40200000, #
+        gcpu_base=0x10050000,
         dxcc_base=0x10210000,
         sej_base=0x1000a000,  # hacc
-        # cqdma_base=0x10212000, #
-        # ap_dma_mem=0x11000a80 + 0x1a0,  # todo check
+        cqdma_base=0x10212000,
+        ap_dma_mem=0x10217a80 + 0x1a0,
         blacklist=[(0x00102844, 0x0),(0x00106B54, 0x0)],
         blacklist_count=0x0000000A,
         send_ptr=(0x102884, 0xdfe0),
@@ -938,18 +966,19 @@ hwconfig = {
         damode=damodes.XFLASH,
         dacode=0x6833,
         name="MT6833",
-        description="Dimensity 700 5G",
+        description="Dimensity 700 5G k6833",
         loader="mt6833_payload.bin"),
     0x996: chipconfig(var1=0xA,
                       watchdog=0x10007000,
                       uart=0x11002000,
                       brom_payload_addr=0x100A00,
                       da_payload_addr=0x201000,
+                      pl_payload_addr=0x40200000, #
                       gcpu_base=0x10050000,
                       dxcc_base=0x10210000,
                       cqdma_base=0x10212000,
                       sej_base=0x1000a000,  # hacc
-                      ap_dma_mem=0x11000000 + 0x1A0,
+                      ap_dma_mem=0x10217a80 + 0x1A0,
                       blacklist=[(0x10284C, 0x0),(0x00106B60, 0x0)],
                       blacklist_count=0x0000000A,
                       send_ptr=(0x10288c, 0xea64),
@@ -974,7 +1003,7 @@ hwconfig = {
         dxcc_base=0x10210000,
         sej_base=0x1000a000,  # hacc
         cqdma_base=0x10212000,
-        ap_dma_mem=0x11000000 + 0x1A0,
+        ap_dma_mem=0x10217a80 + 0x1A0,
         blacklist=[(0x10284C, 0x0),(0x00106B60, 0x0)],
         blacklist_count=0x0000000A,
         send_ptr=(0x10288c, 0xea78),
@@ -994,15 +1023,24 @@ hwconfig = {
         # brom_payload_addr
         # da_payload_addr
         # gcpu_base
-        dxcc_base=0x10210000,
         sej_base=0x1000a000,  # hacc
+        dxcc_base=0x10210000,
         # cqdma_base
         # ap_dma_mem
         # blacklist
+        # blacklist_count
+        # send_ptr
+        # ctrl_buffer
+        # cmd_handler
+        # brom_register_access
+        # meid_addr=
+        # socid_addr=
         damode=damodes.XFLASH,
         dacode=0x6877,  # todo
+        name="MT6877",
         description="Dimensity 900",
-        name="MT6877"),
+        # loader
+        ),
     0x816: chipconfig(
         var1=0xA,  # confirmed
         watchdog=0x10007000,
@@ -1014,7 +1052,7 @@ hwconfig = {
         dxcc_base=0x10210000,
         sej_base=0x1000a000,  # hacc
         cqdma_base=0x10212000,
-        ap_dma_mem=0x11000a80 + 0x1a0,  # todo check
+        ap_dma_mem=0x11000a80 + 0x1a0,
         blacklist=[(0x102848, 0x0),(0x00106B60, 0x0)],
         blacklist_count=0x0000000A,
         send_ptr=(0x102888, 0xE6FC),
@@ -1035,11 +1073,11 @@ hwconfig = {
         brom_payload_addr=0x100A00,
         da_payload_addr=0x201000,
         pl_payload_addr=0x40200000,
-        #gcpu_base=0x10050000,
+        gcpu_base=0x10050000,
         dxcc_base=0x10210000,
         sej_base=0x1000a000,  # hacc
-        #cqdma_base=0x10212000,
-        #ap_dma_mem=0x11000a80 + 0x1a0,  # todo check
+        cqdma_base=0x10212000,
+        ap_dma_mem=0x11000a80 + 0x1a0,
         blacklist=[(0x102848, 0x0), (0x00106B60, 0x0)],
         blacklist_count=0x0000000A,
         send_ptr=(0x102888, 0xE79C),
@@ -1094,21 +1132,32 @@ hwconfig = {
         # uart
         # brom_payload_addr
         da_payload_addr=0x12001000,
+        # pl_payload_addr
         # gcpu_base
         # sej_base
         # cqdma_base
         # ap_dma_mem
         # blacklist
+        # blacklist_count
+        # send_ptr
+        # ctrl_buffer
+        # cmd_handler
+        # brom_register_access
+        # meid_addr
+        # socid_addr
         damode=damodes.DEFAULT,  #
         dacode=0x8135,
-        name="MT8135"),
+        name="MT8135"
+        # description
+        # loader
+        ),
     0x8163: chipconfig(
         var1=0xB1,
         watchdog=0x10007000,
         uart=0x11002000,
         brom_payload_addr=0x100A00,
         da_payload_addr=0x201000,
-        pl_payload_addr=0x40001000,
+        pl_payload_addr=0x40001000, #
         gcpu_base=0x10210000,
         sej_base=0x1000A000,
         # no dxcc
@@ -1130,7 +1179,7 @@ hwconfig = {
                        uart=0x11005000,
                        brom_payload_addr=0x100A00,
                        da_payload_addr=0x201000,
-                       pl_payload_addr=0x40001000,
+                       pl_payload_addr=0x40001000, #
                        gcpu_base=0x1020D000,
                        sej_base=0x1000A000,
                        # no dxcc
@@ -1147,30 +1196,43 @@ hwconfig = {
                        damode=damodes.XFLASH,
                        dacode=0x8167,
                        name="MT8167/MT8516/MT8362",
+                       # description
                        loader="mt8167_payload.bin"),
     0x8168: chipconfig(  # var1
         watchdog=0x10007000,
         uart=0x11002000,
         brom_payload_addr=0x100A00,
-        da_payload_addr=0x201000,  # todo
+        da_payload_addr=0x201000,
+        # pl_payload_addr=0x40001000
         # gcpu_base
-        # sej_base
+        # sej_base=0x1000A000,
         # cqdma_base
-        ap_dma_mem=0x11000000 + 0x1A0,
+        ap_dma_mem=0x11000280 + 0x1A0,
         # blacklist
+        # blacklist_count
+        # send_ptr
+        # ctrl_buffer
+        # cmd_handler
+        # brom_register_access
+        # meid_addr
+        # socid_addr
         damode=damodes.XFLASH,
         dacode=0x8168,
-        name="MT8168"),
+        name="MT8168"
+        # description
+        # loader
+        ),
     0x8172: chipconfig(
         var1=0xA,
         watchdog=0x10007000,
         uart=0x11002000,
         brom_payload_addr=0x120A00,
-        da_payload_addr=0xc0000,
-        pl_payload_addr=0x40200000,
+        da_payload_addr=0xC0000,
+        pl_payload_addr=0x40001000, #
         # gcpu_base
-        # sej_base
-        # cqdma_base
+        sej_base=0x1000a000,
+        # no dxcc
+        cqdma_base=0x10212c00,
         ap_dma_mem=0x11000000 + 0x1A0,
         blacklist=[(0x122774, 0x0),(0x00125904, 0x0)],
         blacklist_count=0x00000008,
@@ -1182,46 +1244,82 @@ hwconfig = {
         damode=damodes.DEFAULT,  #
         dacode=0x8173,
         name="MT8173",
+        # description
         loader="mt8173_payload.bin"),  # sloane, suez
-    0x8176: chipconfig(  # var1
+    0x8176: chipconfig(
+        # var1
         watchdog=0x10212c00,
-        # uart
-        # brom_payload_addr
-        # da_payload_addr
+        uart=0x11002000,
+        brom_payload_addr=0x120A00,
+        da_payload_addr=0xC0000,
+        pl_payload_addr=0x40200000,
         # gcpu_base
-        # sej_base
-        # cqdma_base
-        # ap_dma_mem
+        sej_base=0x1000A000,
+        # no dxcc
+        cqdma_base=0x10212c00,
+        ap_dma_mem=0x11000000 + 0x1A0,
         # blacklist
+        # blacklist_count
+        # send_ptr
+        # ctrl_buffer
+        # cmd_handler
+        # brom_register_access
+        # meid_addr
+        # socid_addr
         dacode=0x8173,
-        damode=damodes.DEFAULT,  #
-        name="MT8176"),
-    0x930: chipconfig(  # var1
+        damode=damodes.DEFAULT,
+        # description
+        name="MT8176"
+        # loader
+    ),
+    0x930: chipconfig(
+        # var1
         # watchdog
         # uart
-        # brom_payload_addr
+        brom_payload_addr=0x100A00,
         da_payload_addr=0x201000,
+        pl_payload_addr=0x40200000,
         # gcpu_base
         # sej_base
         # cqdma_base
         # ap_dma_mem
         # blacklist
+        # blacklist_count
+        # send_ptr
+        # ctrl_buffer
+        # cmd_handler
+        # brom_register_access
+        # meid_addr
+        # socid_addr
         dacode=0x8195,
         damode=damodes.XFLASH,
-        name="MT8195"),
+        # description
+        name="MT8195"
+        # loader
+    ),
     0x8512: chipconfig(  # var1
         # watchdog
         # uart
         # brom_payload_addr
-        da_payload_addr=0x110000,
+        da_payload_addr=0x111000,
         # gcpu_base
         # sej_base
         # cqdma_base
         # ap_dma_mem
         # blacklist
+        # blacklist_count
+        # send_ptr
+        # ctrl_buffer
+        # cmd_handler
+        # brom_register_access
+        # meid_addr
+        # socid_addr
         dacode=0x8512,
         damode=damodes.XFLASH,
-        name="MT8512"),
+        # description
+        name="MT8512"
+        # loader
+    ),
     0x8518: chipconfig(  # var1
         # watchdog
         # uart
@@ -1232,11 +1330,18 @@ hwconfig = {
         # cqdma_base
         # ap_dma_mem
         # blacklist
+        # blacklist_count
+        # send_ptr
+        # ctrl_buffer
+        # cmd_handler
+        # brom_register_access
+        # meid_addr
+        # socid_addr
         dacode=0x8518,
         damode=damodes.XFLASH,
         name="MT8518"),
     0x8590: chipconfig(
-        var1=0xA,  # confirmed
+        var1=0xA,  # confirmed, router
         watchdog=0x10007000,
         uart=0x11002000,
         brom_payload_addr=0x100A00,
@@ -1256,6 +1361,7 @@ hwconfig = {
         dacode=0x8590,
         damode=damodes.DEFAULT,
         name="MT8590/MT7683/MT8521/MT7623",
+        #description=
         loader="mt8590_payload.bin"),
     0x8695: chipconfig(
         var1=0xA,  # confirmed
@@ -1263,9 +1369,9 @@ hwconfig = {
         uart=0x11002000,
         brom_payload_addr=0x100A00,
         da_payload_addr=0x201000,
-        pl_payload_addr=0x40001000,
+        pl_payload_addr=0x40001000, #
         # gcpu_base
-        # sej_base
+        sej_base=0x1000A000,
         # cqdma_base
         ap_dma_mem=0x11000280 + 0x1A0,
         blacklist=[(0x103048, 0x0),(0x00106EC4, 0x0)],
@@ -1277,9 +1383,11 @@ hwconfig = {
         meid_addr=0x1032B8,
         damode=damodes.XFLASH,
         dacode=0x8695,
-        name="MT8695",
+        name="MT8695", #mantis
+        # description
         loader="mt8695_payload.bin"),
-    0x908: chipconfig(  # var1
+    0x908: chipconfig(
+        # var1
         watchdog=0x10007000,
         # uart
         brom_payload_addr=0x100A00,
@@ -1289,9 +1397,19 @@ hwconfig = {
         # cqdma_base
         # ap_dma_mem
         # blacklist
+        # blacklist_count
+        # send_ptr
+        # ctrl_buffer
+        # cmd_handler
+        # brom_register_access
+        # meid_addr
+        # socid_addr
         damode=damodes.XFLASH,
         dacode=0x8696,
-        name="MT8696"),
+        # description
+        name="MT8696"
+        # loader
+    ),
 }
 
 

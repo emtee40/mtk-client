@@ -281,9 +281,11 @@ ErrorCodes_XFlash={
 class ErrorHandler:
     def __init__(self):
         self.ec = ErrorCodes
+        self.xec = ErrorCodes_XFlash
 
     def status(self, status):
         if status in self.ec:
             return self.ec[status]
-        else:
-            return "Unknown: " + hex(status)
+        if status in self.xec:
+            return self.xec[status]
+        return "Unknown: " + hex(status)
