@@ -10,6 +10,7 @@ from struct import pack
 from mtkclient.Library.utils import LogBase, logsetup
 from mtkclient.Library.usblib import usb_class
 
+
 class Port(metaclass=LogBase):
     class deviceclass:
         vid = 0
@@ -44,14 +45,14 @@ class Port(metaclass=LogBase):
     def run_handshake(self):
         EP_OUT = self.cdc.EP_OUT.write
         EP_IN = self.cdc.EP_IN.read
-        maxinsize=self.cdc.EP_IN.wMaxPacketSize
+        maxinsize = self.cdc.EP_IN.wMaxPacketSize
 
         i = 0
         startcmd = b"\xa0\x0a\x50\x05"
         length = len(startcmd)
         try:
             while i < length:
-                if EP_OUT(int.to_bytes(startcmd[i],1,'little')):
+                if EP_OUT(int.to_bytes(startcmd[i], 1, 'little')):
                     v = EP_IN(maxinsize)
                     if len(v) == 1 and v[0] == ~(startcmd[i]) & 0xFF:
                         i += 1
@@ -128,7 +129,7 @@ class Port(metaclass=LogBase):
         for val in data:
             self.usbwrite(val)
             tmp = self.usbread(len(val))
-            #print(hexlify(tmp))
+            # print(hexlify(tmp))
             if val != tmp:
                 return False
         return True

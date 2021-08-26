@@ -130,8 +130,9 @@ class Preloader(metaclass=LogBase):
                 self.error("Sync error. Please power off the device and retry.")
             return False
         else:
-            self.config.hwcode = self.rword()
-            self.config.hwver = self.rword()
+            val = self.rdword()
+            self.config.hwcode = (val>>16)&0xFFFF
+            self.config.hwver = val&0xFFFF
             self.config.init_hwcode(self.config.hwcode)
         da_address = args["--da_addr"]
         if da_address is not None:
