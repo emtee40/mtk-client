@@ -63,7 +63,8 @@ class Mtk(metaclass=LogBase):
         patched = False
         data = bytearray(data)
         patches = [
-            ("B3F5807F01D1", "B3F5807F01D14FF000004FF000007047"), #confirmed : mt6739 c30
+            ("A3687BB12846","0123A3602846"), #oppo security
+            ("B3F5807F01D1", "B3F5807F01D14FF000004FF000007047"), #confirmed : mt6739 c30, mt6833
             ("B3F5807F04BF4FF4807305F011B84FF0FF307047", "B3F5807F04BF4FF480734FF000004FF000007047"),
         ]
 

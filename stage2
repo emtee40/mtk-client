@@ -14,6 +14,7 @@ from mtkclient.Library.utils import LogBase
 from mtkclient.Library.utils import print_progress
 from mtkclient.Library.hwcrypto import crypto_setup, hwcrypto
 from mtkclient.config.brom_config import Mtk_Config
+from mtkclient.config.usb_ids import default_ids
 
 class Stage2(metaclass=LogBase):
     def __init__(self, args, loglevel=logging.INFO):
@@ -37,8 +38,7 @@ class Stage2(metaclass=LogBase):
         else:
             self.__logger.setLevel(logging.INFO)
 
-        portconfig = [[0x0E8D, 0x0003, -1], [0x0E8D, 0x2000, -1]]
-        self.cdc = usb_class(portconfig=portconfig, loglevel=loglevel, devclass=10)
+        self.cdc = usb_class(portconfig=default_ids, loglevel=loglevel, devclass=10)
 
     def preinit(self):
         try:
@@ -494,6 +494,8 @@ def main():
     parser_keys = subparsers.add_parser("keys", help="Write memory")
     parser_keys.add_argument('--otp', dest='otp', type=str,
                         help='OTP for keys (dxcc,sej,gcpu)')
+    parser_keys.add_argument('--mode', dest='mode', default=None, type=str,
+                        help='keymode (dxcc,sej,gcpu)')
     args = parser.parse_args()
     cmd = args.cmd
     if cmd not in cmds:
@@ -555,6 +557,7 @@ def main():
                 print(f"Failed to write data to {hex(start)}.")
         elif cmd == "keys":
             keyinfo=""
+            data=b""
             if st2.hwcrypto.meid_addr:
                 meid = st2.memread(st2.hwcrypto.meid_addr, 16)
                 keyinfo+=f"MEID: {hexlify(meid).decode('utf-8')}\n"
@@ -565,21 +568,16 @@ def main():
                 keyinfo += f"SOCID: {hexlify(socid).decode('utf-8')}\n"
                 with open(os.path.join("logs", "socid.txt"), "wb") as wf:
                     wf.write(hexlify(meid))
-            if args.mode is None:
-                print("Option --mode is needed")
-                exit(0)
-            if args.mode == "sej":
+            if st2.setup.sej_base or args.mode == "sej":
                 data = meid
                 # if not args.otp:
                 #    print("Option --otp is needed")
                 #    exit(0)
-            elif args.mode == "sej_aes_decrypt" or args.mode == "sej_aes_encrypt":
+            if args.mode == "sej_aes_decrypt" or args.mode == "sej_aes_encrypt":
                 if not args.data:
                     print("Option --data is needed")
                     exit(0)
                 data = bytes.fromhex(args.data)
-            else:
-                data = b""
             # otp_hisense=bytes.fromhex("486973656E736500000000000000000000000000000000000000000000000000")
             # st2.jump(0x223449)
             keyinfo+=st2.keys(data=data, mode=args.mode, otp=args.otp)

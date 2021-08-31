@@ -564,8 +564,10 @@ class Preloader(metaclass=LogBase):
         data = (data[:maxsize] + sigdata)
         if len(data + sigdata) % 2 != 0:
             data += b"\x00"
-        for i in range(0, len(data), 2):
-            gen_chksum ^= unpack("<H", data[i:i + 2])[0]
+        for x in range(0, len(data), 2):
+            gen_chksum ^= unpack("<H", data[x:x + 2])[0] #3CDC
+        if len(data)&1!=0:
+            gen_chksum ^= data[-1:]
         return gen_chksum, data
 
     def upload_data(self, data, gen_chksum):
@@ -580,8 +582,7 @@ class Preloader(metaclass=LogBase):
         try:
             checksum, status = self.rword(2)
             if gen_chksum != checksum and checksum != 0:
-                self.error("Checksum of upload doesn't match !")
-                return False
+                self.warning("Checksum of upload doesn't match !")
             if 0 <= status <= 0xFF:
                 return True
             else:
