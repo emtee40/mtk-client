@@ -22,7 +22,6 @@ setup(
     license='MIT License',
     install_requires=[
     'colorama',
-    'docopt',
     'usb',
     'pyusb',
     'pycryptodome'

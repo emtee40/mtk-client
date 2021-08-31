@@ -156,7 +156,7 @@ class Kamakiri(metaclass=LogBase):
                     self.linecode = self.mtk.port.cdc.device.ctrl_transfer(0xA1, 0x21, 0, 0, 7) + array.array('B', [0])
                 found, startaddr = self.newbrute(startaddr)
                 if found:
-                    filename = args["--filename"]
+                    filename = args.filename
                     if filename is None:
                         cpu = ""
                         if self.mtk.config.cpu != "":
@@ -218,7 +218,7 @@ class Kamakiri(metaclass=LogBase):
         return False, dump_ptr + 4
 
     def bruteforce(self, args, readsocid=False, enforcecrash=False):
-        var1 = args["--var1"]
+        var1 = args.var1
         if var1 is not None:
             var1 = getint(var1)
             self.info("F:Var1:\t\t" + hex(var1))
@@ -246,7 +246,7 @@ class Kamakiri(metaclass=LogBase):
                     rmtk = self.mtk.crasher(args=args, readsocid=readsocid, enforcecrash=enforcecrash,
                                             display=False)
                     try:
-                        filename = args["--filename"]
+                        filename = args.filename
                         if filename is None:
                             cpu = ""
                             if rmtk.config.cpu != "":
@@ -291,6 +291,7 @@ class Kamakiri(metaclass=LogBase):
     def dump_preloader(self, length=0x80000):
         try:
             filename = ""
+            self.mtk.port.usbwrite(pack(">I",length))
             ack = unpack("<I", self.mtk.port.usbread(4))[0]
             if ack == 0xC0C0C0C0:
                 data = self.mtk.port.usbread(length)

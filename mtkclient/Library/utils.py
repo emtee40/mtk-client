@@ -125,7 +125,7 @@ def do_tcp_server(client, arguments, handler):
     client.printer = tcpprint
     import socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    port = int(arguments["--tcpport"])
+    port = int(arguments.tcpport)
     server_address = ('localhost', port)
     print('starting up on %s port %s' % server_address)
     sock.bind(server_address)

@@ -1,6 +1,5 @@
 wheel
 pyusb
-docopt
 pycryptodome
 colorama
 usb

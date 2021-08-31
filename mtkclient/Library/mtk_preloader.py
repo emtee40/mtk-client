@@ -151,27 +151,27 @@ class Preloader(metaclass=LogBase):
             self.config.hwcode = (val >> 16) & 0xFFFF
             self.config.hwver = val & 0xFFFF
             self.config.init_hwcode(self.config.hwcode)
-        da_address = args["--da_addr"]
+        da_address = args.da_addr
         if da_address is not None:
             self.info("O:DA offset:\t\t\t" + da_address)
             self.config.chipconfig.da_payload_addr = getint(da_address)
 
-        brom_address = args["--brom_addr"]
+        brom_address = args.brom_addr
         if brom_address is not None:
             self.info("O:Payload offset:\t\t" + brom_address)
             self.config.chipconfig.brom_payload_addr = getint(brom_address)
 
-        watchdog_address = args["--wdt"]
+        watchdog_address = args.wdt
         if watchdog_address is not None:
             self.info("O:Watchdog addr:\t\t" + watchdog_address)
             self.config.chipconfig.watchdog = getint(watchdog_address)
 
-        uart_address = args["--uartaddr"]
+        uart_address = args.uart_addr
         if uart_address is not None:
             self.info("O:Uart addr:\t\t" + uart_address)
             self.config.chipconfig.uart = getint(uart_address)
 
-        var1 = args["--var1"]
+        var1 = args.var1
         if var1 is not None:
             self.info("O:Var1:\t\t" + var1)
             self.config.chipconfig.var1 = getint(var1)
@@ -202,7 +202,7 @@ class Preloader(metaclass=LogBase):
             self.info("\tHW Ver:\t\t\t" + hex(self.config.hwver))
             self.info("\tSW Ver:\t\t\t" + hex(self.config.swver))
 
-        if not args["--skipwdt"]:
+        if not args.skipwdt:
             if self.display:
                 self.info("Disabling Watchdog...")
             self.setreg_disablewatchdogtimer(self.config.hwcode)  # D4

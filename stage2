@@ -352,7 +352,7 @@ class Stage2(metaclass=LogBase):
     def keys(self, data=b"", otp=None, mode="dxcc"):
         # self.hwcrypto.disable_range_blacklist("cqdma",self.cmd_C8)
         keyinfo=""
-        if mode == "dxcc":
+        if self.setup.dxcc_base is not None:
             rpmbkey = self.hwcrypto.aes_hwcrypt(btype="dxcc",mode="rpmb")
             fdekey = self.hwcrypto.aes_hwcrypt(btype="dxcc",mode="fde")
             tfdekey = self.hwcrypto.aes_hwcrypt(btype="dxcc",mode="itrustee-fde")
@@ -364,12 +364,24 @@ class Stage2(metaclass=LogBase):
             keyinfo+="Platform: " + hexlify(platkey).decode('utf-8')+"\n"
             keyinfo+="Provisioning: " + hexlify(provkey).decode('utf-8')+"\n"
             keyinfo+="\n"
-        elif mode == "sej":
+            with open(os.path.join("logs", "rpmbkey.txt"), "wb") as wf:
+                wf.write(hexlify(rpmbkey))
+            with open(os.path.join("logs", "fdekey.txt"), "wb") as wf:
+                wf.write(hexlify(fdekey))
+            with open(os.path.join("logs", "itrustee-fdekey.txt"), "wb") as wf:
+                wf.write(hexlify(tfdekey))
+            with open(os.path.join("logs", "platkey.txt"), "wb") as wf:
+                wf.write(hexlify(platkey))
+            with open(os.path.join("logs", "provkey.txt"), "wb") as wf:
+                wf.write(hexlify(provkey))
+        elif self.setup.sej_base is not None:
             rpmbkey = self.hwcrypto.aes_hwcrypt(mode="rpmb", data=data, otp=otp, btype="sej")
             keyinfo+="\nKeys :\n-----------------------------------------\n"
             keyinfo+="RPMB: " + hexlify(rpmbkey).decode('utf-8')
             keyinfo+="\n"
-        elif mode == "sej_aes_decrypt":
+            with open(os.path.join("logs", "rpmbkey.txt"), "wb") as wf:
+                wf.write(hexlify(rpmbkey))
+        if mode == "sej_aes_decrypt":
             dec_data = self.hwcrypto.aes_hwcrypt(mode="cbc", data=data, btype="sej", encrypt=False)
             keyinfo+="\n"
             keyinfo+="Data: " + hexlify(dec_data).decode('utf-8')
@@ -480,8 +492,6 @@ def main():
     parser_reboot = subparsers.add_parser("reboot", help="Reboot device")
 
     parser_keys = subparsers.add_parser("keys", help="Write memory")
-    parser_keys.add_argument('--mode', dest='mode', type=str,
-                        help='Mode for keys (dxcc,sej,gcpu)')
     parser_keys.add_argument('--otp', dest='otp', type=str,
                         help='OTP for keys (dxcc,sej,gcpu)')
     args = parser.parse_args()
@@ -548,9 +558,13 @@ def main():
             if st2.hwcrypto.meid_addr:
                 meid = st2.memread(st2.hwcrypto.meid_addr, 16)
                 keyinfo+=f"MEID: {hexlify(meid).decode('utf-8')}\n"
+                with open(os.path.join("logs", "meid.txt"), "wb") as wf:
+                    wf.write(hexlify(meid))
             if st2.hwcrypto.socid_addr:
                 socid = st2.memread(st2.hwcrypto.socid_addr, 32)
                 keyinfo += f"SOCID: {hexlify(socid).decode('utf-8')}\n"
+                with open(os.path.join("logs", "socid.txt"), "wb") as wf:
+                    wf.write(hexlify(meid))
             if args.mode is None:
                 print("Option --mode is needed")
                 exit(0)

@@ -1,6 +1,9 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 # (c) B.Kerler 2018-2021 MIT License
+
+# DXCC = Discretix CryptoCell
+
 import logging, os
 import hashlib
 from struct import pack
@@ -1253,14 +1256,14 @@ class dxcc(metaclass=LogBase):
         ctr = Counter.new(128, initial_value=bytes_to_long(iv))
         return AES.new(key=key, counter=ctr, mode=AES.MODE_CTR).decrypt(data)
 
-    def SBROM_SHA256(self, buffer, destaddr):
+    def SBROM_SHA256(self, buffer, destaddr): #TZCC_SHA256_Init
         dataptr = destaddr+0x40
         ivptr = destaddr+0x20
         outptr = destaddr
+        self.writemem(0x1000108C, 0x18000000)
         iv = bytes.fromhex("19CDE05BABD9831F8C68059B7F520E513AF54FA572F36E3C85AE67BB67E6096A")
         self.writemem(ivptr, iv)
         self.writemem(dataptr,buffer)
-        self.writemem(0x1000108C, 0x18000000)
         self.SBROM_CryptoInitDriver(aeskeyptr=0,aesivptr=ivptr,cryptodrivermode=0)
         self.SBROM_CryptoUpdate(inputptr=dataptr,outputptr=outptr,blockSize=len(buffer), islastblock=1,
                                 cryptodrivermode=0,waitforcrypto=3)

@@ -43,9 +43,9 @@ class DAloader(metaclass=LogBase):
 
     def detect_partition(self, arguments, partitionname, parttype=None):
         fpartitions = []
-        data, guid_gpt = self.da.partition.get_gpt(int(arguments["--gpt-num-part-entries"]),
-                                                   int(arguments["--gpt-part-entry-size"]),
-                                                   int(arguments["--gpt-part-entry-start-lba"]), parttype)
+        data, guid_gpt = self.da.partition.get_gpt(int(arguments.gpt_num_part_entries),
+                                                   int(arguments.gpt_part_entry_size),
+                                                   int(arguments.gpt_part_entry_start_lba), parttype)
         if guid_gpt is None:
             return [False, fpartitions]
         else:
@@ -57,9 +57,9 @@ class DAloader(metaclass=LogBase):
 
     def get_partition_data(self, arguments, parttype=None):
         fpartitions = []
-        data, guid_gpt = self.da.partition.get_gpt(int(arguments["--gpt-num-part-entries"]),
-                                                   int(arguments["--gpt-part-entry-size"]),
-                                                   int(arguments["--gpt-part-entry-start-lba"]), parttype)
+        data, guid_gpt = self.da.partition.get_gpt(int(arguments.gpt_num_part_entries),
+                                                   int(arguments.gpt_part_entry_size),
+                                                   int(arguments.gpt_part_entry_start_lba), parttype)
         if guid_gpt is None:
             return [False, fpartitions]
         else:
@@ -67,9 +67,9 @@ class DAloader(metaclass=LogBase):
 
     def get_gpt(self, arguments, parttype=None):
         fpartitions = []
-        data, guid_gpt = self.da.partition.get_gpt(int(arguments["--gpt-num-part-entries"]),
-                                                   int(arguments["--gpt-part-entry-size"]),
-                                                   int(arguments["--gpt-part-entry-start-lba"]), parttype)
+        data, guid_gpt = self.da.partition.get_gpt(int(arguments.gpt_num_part_entries),
+                                                   int(arguments.gpt_part_entry_size),
+                                                   int(arguments.gpt_part_entry_start_lba), parttype)
         if guid_gpt is None:
             return [False, fpartitions]
         return [data, guid_gpt]

@@ -285,7 +285,7 @@ class ErrorHandler:
 
     def status(self, status):
         if status in self.ec:
-            return self.ec[status]
+            return self.ec[status]+" ("+hex(status)+")"
         if status in self.xec:
-            return self.xec[status]
+            return self.xec[status]+" ("+hex(status)+")"
         return "Unknown: " + hex(status)
