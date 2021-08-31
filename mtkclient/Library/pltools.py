@@ -252,7 +252,7 @@ class PLTools(metaclass=LogBase):
         if btype == "kamakiri":
             self.info("Kamakiri / DA Run")
             if self.runpayload(filename=pfilename, ptype="kamakiri", ack=0xC1C2C3C4, offset=0):
-                data,filename=self.kama.dump_preloader(0x80000)
+                data,filename=self.kama.dump_preloader()
                 return data, filename
             else:
                 self.error("Error on sending payload: " + pfilename)
@@ -260,7 +260,7 @@ class PLTools(metaclass=LogBase):
         elif btype == "kamakiri2" or btype is None:
             self.info("Kamakiri2")
             if self.runpayload(filename=pfilename, ptype="kamakiri2", ack=0xC1C2C3C4, offset=0):
-                data,filename=self.kama.dump_preloader(0x80000)
+                data,filename=self.kama.dump_preloader()
                 return data, filename
             else:
                 self.error("Error on sending payload: " + pfilename)

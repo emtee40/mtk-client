@@ -288,12 +288,11 @@ class Kamakiri(metaclass=LogBase):
             self.error(f"Error on opening {filename} for writing: {str(e)}")
             return False
 
-    def dump_preloader(self, length=0x80000):
+    def dump_preloader(self):
         try:
             filename = ""
-            self.mtk.port.usbwrite(pack(">I",length))
-            ack = unpack("<I", self.mtk.port.usbread(4))[0]
-            if ack == 0xC0C0C0C0:
+            length = unpack("<I", self.mtk.port.usbread(4))[0]
+            if length > 0:
                 data = self.mtk.port.usbread(length)
                 idx = data.find(b"MTK_BLOADER_INFO")
                 if idx != -1:
