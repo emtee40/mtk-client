@@ -119,7 +119,10 @@ class Mtk(metaclass=LogBase):
             pid = self.pid
         if interface is None:
             interface = self.interface
-        preloader = self.args.preloader
+        try:
+            preloader = self.args.preloader
+        except AttributeError:
+            preloader = None
         if vid != -1 and pid != -1:
             if interface == -1:
                 for dev in default_ids:
