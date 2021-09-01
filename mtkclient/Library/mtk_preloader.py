@@ -8,8 +8,6 @@ from struct import unpack, pack
 from binascii import hexlify
 from mtkclient.Library.utils import LogBase, logsetup
 from mtkclient.Library.error import ErrorHandler
-from mtkclient.Library.utils import getint
-
 
 def calc_xflash_checksum(data):
     checksum = 0
@@ -125,12 +123,10 @@ class Preloader(metaclass=LogBase):
         self.echo = self.mtk.port.echo
         self.sendcmd = self.mtk.port.mtk_cmd
 
-    def init(self, args, readsocid=False, maxtries=None, display=True):
-        try:
-            skipwdt = args.skipwdt
-        except AttributeError:
-            skipwdt = None
-            
+    def init(self, maxtries=None, display=True):
+        readsocid=self.config.readsocid
+        skipwdt = self.config.skipwdt
+
         if not display:
             self.info("Status: Waiting for PreLoader VCOM, please reconnect mobile to brom mode")
         else:
@@ -141,7 +137,7 @@ class Preloader(metaclass=LogBase):
             res = self.mtk.port.handshake(maxtries=maxtries)
             if not res:
                 if display:
-                    self.error("Status: Handshake failed, please retry")
+                    self.error("Status: Handshake failed, retrying...")
                 self.mtk.port.close()
                 tries += 1
         if tries == 10:
@@ -156,46 +152,6 @@ class Preloader(metaclass=LogBase):
             self.config.hwcode = (val >> 16) & 0xFFFF
             self.config.hwver = val & 0xFFFF
             self.config.init_hwcode(self.config.hwcode)
-        try:
-            da_address = args.da_addr
-        except AttributeError:
-            da_address = None
-        if da_address is not None:
-            self.info("O:DA offset:\t\t\t" + da_address)
-            self.config.chipconfig.da_payload_addr = getint(da_address)
-
-        try:
-            brom_address = args.brom_addr
-        except AttributeError:
-            brom_address = None
-        if brom_address is not None:
-            self.info("O:Payload offset:\t\t" + brom_address)
-            self.config.chipconfig.brom_payload_addr = getint(brom_address)
-
-        try:
-            watchdog_address = args.wdt
-        except AttributeError:
-            watchdog_address = None
-        if watchdog_address is not None:
-            self.info("O:Watchdog addr:\t\t" + watchdog_address)
-            self.config.chipconfig.watchdog = getint(watchdog_address)
-
-        try:
-            uart_address = args.uart_addr
-        except AttributeError:
-            uart_address = None
-        if uart_address is not None:
-            self.info("O:Uart addr:\t\t" + uart_address)
-            self.config.chipconfig.uart = getint(uart_address)
-
-        try:
-            var1 = args.var1
-        except AttributeError:
-            var1 = None
-
-        if var1 is not None:
-            self.info("O:Var1:\t\t" + var1)
-            self.config.chipconfig.var1 = getint(var1)
 
         cpu = self.config.chipconfig.name
         if self.display:
@@ -548,7 +504,9 @@ class Preloader(metaclass=LogBase):
         return self.mtk.config.plcap
 
     def get_hw_sw_ver(self):
-        res = self.sendcmd(self.Cmd.GET_HW_SW_VER.value, 8)  # 0xFC
+        res = self.sendcmd(self.Cmd.GET_HW_SW_VER.value, 8) # 0xFC
+        if len(res)!=8:
+            res = self.sendcmd(self.Cmd.GET_HW_SW_VER.value, 8)  # 0xFC
         return unpack(">HHHH", res)
 
     def get_meid(self):
@@ -561,6 +519,7 @@ class Preloader(metaclass=LogBase):
                     self.mtk.config.meid = self.usbread(length)
                     status = unpack("<H", self.usbread(2))[0]
                     if status == 0:
+                        self.config.is_brom=True
                         return self.mtk.config.meid
                     else:
                         self.error("Error on get_meid: " + self.eh.status(status))

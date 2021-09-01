@@ -10,11 +10,9 @@ from mtkclient.Library.mtk_daxflash import DAXFlash
 
 
 class DAloader(metaclass=LogBase):
-    def __init__(self, mtk, loader=None, preloader=None, generatekeys=None, loglevel=logging.INFO):
+    def __init__(self, mtk, loglevel=logging.INFO):
         self.__logger = logsetup(self, self.__logger, loglevel)
         self.mtk = mtk
-        self.generatekeys = generatekeys
-        self.loader = loader
         self.loglevel = loglevel
         self.eh = ErrorHandler()
         self.config = self.mtk.config
@@ -24,7 +22,8 @@ class DAloader(metaclass=LogBase):
         self.rbyte = self.mtk.port.rbyte
         self.rdword = self.mtk.port.rdword
         self.rword = self.mtk.port.rword
-        self.daconfig = DAconfig(mtk=self.mtk, loader=loader, preloader=preloader, loglevel=loglevel)
+        self.daconfig = DAconfig(mtk=self.mtk, loader=self.mtk.config.loader,
+                                 preloader=self.mtk.config.preloader, loglevel=loglevel)
         self.da = None
 
     def set_da(self):
@@ -37,7 +36,7 @@ class DAloader(metaclass=LogBase):
         if self.mtk.config.chipconfig.damode == 1:
             xflash = True
         if xflash:
-            self.da = DAXFlash(self.mtk, self.daconfig, self.generatekeys, self.loglevel)
+            self.da = DAXFlash(self.mtk, self.daconfig, self.loglevel)
         else:
             self.da = DALegacy(self.mtk, self.daconfig, self.loglevel)
 

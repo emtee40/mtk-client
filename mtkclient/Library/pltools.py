@@ -52,7 +52,8 @@ class PLTools(metaclass=LogBase):
         else:
             self.__logger.setLevel(logging.INFO)
 
-    def runpayload(self, filename, ptype, offset=0, ack=0xA1A2A3A4, addr=None, dontack=False):
+    def runpayload(self, filename, offset=0, ack=0xA1A2A3A4, addr=None, dontack=False):
+        ptype=self.config.ptype
         try:
             with open(filename, "rb") as rf:
                 rf.seek(offset)
@@ -150,18 +151,16 @@ class PLTools(metaclass=LogBase):
             else:
                 self.error("Error on sending payload: " + filename)
 
-    def runbrute(self, args, readsocid, ptype="kamakiri", enforcecrash=False):
-        if ptype is None:
-            ptype = "kamakiri2"
-        if ptype == "kamakiri":
+    def runbrute(self, args):
+        if self.config.ptype == "kamakiri":
             self.info("Kamakiri Run")
-            if self.kama.bruteforce(args,readsocid,enforcecrash):
+            if self.kama.bruteforce(args):
                 return True
             else:
                 self.error("Error on bruteforcing.")
-        elif ptype == "kamakiri2":
+        elif self.config.ptype == "kamakiri2":
             self.info("Kamakiri2 Run")
-            if self.kama.bruteforce2(args,readsocid,enforcecrash,0x9900):
+            if self.kama.bruteforce2(args,0x9900):
                 return True
             else:
                 self.error("Error on bruteforcing.")
@@ -213,7 +212,7 @@ class PLTools(metaclass=LogBase):
                 self.error("Error on sending payload: " + pfilename)
         elif btype == "kamakiri":
             self.info("Kamakiri / DA Run")
-            if self.runpayload(filename=pfilename, ptype="kamakiri", ack=0xC1C2C3C4, offset=0):
+            if self.runpayload(filename=pfilename, ack=0xC1C2C3C4, offset=0):
                 if self.kama.dump_brom(filename):
                     self.info("Bootrom dumped as: " + filename)
                     return True
@@ -221,7 +220,7 @@ class PLTools(metaclass=LogBase):
                 self.error("Error on sending payload: " + filename)
         elif btype == "kamakiri2" or btype is None:
             self.info("Kamakiri2")
-            if self.runpayload(filename=pfilename, ptype="kamakiri2", ack=0xC1C2C3C4, offset=0):
+            if self.runpayload(filename=pfilename, ack=0xC1C2C3C4, offset=0):
                 if self.kama.dump_brom(filename):
                     self.info("Bootrom dumped as: " + filename)
                     return True
@@ -251,7 +250,7 @@ class PLTools(metaclass=LogBase):
         """
         if btype == "kamakiri":
             self.info("Kamakiri / DA Run")
-            if self.runpayload(filename=pfilename, ptype="kamakiri", ack=0xC1C2C3C4, offset=0):
+            if self.runpayload(filename=pfilename, ack=0xC1C2C3C4, offset=0):
                 data,filename=self.kama.dump_preloader()
                 return data, filename
             else:
@@ -259,7 +258,7 @@ class PLTools(metaclass=LogBase):
                 return None, None
         elif btype == "kamakiri2" or btype is None:
             self.info("Kamakiri2")
-            if self.runpayload(filename=pfilename, ptype="kamakiri2", ack=0xC1C2C3C4, offset=0):
+            if self.runpayload(filename=pfilename, ack=0xC1C2C3C4, offset=0):
                 data,filename=self.kama.dump_preloader()
                 return data, filename
             else:

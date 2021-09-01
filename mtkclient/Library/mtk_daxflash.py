@@ -151,7 +151,7 @@ class DAXFlash(metaclass=LogBase):
         DT_PROTOCOL_FLOW = 1
         DT_MESSAGE = 2
 
-    def __init__(self, mtk, daconfig, generatekeys=None, loglevel=logging.INFO):
+    def __init__(self, mtk, daconfig, loglevel=logging.INFO):
         self.__logger = logsetup(self, self.__logger, loglevel)
         self.info = self.__logger.info
         self.debug = self.__logger.debug
@@ -159,7 +159,6 @@ class DAXFlash(metaclass=LogBase):
         self.warning = self.__logger.warning
         self.mtk = mtk
         self.loglevel = loglevel
-        self.generatekeys = generatekeys
         self.sram = None
         self.dram = None
         self.emmc = None

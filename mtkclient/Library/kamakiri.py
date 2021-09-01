@@ -102,15 +102,17 @@ class Kamakiri(metaclass=LogBase):
                 self.kamakiri2(ptr_da - 5 + (3 - i))
             return self.mtk.preloader.brom_register_access(address - 0x40, length, data, check_result)
 
-    def exploit2(self, payload, payloadaddr=None, loader=None, mode=3):
+    def exploit2(self, payload, payloadaddr=None):
         # noinspection PyProtectedMember
+        if payloadaddr is None:
+            payloadaddr = self.chipconfig.brom_payload_addr
         try:
             # self.mtk.port.cdc.device.reset()
             if self.linecode is None:
                 self.linecode = self.mtk.port.cdc.device.ctrl_transfer(0xA1, 0x21, 0, 0, 7) + array.array('B', [0])
             ptr_send = unpack("<I", self.da_read(self.mtk.config.chipconfig.send_ptr[0][1], 4))[0] + 8
-            self.da_write(self.mtk.config.chipconfig.brom_payload_addr, len(payload), payload)
-            self.da_write(ptr_send, 4, pack("<I", self.mtk.config.chipconfig.brom_payload_addr), False)
+            self.da_write(payloadaddr, len(payload), payload)
+            self.da_write(ptr_send, 4, pack("<I", payloadaddr), False)
         except usb.core.USBError as e:
             print(e)
         return True
@@ -143,15 +145,14 @@ class Kamakiri(metaclass=LogBase):
         self.error("Error on sending payload.")
         return False
 
-    def bruteforce2(self, args, readsocid=False, enforcecrash=False, startaddr=0x9900):
+    def bruteforce2(self, args, startaddr=0x9900):
         found = False
         while not found:
             self.mtk.init()
             self.mtk.preloader.display = False
-            if self.mtk.preloader.init(args=args, readsocid=readsocid, display=False):
-                self.mtk = self.mtk.crasher(args=args, readsocid=readsocid, enforcecrash=enforcecrash,
-                                            display=False)
-                self.info("Test mode, testing " + hex(startaddr) + "...")
+            if self.mtk.preloader.init(display=False):
+                self.mtk = self.mtk.crasher(display=False)
+                self.info("Bruteforce, testing " + hex(startaddr) + "...")
                 if self.linecode is None:
                     self.linecode = self.mtk.port.cdc.device.ctrl_transfer(0xA1, 0x21, 0, 0, 7) + array.array('B', [0])
                 found, startaddr = self.newbrute(startaddr)
@@ -203,6 +204,8 @@ class Kamakiri(metaclass=LogBase):
                 pass
 
             for address in range(dump_ptr, 0xffff, 4):
+                if address % 0x100 == 0:
+                    self.info("Bruteforce, testing " + hex(address) + "...")
                 for i in range(3):
                     self.kamakiri2(address - 5 + (3 - i))
                 try:
@@ -217,14 +220,8 @@ class Kamakiri(metaclass=LogBase):
                     return False, address + 4
         return False, dump_ptr + 4
 
-    def bruteforce(self, args, readsocid=False, enforcecrash=False):
-        var1 = args.var1
-        if var1 is not None:
-            var1 = getint(var1)
-            self.info("F:Var1:\t\t" + hex(var1))
-        else:
-            var1 = 0xA
-
+    def bruteforce(self, args):
+        var1 = self.chipconfig.var1
         filename = os.path.join(self.pathconfig.get_payloads_path(), "generic_dump_payload.bin")
         try:
             with open(filename, "rb") as rf:
@@ -241,10 +238,9 @@ class Kamakiri(metaclass=LogBase):
             while True:
                 self.mtk.init()
                 self.mtk.preloader.display = False
-                if self.mtk.preloader.init(args=args, readsocid=readsocid):
+                if self.mtk.preloader.init():
                     addr = self.mtk.config.chipconfig.brom_payload_addr
-                    rmtk = self.mtk.crasher(args=args, readsocid=readsocid, enforcecrash=enforcecrash,
-                                            display=False)
+                    rmtk = self.mtk.crasher(display=False)
                     try:
                         filename = args.filename
                         if filename is None:

@@ -11,8 +11,6 @@ class Partition(metaclass=LogBase):
         self.mtk = mtk
         self.__logger = logsetup(self, self.__logger, loglevel)
         self.config = self.mtk.config
-        self.usbwrite = self.mtk.port.usbwrite
-        self.usbread = self.mtk.port.usbread
         self.readflash = readflash
         self.read_pmt = read_pmt
 
