@@ -126,6 +126,11 @@ class Preloader(metaclass=LogBase):
         self.sendcmd = self.mtk.port.mtk_cmd
 
     def init(self, args, readsocid=False, maxtries=None, display=True):
+        try:
+            skipwdt = args.skipwdt
+        except AttributeError:
+            skipwdt = None
+            
         if not display:
             self.info("Status: Waiting for PreLoader VCOM, please reconnect mobile to brom mode")
         else:
@@ -151,27 +156,43 @@ class Preloader(metaclass=LogBase):
             self.config.hwcode = (val >> 16) & 0xFFFF
             self.config.hwver = val & 0xFFFF
             self.config.init_hwcode(self.config.hwcode)
-        da_address = args.da_addr
+        try:
+            da_address = args.da_addr
+        except AttributeError:
+            da_address = None
         if da_address is not None:
             self.info("O:DA offset:\t\t\t" + da_address)
             self.config.chipconfig.da_payload_addr = getint(da_address)
 
-        brom_address = args.brom_addr
+        try:
+            brom_address = args.brom_addr
+        except AttributeError:
+            brom_address = None
         if brom_address is not None:
             self.info("O:Payload offset:\t\t" + brom_address)
             self.config.chipconfig.brom_payload_addr = getint(brom_address)
 
-        watchdog_address = args.wdt
+        try:
+            watchdog_address = args.wdt
+        except AttributeError:
+            watchdog_address = None
         if watchdog_address is not None:
             self.info("O:Watchdog addr:\t\t" + watchdog_address)
             self.config.chipconfig.watchdog = getint(watchdog_address)
 
-        uart_address = args.uart_addr
+        try:
+            uart_address = args.uart_addr
+        except AttributeError:
+            uart_address = None
         if uart_address is not None:
             self.info("O:Uart addr:\t\t" + uart_address)
             self.config.chipconfig.uart = getint(uart_address)
 
-        var1 = args.var1
+        try:
+            var1 = args.var1
+        except AttributeError:
+            var1 = None
+
         if var1 is not None:
             self.info("O:Var1:\t\t" + var1)
             self.config.chipconfig.var1 = getint(var1)
@@ -202,7 +223,7 @@ class Preloader(metaclass=LogBase):
             self.info("\tHW Ver:\t\t\t" + hex(self.config.hwver))
             self.info("\tSW Ver:\t\t\t" + hex(self.config.swver))
 
-        if not args.skipwdt:
+        if not skipwdt:
             if self.display:
                 self.info("Disabling Watchdog...")
             self.setreg_disablewatchdogtimer(self.config.hwcode)  # D4

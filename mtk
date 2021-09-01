@@ -36,23 +36,43 @@ class Mtk(metaclass=LogBase):
         self.interface = interface
         self.pathconfig = pathconfig()
         self.__logger = logsetup(self, self.__logger, loglevel)
-        da_address = self.args.da_addr
+        try:
+            da_address = self.args.da_addr
+        except AttributeError:
+            da_address = None
+
         if da_address is not None:
             self.config.chipconfig.da_payload_addr = getint(da_address)
 
-        brom_address = self.args.brom_addr
+        try:
+            brom_address = self.args.brom_addr
+        except AttributeError:
+            brom_address = None
+
         if brom_address is not None:
             self.config.chipconfig.brom_payload_addr = getint(brom_address)
 
-        watchdog_address = self.args.wdt
+        try:
+            watchdog_address = self.args.wdt
+        except AttributeError:
+            watchdog_address = None
+
         if watchdog_address is not None:
             self.config.chipconfig.watchdog = getint(watchdog_address)
 
-        uart_address = self.args.uart_addr
+        try:
+            uart_address = self.args.uart_addr
+        except AttributeError:
+            uart_address = None
+            
         if uart_address is not None:
             self.config.chipconfig.uart = getint(uart_address)
 
-        var1 = self.args.var1
+        try:
+            var1 = self.args.var1
+        except AttributeError:
+            var1 = None
+
         if var1 is not None:
             self.config.chipconfig.var1 = getint(var1)
 
@@ -242,8 +262,11 @@ class Main(metaclass=LogBase):
         readsocid = False
         if self.args.socid is not None:
             readsocid = self.args.socid
-        if self.args.crash:
-            enforcecrash = True
+        try:
+            if self.args.crash:
+                enforcecrash = True
+        except AttributeError:
+            enforcecrash = False
         if self.args.debugmode:
             logfilename = os.path.join("logs", "log.txt")
             if os.path.exists(logfilename):
@@ -254,9 +277,13 @@ class Main(metaclass=LogBase):
         else:
             self.__logger.setLevel(logging.INFO)
         self.debug(" ".join(sys.argv))
+        try:
+            loader=self.args.loader
+        except AttributeError:
+            loader=None
         interface = -1
         # pagesize = getint(self.args.sectorsize
-        mtk = Mtk(loader=self.args.loader, loglevel=self.__logger.level, vid=vid, pid=pid, interface=interface,
+        mtk = Mtk(loader=loader, loglevel=self.__logger.level, vid=vid, pid=pid, interface=interface,
                   args=self.args)
         cmd = self.args.cmd
         if cmd == "dumpbrom":
