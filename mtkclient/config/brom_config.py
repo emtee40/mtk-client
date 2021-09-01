@@ -1460,7 +1460,7 @@ class Mtk_Config(metaclass=LogBase):
         if self.chipconfig.gcpu_base is None:
             self.chipconfig.gcpu_base = None
         if self.chipconfig.sej_base is None:
-            self.chipconfig.sej_base = 0x10008000
+            self.chipconfig.sej_base = None
         if self.chipconfig.dacode is None:
             self.chipconfig.dacode = hwcode
         if self.chipconfig.ap_dma_mem is None:
@@ -1468,7 +1468,7 @@ class Mtk_Config(metaclass=LogBase):
         if self.chipconfig.damode is None:
             self.chipconfig.damode = damodes.DEFAULT
         if self.chipconfig.dxcc_base is None:
-            self.chipconfig.dxcc_base = 0x10210000
+            self.chipconfig.dxcc_base = None
         if self.chipconfig.meid_addr is None:
             self.chipconfig.meid_addr = None
         if self.chipconfig.socid_addr is None:
