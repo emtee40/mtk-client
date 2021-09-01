@@ -626,9 +626,10 @@ class Main(metaclass=LogBase):
                 else:
                     self.info("Device is unprotected.")
                     if mtk.config.is_brom:
-                        self.info("Device is in BROM mode. Trying to dump preloader.")
-                        mtk = mtk.bypass_security()
-                        preloader = self.dump_preloader_ram(mtk)
+                        #mtk = mtk.bypass_security()
+                        if preloader is None:
+                            self.warning("Device is in BROM mode. No preloader given, trying to dump preloader from ram.")
+                            preloader = self.dump_preloader_ram(mtk)
                 if not mtk.daloader.upload_da(preloader=preloader):
                     self.error("Error uploading da")
                     return False
