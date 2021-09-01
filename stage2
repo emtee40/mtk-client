@@ -351,7 +351,7 @@ class Stage2(metaclass=LogBase):
             print_progress(100, 100, prefix='Complete: ', suffix=filename, bar_length=50)
         print("Done")
 
-    def keys(self, data=b"", otp=None, mode="dxcc"):
+    def keys(self, data=b"", otp=None, mode="dxcc") -> tuple[list or bytes or None,str]:
         # self.hwcrypto.disable_range_blacklist("cqdma",self.cmd_C8)
         keyinfo=""
         if self.setup.dxcc_base is not None:
@@ -376,6 +376,7 @@ class Stage2(metaclass=LogBase):
                 wf.write(hexlify(platkey))
             with open(os.path.join("logs", "provkey.txt"), "wb") as wf:
                 wf.write(hexlify(provkey))
+            return [rpmbkey, fdekey, tfdekey, platkey, provkey], keyinfo
         elif self.setup.sej_base is not None:
             rpmbkey = self.hwcrypto.aes_hwcrypt(mode="rpmb", data=data, otp=otp, btype="sej")
             keyinfo+="\nKeys :\n-----------------------------------------\n"
@@ -383,22 +384,26 @@ class Stage2(metaclass=LogBase):
             keyinfo+="\n"
             with open(os.path.join("logs", "rpmbkey.txt"), "wb") as wf:
                 wf.write(hexlify(rpmbkey))
+            return rpmbkey, keyinfo
         if mode == "sej_aes_decrypt":
             dec_data = self.hwcrypto.aes_hwcrypt(mode="cbc", data=data, btype="sej", encrypt=False)
             keyinfo+="\n"
             keyinfo+="Data: " + hexlify(dec_data).decode('utf-8')
             keyinfo+="\n"
+            return dec_data, keyinfo
         elif mode == "sej_aes_encrypt":
             enc_data = self.hwcrypto.aes_hwcrypt(mode="cbc", data=data, btype="sej", encrypt=False)
             keyinfo+="\n"
             keyinfo+="Data: " + hexlify(enc_data).decode('utf-8')
             keyinfo+="\n"
+            return enc_data, keyinfo
         elif mode == "dxcc_sha256":
             sha256val = self.hwcrypto.aes_hwcrypt(mode="sha256", data=data, btype="dxcc")
             keyinfo+="\n"
             keyinfo+="SHA256: " + hexlify(sha256val).decode('utf-8')
             keyinfo+="\n"
-        return keyinfo
+            return sha256val, keyinfo
+        return None, ""
 
     def reboot(self):
         print("Rebooting..")
@@ -582,7 +587,7 @@ def main():
                 data = bytes.fromhex(args.data)
             # otp_hisense=bytes.fromhex("486973656E736500000000000000000000000000000000000000000000000000")
             # st2.jump(0x223449)
-            keyinfo+=st2.keys(data=data, mode=args.mode, otp=args.otp)
+            keys, keyinfo=st2.keys(data=data, mode=args.mode, otp=args.otp)
             print(keyinfo)
             with open("keys.txt","w") as wf:
                 wf.write(keyinfo)
@@ -615,7 +620,7 @@ def main():
                 seccfg_data = pack("<IIIIIII", 0x4D4D4D4D, seccfg_ver, seccfg_size, lock_state,
                                    critical_lock_state, sboot_runtime, 0x45454545)
                 dec_hash = hashlib.sha256(seccfg_data).digest()
-                enc_hash = st2.keys(data=dec_hash, mode="sej_aes_encrypt")
+                enc_hash, keyinfo = st2.keys(data=dec_hash, mode="sej_aes_encrypt")
                 data = seccfg_data + enc_hash
                 data += b"\x00" * (0x200 - len(data))
                 wf.write(data)
