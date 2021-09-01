@@ -497,8 +497,7 @@ class Main(metaclass=LogBase):
                     return False
             verifystage2 = self.args.verifystage2
             if mtk.preloader.init(args=self.args, readsocid=readsocid):
-                if self.args.crash is not None:
-                    mtk = mtk.crasher(args=self.args, readsocid=readsocid, enforcecrash=enforcecrash)
+                mtk = mtk.crasher(args=self.args, readsocid=readsocid, enforcecrash=enforcecrash)
                 if mtk.port.cdc.pid == 0x0003:
                     plt = PLTools(mtk, self.__logger.level)
                     self.info("Uploading stage 1")
