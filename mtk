@@ -64,7 +64,7 @@ class Mtk(metaclass=LogBase):
             uart_address = self.args.uart_addr
         except AttributeError:
             uart_address = None
-            
+
         if uart_address is not None:
             self.config.chipconfig.uart = getint(uart_address)
 
@@ -179,7 +179,11 @@ class Mtk(metaclass=LogBase):
                 except Exception as err:
                     self.__logger.debug(str(err))
                     pass
-                rmtk = Mtk(loader=self.args.loader, loglevel=self.__logger.level, vid=0xE8D, pid=0x0003,
+                try:
+                    loader=self.args.loader
+                except AttributeError:
+                    loader=None
+                rmtk = Mtk(loader=loader, loglevel=self.__logger.level, vid=0xE8D, pid=0x0003,
                            interface=1, args=self.args)
                 rmtk.preloader.display = display
                 if rmtk.preloader.init(args=self.args, readsocid=readsocid, maxtries=20):
@@ -199,8 +203,11 @@ class Mtk(metaclass=LogBase):
             else:
                 payloadfile = os.path.join(self.pathconfig.get_payloads_path(), self.config.chipconfig.loader)
         ptype = "kamakiri2"
-        if self.args.ptype is not None:
-            ptype = self.args.ptype
+        try:
+            if self.args.ptype is not None:
+                ptype = self.args.ptype
+        except AttributeError:
+            pass
         if plt.runpayload(filename=payloadfile, ptype=ptype):
             mtk.port.run_handshake()
             # mtk.port.close()
@@ -327,7 +334,11 @@ class Main(metaclass=LogBase):
             self.close()
         elif cmd == "brute":
             self.info("Kamakiri / DA Bruteforce run")
-            rmtk = Mtk(loader=self.args.loader, loglevel=self.__logger.level, vid=vid, pid=pid,
+            try:
+                loader=self.args.loader
+            except AttributeError:
+                loader=None
+            rmtk = Mtk(loader=loader, loglevel=self.__logger.level, vid=vid, pid=pid,
                        interface=interface,
                        args=self.args)
             plt = PLTools(rmtk, self.__logger.level)
@@ -358,7 +369,11 @@ class Main(metaclass=LogBase):
                             if mtk.preloader.jump_da(daaddr):
                                 self.info(f"PL Jumped to daaddr {hex(daaddr)}.")
                                 time.sleep(2)
-                                mtk = Mtk(loader=self.args.loader, loglevel=self.__logger.level, vid=vid, pid=pid,
+                                try:
+                                    loader=self.args.loader
+                                except AttributeError:
+                                    loader=None
+                                mtk = Mtk(loader=loader, loglevel=self.__logger.level, vid=vid, pid=pid,
                                           interface=interface,
                                           args=self.args)
                                 res = mtk.preloader.init(args=self.args, readsocid=readsocid)
@@ -455,7 +470,11 @@ class Main(metaclass=LogBase):
                         if mtk.preloader.jump_da(daaddr):
                             self.info(f"Jumped to pl {hex(daaddr)}.")
                             time.sleep(2)
-                            mtk = Mtk(loader=self.args.loader, loglevel=self.__logger.level, vid=vid, pid=pid,
+                            try:
+                                loader=self.args.loader
+                            except AttributeError:
+                                loader=None
+                            mtk = Mtk(loader=loader, loglevel=self.__logger.level, vid=vid, pid=pid,
                                       interface=interface,
                                       args=self.args)
                             res = mtk.preloader.init(args=self.args, readsocid=readsocid)
