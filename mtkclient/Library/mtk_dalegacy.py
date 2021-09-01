@@ -809,10 +809,13 @@ class DALegacy(metaclass=LogBase):
                         if sync != b"\xC0":
                             self.error("Error on DA sync")
                             return False
+                        else:
+                            self.info("Got loader sync !")
                     else:
                         return False
                 else:
                     return False
+                self.info("Reading nand info")
                 nandinfo = unpack(">I", self.usbread(4))[0]
                 self.debug("NAND_INFO: " + hex(nandinfo))
                 ids = unpack(">H", self.usbread(2))[0]
@@ -820,7 +823,7 @@ class DALegacy(metaclass=LogBase):
                 for i in range(0, ids):
                     tmp = unpack(">H", self.usbread(2))[0]
                     nandids.append(tmp)
-
+                self.info("Reading emmc info")
                 emmcinfolegacy = unpack(">I", self.usbread(4))[0]
                 self.debug("EMMC_INFO: " + hex(emmcinfolegacy))
                 emmcids = []
@@ -836,7 +839,9 @@ class DALegacy(metaclass=LogBase):
                     self.daconfig.flashtype = "nor"
 
                 self.usbwrite(self.Rsp.ACK)
-                ackval = self.usbread(3)
+                ackval = self.usbread(1)
+                ackval += self.usbread(1)
+                ackval += self.usbread(1)
                 self.debug("ACK: " + hexlify(ackval).decode('utf-8'))
 
                 self.set_stage2_config(self.config.hwcode)
@@ -1206,7 +1211,8 @@ class DALegacy(metaclass=LogBase):
                     size = bytestoread
                     if bytestoread > packetsize:
                         size = packetsize
-                    wf.write(self.usbread(size,0x400))
+                    #wf.write(self.usbread(size,0x400))
+                    wf.write(self.usbread(size))
                     bytestoread -= size
                     checksum = unpack(">H", self.usbread(1)+self.usbread(1))[0]
                     self.debug("Checksum: %04X" % checksum)
@@ -1221,7 +1227,8 @@ class DALegacy(metaclass=LogBase):
                 size = bytestoread
                 if bytestoread > packetsize:
                     size = packetsize
-                buffer.extend(self.usbread(size,0x400))
+                #buffer.extend(self.usbread(size,0x400))
+                buffer.extend(self.usbread(size))
                 bytestoread -= size
                 checksum = unpack(">H", self.usbread(2))[0]
                 self.debug("Checksum: %04X" % checksum)

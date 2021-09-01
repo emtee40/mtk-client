@@ -39,6 +39,8 @@ class Stage2(metaclass=LogBase):
             self.__logger.setLevel(logging.INFO)
 
         self.cdc = usb_class(portconfig=default_ids, loglevel=loglevel, devclass=10)
+        self.usbread=self.cdc.read
+        self.usbwrite=self.cdc.usbwrite
 
     def preinit(self):
         try:
@@ -62,43 +64,43 @@ class Stage2(metaclass=LogBase):
         return True
 
     def init_emmc(self):
-        self.cdc.usbwrite(pack(">I", 0xf00dd00d))
-        self.cdc.usbwrite(pack(">I", 0x6001))
-        if unpack("<I", self.cdc.usbread(4))[0] != 0x1:
-            self.cdc.usbwrite(pack(">I", 0xf00dd00d))
-            self.cdc.usbwrite(pack(">I", 0x6000))
+        self.usbwrite(pack(">I", 0xf00dd00d))
+        self.usbwrite(pack(">I", 0x6001))
+        if unpack("<I", self.usbread(4))[0] != 0x1:
+            self.usbwrite(pack(">I", 0xf00dd00d))
+            self.usbwrite(pack(">I", 0x6000))
             time.sleep(2)
-            if unpack("<I", self.cdc.usbread(4))[0] == 0xD1D1D1D1:
+            if unpack("<I", self.usbread(4))[0] == 0xD1D1D1D1:
                 return True
             self.emmc_inited = True
         return False
 
     def jump(self, addr):
-        self.cdc.usbwrite(pack(">I", 0xf00dd00d))
-        self.cdc.usbwrite(pack(">I", 0x4001))
-        self.cdc.usbwrite(pack(">I", addr))
+        self.usbwrite(pack(">I", 0xf00dd00d))
+        self.usbwrite(pack(">I", 0x4001))
+        self.usbwrite(pack(">I", addr))
         time.sleep(5)
-        if unpack("<I", self.cdc.usbread(4))[0] == 0xD0D0D0D0:
+        if unpack("<I", self.usbread(4))[0] == 0xD0D0D0D0:
             return True
         return False
 
     def read32(self, addr, dwords=1):
         result = []
         for pos in range(dwords):
-            self.cdc.usbwrite(pack(">I", 0xf00dd00d))
-            self.cdc.usbwrite(pack(">I", 0x4002))
-            self.cdc.usbwrite(pack(">I", addr + (pos * 4)))
-            self.cdc.usbwrite(pack(">I", 4))
-            result.append(unpack("<I", self.cdc.usbread(4))[0])
+            self.usbwrite(pack(">I", 0xf00dd00d))
+            self.usbwrite(pack(">I", 0x4002))
+            self.usbwrite(pack(">I", addr + (pos * 4)))
+            self.usbwrite(pack(">I", 4))
+            result.append(unpack("<I", self.usbread(4))[0])
         if len(result) == 1:
             return result[0]
         return result
 
     def cmd_C8(self, val) -> bool:
         'Clear cache func'
-        self.cdc.usbwrite(pack(">I", 0xf00dd00d))
-        self.cdc.usbwrite(pack(">I", 0x5000))
-        ack = self.cdc.usbread(4)
+        self.usbwrite(pack(">I", 0xf00dd00d))
+        self.usbwrite(pack(">I", 0x5000))
+        ack = self.usbread(4)
         if ack == b"\xD0\xD0\xD0\xD0":
             return True
         return False
@@ -107,12 +109,12 @@ class Stage2(metaclass=LogBase):
         if isinstance(dwords, int):
             dwords = [dwords]
         for pos in range(0, len(dwords)):
-            self.cdc.usbwrite(pack(">I", 0xf00dd00d))
-            self.cdc.usbwrite(pack(">I", 0x4000))
-            self.cdc.usbwrite(pack(">I", addr + (pos * 4)))
-            self.cdc.usbwrite(pack(">I", 4))
-            self.cdc.usbwrite(pack("<I", dwords[pos]))
-            ack = self.cdc.usbread(4)
+            self.usbwrite(pack(">I", 0xf00dd00d))
+            self.usbwrite(pack(">I", 0x4000))
+            self.usbwrite(pack(">I", addr + (pos * 4)))
+            self.usbwrite(pack(">I", 4))
+            self.usbwrite(pack("<I", dwords[pos]))
+            ack = self.usbread(4)
             if ack == b"\xD0\xD0\xD0\xD0":
                 continue
             else:
@@ -138,26 +140,26 @@ class Stage2(metaclass=LogBase):
         sectors += (1 if length % 0x200 else 0)
         startsector = (start // 0x200)
         # emmc_switch(1)
-        self.cdc.usbwrite(pack(">I", 0xf00dd00d))
-        self.cdc.usbwrite(pack(">I", 0x1002))
-        self.cdc.usbwrite(pack(">I", type))
+        self.usbwrite(pack(">I", 0xf00dd00d))
+        self.usbwrite(pack(">I", 0x1002))
+        self.usbwrite(pack(">I", type))
 
         if display:
             print_progress(0, 100, prefix='Progress:', suffix='Complete', bar_length=50)
 
         # kick-wdt
-        # self.cdc.usbwrite(pack(">I", 0xf00dd00d))
-        # self.cdc.usbwrite(pack(">I", 0x3001))
+        # self.usbwrite(pack(">I", 0xf00dd00d))
+        # self.usbwrite(pack(">I", 0x3001))
 
         bytestoread = length
         bytesread = 0
         old = 0
         # emmc_read(0)
         for sector in range(startsector, sectors):
-            self.cdc.usbwrite(pack(">I", 0xf00dd00d))
-            self.cdc.usbwrite(pack(">I", 0x1000))
-            self.cdc.usbwrite(pack(">I", sector))
-            tmp = self.cdc.usbread(0x200)
+            self.usbwrite(pack(">I", 0xf00dd00d))
+            self.usbwrite(pack(">I", 0x1000))
+            self.usbwrite(pack(">I", sector))
+            tmp = self.usbread(0x200)
             if not tmp or len(tmp) != 0x200:
                 self.error("Error on getting data")
                 return
@@ -249,14 +251,14 @@ class Stage2(metaclass=LogBase):
             wf = open(filename, "wb")
         while bytestoread > 0:
             size = min(bytestoread, 0x100)
-            self.cdc.usbwrite(pack(">I", 0xf00dd00d))
-            self.cdc.usbwrite(pack(">I", 0x4002))
-            self.cdc.usbwrite(pack(">I", addr + pos))
-            self.cdc.usbwrite(pack(">I", size))
+            self.usbwrite(pack(">I", 0xf00dd00d))
+            self.usbwrite(pack(">I", 0x4002))
+            self.usbwrite(pack(">I", addr + pos))
+            self.usbwrite(pack(">I", size))
             if filename is None:
-                data += self.cdc.usbread(size)
+                data += self.usbread(size)
             else:
-                wf.write(self.cdc.usbread(size))
+                wf.write(self.usbread(size))
             bytestoread -= size
             pos += size
         self.info(f"{hex(start)}: " + hexlify(data).decode('utf-8'))
@@ -278,10 +280,10 @@ class Stage2(metaclass=LogBase):
         pos = 0
         while bytestowrite > 0:
             size = min(bytestowrite, 0x100)
-            self.cdc.usbwrite(pack(">I", 0xf00dd00d))
-            self.cdc.usbwrite(pack(">I", 0x4000))
-            self.cdc.usbwrite(pack(">I", addr + pos))
-            self.cdc.usbwrite(pack(">I", size))
+            self.usbwrite(pack(">I", 0xf00dd00d))
+            self.usbwrite(pack(">I", 0x4000))
+            self.usbwrite(pack(">I", addr + pos))
+            self.usbwrite(pack(">I", size))
             if filename is None:
                 wdata = data[pos:pos + size]
             else:
@@ -290,11 +292,11 @@ class Stage2(metaclass=LogBase):
             pos += size
             while len(wdata) % 4 != 0:
                 wdata += b"\x00"
-            self.cdc.usbwrite(wdata)
+            self.usbwrite(wdata)
 
         if filename is not None:
             rf.close()
-        ack = self.cdc.usbread(4)
+        ack = self.usbread(4)
         if ack == b"\xD0\xD0\xD0\xD0":
             return True
         else:
@@ -313,13 +315,13 @@ class Stage2(metaclass=LogBase):
             sectors = (length // 0x100) + (1 if length % 0x100 else 0)
         self.info("Reading rpmb...")
 
-        self.cdc.usbwrite(pack(">I", 0xf00dd00d))
-        self.cdc.usbwrite(pack(">I", 0x1002))
-        self.cdc.usbwrite(pack(">I", 0x1))
+        self.usbwrite(pack(">I", 0xf00dd00d))
+        self.usbwrite(pack(">I", 0x1002))
+        self.usbwrite(pack(">I", 0x1))
 
         # kick-wdt
-        # self.cdc.usbwrite(pack(">I", 0xf00dd00d))
-        # self.cdc.usbwrite(pack(">I", 0x3001))
+        # self.usbwrite(pack(">I", 0xf00dd00d))
+        # self.usbwrite(pack(">I", 0x3001))
 
         print_progress(0, 100, prefix='Progress:', suffix='Complete', bar_length=50)
         bytesread = 0
@@ -327,10 +329,10 @@ class Stage2(metaclass=LogBase):
         bytestoread = sectors * 0x100
         with open(filename, "wb") as wf:
             for sector in range(start, sectors):
-                self.cdc.usbwrite(pack(">I", 0xf00dd00d))
-                self.cdc.usbwrite(pack(">I", 0x2000))
-                self.cdc.usbwrite(pack(">H", sector))
-                tmp = self.cdc.usbread(0x100)
+                self.usbwrite(pack(">I", 0xf00dd00d))
+                self.usbwrite(pack(">I", 0x2000))
+                self.usbwrite(pack(">H", sector))
+                tmp = self.usbread(0x100)
                 if reverse:
                     tmp = tmp[::-1]
                 if len(tmp) != 0x100:
@@ -400,8 +402,8 @@ class Stage2(metaclass=LogBase):
 
     def reboot(self):
         print("Rebooting..")
-        self.cdc.usbwrite(pack(">I", 0xf00dd00d))
-        self.cdc.usbwrite(pack(">I", 0x3000))
+        self.usbwrite(pack(">I", 0xf00dd00d))
+        self.usbwrite(pack(">I", 0x3000))
 
 
 

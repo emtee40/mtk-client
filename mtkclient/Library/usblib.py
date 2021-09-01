@@ -95,6 +95,8 @@ class usb_class(metaclass=LogBase):
         self.debug = self.__logger.debug
         self.__logger.setLevel(loglevel)
         self.buffer = array.array('B', [0]) * 1048576
+        self.rpacketsize=64
+        self.wpacketsize=64
         if loglevel == logging.DEBUG:
             logfilename = os.path.join("logs", "log.txt")
             fh = logging.FileHandler(logfilename)
@@ -337,6 +339,8 @@ class usb_class(metaclass=LogBase):
                 self.EP_IN = EP_IN
 
             self.connected = True
+            self.rpacketsize = self.EP_IN.wMaxPacketSize
+            self.wpacketsize = self.EP_OUT.wMaxPacketSize
             return True
         else:
             print("Couldn't find MassStorage interface. Aborting.")
@@ -361,7 +365,7 @@ class usb_class(metaclass=LogBase):
 
     def write(self, command, pktsize=None):
         if pktsize is None:
-            pktsize = self.EP_OUT.wMaxPacketSize
+            pktsize = self.wpacketsize
         if isinstance(command, str):
             command = bytes(command, 'utf-8')
         pos = 0
@@ -395,9 +399,10 @@ class usb_class(metaclass=LogBase):
         self.verify_data(bytearray(command), "TX:")
         return True
 
-    def read(self, maxlength=None, timeout=None):
-        if maxlength is None:
-            maxlength=self.EP_IN.wMaxPacketSize
+    def read(self, length=None, timeout=None, returnimmediately=False):
+        maxlength=length
+        if length is None or length > self.rpacketsize:
+            maxlength=self.rpacketsize
         if self.loglevel == logging.DEBUG:
             self.debug(inspect.currentframe().f_back.f_code.co_name + ":" + hex(maxlength))
         rxBuffer = array.array('B')
@@ -406,14 +411,15 @@ class usb_class(metaclass=LogBase):
             timeout = self.timeout
         buffer = self.buffer[:maxlength]
         ep_read = self.EP_IN.read
-        while len(rxBuffer) == 0:
+        while len(rxBuffer)<length:
             try:
-                length = ep_read(buffer, timeout)
-                extend(buffer[:length])
+                rlength = ep_read(buffer, timeout)
+                extend(buffer[:rlength])
                 if len(rxBuffer) > 0:
                     if self.loglevel == logging.DEBUG:
                         self.verify_data(rxBuffer, "RX:")
-                    return rxBuffer
+                    if returnimmediately:
+                        return bytearray(rxBuffer)
             except usb.core.USBError as e:
                 error = str(e.strerror)
                 if "timed out" in error:
@@ -422,7 +428,7 @@ class usb_class(metaclass=LogBase):
                     # print("Waiting...")
                     self.debug("Timed out")
                     self.debug(rxBuffer)
-                    return rxBuffer
+                    return bytearray(rxBuffer)
                 elif "Overflow" in error:
                     self.error("USB Overflow")
                     sys.exit(0)
@@ -431,7 +437,7 @@ class usb_class(metaclass=LogBase):
                     sys.exit(0)
                 else:
                     break
-        return rxBuffer
+        return bytearray(rxBuffer)
 
     def ctrl_transfer(self, bmRequestType, bRequest, wValue, wIndex, data_or_wLength):
         ret = self.device.ctrl_transfer(bmRequestType=bmRequestType, bRequest=bRequest, wValue=wValue, wIndex=wIndex,
@@ -461,12 +467,12 @@ class usb_class(metaclass=LogBase):
     def usbreadwrite(self, data, resplen):
         self.usbwrite(data)  # size
         # port->flush()
-        res = self.usbread(resplen)
+        res = self.read(resplen)
         return res
 
     def rdword(self, count=1, little=False):
         rev = "<" if little else ">"
-        value = self.usbread(4 * count)
+        value = self.read(4 * count)
         data = unpack(rev + "I" * count, value)
         if count == 1:
             return data[0]
@@ -476,7 +482,7 @@ class usb_class(metaclass=LogBase):
         rev = "<" if little else ">"
         data = []
         for _ in range(count):
-            v = self.usbread(2)
+            v = self.read(2)
             if len(v) == 0:
                 return data
             data.append(unpack(rev + "H", v)[0])
@@ -485,26 +491,7 @@ class usb_class(metaclass=LogBase):
         return data
 
     def rbyte(self, count=1):
-        return self.usbread(count)
-
-    def usbread(self, resplen, size=None):
-        if size is None:
-            size = resplen
-        res = bytearray()
-        timeout = 0
-        while len(res) < resplen:
-            v=self.read(size)
-            res.extend(v)
-            if len(res) == resplen:
-                break
-            if len(res) == 0:
-                time.sleep(0.001)
-                if timeout == 4:
-                    return res
-                timeout += 1
-            elif len(v)==0:
-                break
-        return res
+        return self.read(count)
 
 
 class scsi_cmds(Enum):

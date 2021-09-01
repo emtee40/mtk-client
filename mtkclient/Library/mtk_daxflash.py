@@ -159,6 +159,7 @@ class DAXFlash(metaclass=LogBase):
         self.warning = self.__logger.warning
         self.mtk = mtk
         self.loglevel = loglevel
+        self.generatekeys = generatekeys
         self.sram = None
         self.dram = None
         self.emmc = None
@@ -560,6 +561,8 @@ class DAXFlash(metaclass=LogBase):
 
     def get_emmc_info(self, display=True):
         resp = self.send_devctrl(self.Cmd.GET_EMMC_INFO)
+        if resp == b'':
+            return None
         status=self.status()
         if status == 0:
             class EmmcInfo:
@@ -930,7 +933,6 @@ class DAXFlash(metaclass=LogBase):
             if self.mtk.preloader.send_da(address, size, sig_len, dadata):
                 self.info("Successfully uploaded stage 1, jumping ..")
                 if self.mtk.preloader.jump_da(address):
-                    time.sleep(0.5)
                     sync = self.usbread(1)
                     if sync != b"\xC0":
                         self.error("Error on DA sync")
@@ -959,7 +961,8 @@ class DAXFlash(metaclass=LogBase):
             self.set_checksum_level(0x0)
             connagent = self.get_connection_agent()
             emmc_info=self.get_emmc_info(False)
-            self.info("DRAM config needed for : " + hexlify(emmc_info.cid[:8]).decode('utf-8'))
+            if emmc_info is not None:
+                self.info("DRAM config needed for : " + hexlify(emmc_info.cid[:8]).decode('utf-8'))
             # dev_fw_info=self.get_dev_fw_info()
             # dramtype = self.get_dram_type()
             stage = None

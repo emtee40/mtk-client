@@ -400,6 +400,7 @@ class Preloader(metaclass=LogBase):
                     self.error(f"Jump_DA Resp2 {str(e)} ," + hexlify(data).decode('utf-8'))
                     return False
                 if status == 0:
+                    self.info(f"Jumping to {hex(addr)}: ok.")
                     return True
                 else:
                     self.error(f"Jump_DA status error:{self.eh.status(status)}")
