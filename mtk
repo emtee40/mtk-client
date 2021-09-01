@@ -372,7 +372,7 @@ class Main(metaclass=LogBase):
                                         mtk.preloader.get_hw_sw_ver()
                                         if mtk.preloader.jump_da(daaddr):
                                             self.info(f"Jumped to {hex(daaddr)}.")
-                                            ack = unpack(">I", mtk.port.read(4))[0]
+                                            ack = unpack(">I", mtk.port.usbread(4))[0]
                                             if ack == 0xB1B2B3B4:
                                                 self.info("Successfully loaded stage2")
                                                 return
@@ -396,7 +396,7 @@ class Main(metaclass=LogBase):
                 self.info(f"Sent da to {hex(daaddr)}, length {hex(len(dadata))}")
                 if mtk.preloader.jump_da(daaddr):
                     self.info(f"Jumped to {hex(daaddr)}.")
-                    ack = unpack(">I", mtk.port.read(4))[0]
+                    ack = unpack(">I", mtk.port.usbread(4))[0]
                     if ack == 0xB1B2B3B4:
                         self.info("Successfully loaded stage2")
                 else:
@@ -549,7 +549,7 @@ class Main(metaclass=LogBase):
                             bytestoread = len(stage2data)
                             while bytestoread > 0:
                                 size = min(bytestoread, 1)
-                                rdata += mtk.port.read(size)
+                                rdata += mtk.port.usbread(size)
                                 bytestoread -= size
                             flag = mtk.port.rdword()
                             if flag != 0xD0D0D0D0:
@@ -575,7 +575,7 @@ class Main(metaclass=LogBase):
                         # address
                         mtk.port.usbwrite(pack(">I", stage2addr))
                         self.info("Done jumping stage2 at %08X" % stage2addr)
-                        ack = unpack(">I", mtk.port.read(4))[0]
+                        ack = unpack(">I", mtk.port.usbread(4))[0]
                         if ack == 0xB1B2B3B4:
                             self.info("Successfully loaded stage2")
                 self.close()
