@@ -158,7 +158,7 @@ class Stage2(metaclass=LogBase):
             self.cdc.usbwrite(pack(">I", 0x1000))
             self.cdc.usbwrite(pack(">I", sector))
             tmp = self.cdc.usbread(0x200)
-            if len(tmp) != 0x200:
+            if not tmp or len(tmp) != 0x200:
                 self.error("Error on getting data")
                 return
             if display:
