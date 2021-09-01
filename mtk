@@ -120,7 +120,10 @@ class Mtk(metaclass=LogBase):
             pid = self.pid
         if interface is None:
             interface = self.interface
-        preloader = self.args.preloader
+        try:
+            preloader = self.args.preloader
+        except:
+            preloader = None
         if vid != -1 and pid != -1:
             if interface == -1:
                 for dev in default_ids:
@@ -1309,7 +1312,7 @@ if __name__ == '__main__':
     parser_wl.add_argument('--crash', help='Enforce crash if device is in pl mode to enter brom mode')
     parser_wl.add_argument('--socid', help='Read Soc ID')
 
-    parser_e.add_argument('partitonname', help='Partitionname to erase from flash')
+    parser_e.add_argument('partitionname', help='Partitionname to erase from flash')
     parser_e.add_argument('--loader', type=str, help='Use specific DA loader, disable autodetection')
     parser_e.add_argument('--vid', type=str, help='Set usb vendor id used for MTK Preloader')
     parser_e.add_argument('--pid', type=str, help='Set usb product id used for MTK Preloader')
