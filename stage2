@@ -503,6 +503,9 @@ def main():
                         help='OTP for keys (dxcc,sej,gcpu)')
     parser_keys.add_argument('--mode', dest='mode', default=None, type=str,
                         help='keymode (dxcc,sej,gcpu)')
+
+    parser_seccfg = subparsers.add_parser("seccfg", help="Generate seccfg")
+
     args = parser.parse_args()
     cmd = args.cmd
     if cmd not in cmds:
@@ -624,7 +627,7 @@ def main():
                 data = seccfg_data + enc_hash
                 data += b"\x00" * (0x200 - len(data))
                 wf.write(data)
-            print("Successfully wrote seccfg.")
+                print("Successfully wrote seccfg as seccfg.bin")
     st2.close()
 
     st2.close()
