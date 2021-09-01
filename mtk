@@ -222,7 +222,7 @@ class Mtk(metaclass=LogBase):
         mtk = self.crasher()
         plt = PLTools(mtk, self.__logger.level)
         if self.config.payloadfile is None:
-            if self.config.loader is None:
+            if self.config.chipconfig.loader is None:
                 self.config.payloadfile = os.path.join(self.pathconfig.get_payloads_path(), "generic_patcher_payload.bin")
             else:
                 self.config.payloadfile = os.path.join(self.pathconfig.get_payloads_path(), self.config.chipconfig.loader)
