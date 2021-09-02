@@ -11,6 +11,8 @@ from mtkclient.Library.utils import LogBase, progress, logsetup
 from mtkclient.Library.error import ErrorHandler
 from mtkclient.Library.daconfig import EMMC_PartitionType, UFS_PartitionType, DaStorage
 from mtkclient.Library.partition import Partition
+from mtkclient.Library.rw_patch import write32, read32
+from mtkclient.Library.hwcrypto import crypto_setup, hwcrypto
 from mtkclient.config.payloads import pathconfig
 
 def find_binary(data, strf, pos=0):
@@ -259,7 +261,8 @@ class DAXFlash(metaclass=LogBase):
         if status == 0:
             return True
         else:
-            self.error(f"Error on sending parameter: {self.eh.status(status)}")
+            if status!=0xc0040050:
+                self.error(f"Error on sending parameter: {self.eh.status(status)}")
         return False
 
 
@@ -976,12 +979,13 @@ class DAXFlash(metaclass=LogBase):
                                 data = rf.read()
                                 if emmc_info.cid[:8] in data:
                                     preloader = os.path.join(root, file)
-                                    print("Detected preloader: " + preloader)
                                     self.daconfig.extract_emi(preloader,False)
-                                    found = True
                                     if not self.send_emi(self.daconfig.emi):
-                                        return False
-                                    break
+                                        continue
+                                    else:
+                                        found = True
+                                        self.info("Detected working preloader: " + preloader)
+                                        break
                                 if found:
                                     break
                     if not found:
