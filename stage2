@@ -354,7 +354,7 @@ class Stage2(metaclass=LogBase):
     def keys(self, data=b"", otp=None, mode="dxcc") -> tuple[list or bytes or None,str]:
         # self.hwcrypto.disable_range_blacklist("cqdma",self.cmd_C8)
         keyinfo=""
-        if self.setup.dxcc_base is not None:
+        if self.setup.dxcc_base is not None and mode not in ["sej_aes_decrypt","sej_aes_encrypt","dxcc_sha256"]:
             rpmbkey = self.hwcrypto.aes_hwcrypt(btype="dxcc",mode="rpmb")
             fdekey = self.hwcrypto.aes_hwcrypt(btype="dxcc",mode="fde")
             tfdekey = self.hwcrypto.aes_hwcrypt(btype="dxcc",mode="itrustee-fde")
@@ -377,7 +377,7 @@ class Stage2(metaclass=LogBase):
             with open(os.path.join("logs", "provkey.txt"), "wb") as wf:
                 wf.write(hexlify(provkey))
             return [rpmbkey, fdekey, tfdekey, platkey, provkey], keyinfo
-        elif self.setup.sej_base is not None:
+        elif self.setup.sej_base is not None and mode not in ["sej_aes_decrypt","sej_aes_encrypt","dxcc_sha256"]:
             rpmbkey = self.hwcrypto.aes_hwcrypt(mode="rpmb", data=data, otp=otp, btype="sej")
             keyinfo+="\nKeys :\n-----------------------------------------\n"
             keyinfo+="RPMB: " + hexlify(rpmbkey).decode('utf-8')
@@ -498,14 +498,13 @@ def main():
 
     parser_reboot = subparsers.add_parser("reboot", help="Reboot device")
 
+    parser_seccfg = subparsers.add_parser("seccfg", help="Generate seccfg")
+
     parser_keys = subparsers.add_parser("keys", help="Write memory")
     parser_keys.add_argument('--otp', dest='otp', type=str,
                         help='OTP for keys (dxcc,sej,gcpu)')
     parser_keys.add_argument('--mode', dest='mode', default=None, type=str,
                         help='keymode (dxcc,sej,gcpu)')
-
-    parser_seccfg = subparsers.add_parser("seccfg", help="Generate seccfg")
-
     args = parser.parse_args()
     cmd = args.cmd
     if cmd not in cmds:
@@ -627,7 +626,7 @@ def main():
                 data = seccfg_data + enc_hash
                 data += b"\x00" * (0x200 - len(data))
                 wf.write(data)
-                print("Successfully wrote seccfg as seccfg.bin")
+                print("Successfully wrote seccfg to seccfg.bin.")
     st2.close()
 
     st2.close()
