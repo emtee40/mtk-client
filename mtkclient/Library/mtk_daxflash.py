@@ -397,7 +397,7 @@ class DAXFlash(metaclass=LogBase):
                         if self.send_data(da):
                             time.sleep(0.5)
                             status = self.status()
-                            if status == 0x434E5953:
+                            if status == 0x434E5953 or status == 0x0:
                                 return True
                             else:
                                 self.error(f"Error on boot to: {self.eh.status(status)}")
