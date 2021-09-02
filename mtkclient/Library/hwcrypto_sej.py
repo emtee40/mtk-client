@@ -55,7 +55,8 @@ regval = {
     "HACC_SECINIT0": 0x0080,
     "HACC_SECINIT1": 0x0084,
     "HACC_SECINIT2": 0x0088,
-    "HACC_MKJ": 0x00a0
+    "HACC_MKJ": 0x00a0,
+    "HACC_UNK": 0x00bc
 }
 
 
@@ -249,9 +250,77 @@ class sej(metaclass=LogBase):
         #self.crypto_secure(1)
         return
 
-    def SEJ_V3_Init(self, encrypt=True, g_AC_CFG=None):
-        if g_AC_CFG is None:
-            g_AC_CFG = self.g_HACC_CFG_1
+    def SEJ_Init(self, encrypt=True, iv=None):
+        if iv is None:
+            iv = self.g_HACC_CFG_1
+        acon_setting = self.HACC_AES_CHG_BO_OFF | self.HACC_AES_CBC | self.HACC_AES_128
+        if encrypt:
+            acon_setting |= self.HACC_AES_ENC
+        else:
+            acon_setting |= self.HACC_AES_DEC
+
+        # clear key
+        self.reg.HACC_AKEY0 = 0
+        self.reg.HACC_AKEY1 = 0
+        self.reg.HACC_AKEY2 = 0
+        self.reg.HACC_AKEY3 = 0
+        self.reg.HACC_AKEY4 = 0
+        self.reg.HACC_AKEY5 = 0
+        self.reg.HACC_AKEY6 = 0
+        self.reg.HACC_AKEY7 = 0
+        self.reg.HACC_ACFG0 = iv[0] #g_AC_CFG
+        self.reg.HACC_ACFG1 = iv[1]
+        self.reg.HACC_ACFG2 = iv[2]
+        self.reg.HACC_ACFG3 = iv[3]
+        self.reg.HACC_UNK |= 2
+
+        # clear HACC_ASRC/HACC_ACFG/HACC_AOUT
+        self.reg.HACC_ACON2 = 0x40000000 | self.HACC_AES_CLR
+
+        while True:
+            if self.reg.HACC_ACON2 > 0x80000000:
+                break
+
+        self.reg.HACC_UNK &= 0xFFFFFFFE
+        self.reg.HACC_ACONK = self.HACC_AES_BK2C
+        self.reg.HACC_ACON = acon_setting
+        return acon_setting
+
+    def SEJ_Run(self, data):
+        pdst = bytearray()
+        psrc = bytes_to_dwords(data)
+        plen = len(psrc)
+        pos = 0
+        for i in range(plen // 4):
+            self.reg.HACC_ASRC0 = psrc[pos + 0]
+            self.reg.HACC_ASRC1 = psrc[pos + 1]
+            self.reg.HACC_ASRC2 = psrc[pos + 2]
+            self.reg.HACC_ASRC3 = psrc[pos + 3]
+            self.reg.HACC_ACON2 = 1
+            while True:
+                if self.reg.HACC_ACON2 & self.HACC_AES_RDY != 0:
+                    break
+            pdst.extend(pack("<I", self.reg.HACC_AOUT0))
+            pdst.extend(pack("<I", self.reg.HACC_AOUT1))
+            pdst.extend(pack("<I", self.reg.HACC_AOUT2))
+            pdst.extend(pack("<I", self.reg.HACC_AOUT3))
+            pos+=4
+        return pdst
+
+    def SEJ_Terminate(self):
+        self.reg.HACC_ACON2 = self.HACC_AES_CLR
+        self.reg.HACC_AKEY0 = 0
+        self.reg.HACC_AKEY1 = 0
+        self.reg.HACC_AKEY2 = 0
+        self.reg.HACC_AKEY3 = 0
+        self.reg.HACC_AKEY4 = 0
+        self.reg.HACC_AKEY5 = 0
+        self.reg.HACC_AKEY6 = 0
+        self.reg.HACC_AKEY7 = 0
+
+    def SEJ_V3_Init(self, encrypt=True, iv=None):
+        if iv is None:
+            iv = self.g_HACC_CFG_1
         acon_setting = self.HACC_AES_CHG_BO_OFF | self.HACC_AES_CBC | self.HACC_AES_128
         if encrypt:
             acon_setting |= self.HACC_AES_ENC
@@ -277,10 +346,10 @@ class sej(metaclass=LogBase):
 
         # clear HACC_ASRC/HACC_ACFG/HACC_AOUT
         self.reg.HACC_ACON2 = self.HACC_AES_CLR
-        self.reg.HACC_ACFG0 = g_AC_CFG[0]
-        self.reg.HACC_ACFG1 = g_AC_CFG[1]
-        self.reg.HACC_ACFG2 = g_AC_CFG[2]
-        self.reg.HACC_ACFG3 = g_AC_CFG[3]
+        self.reg.HACC_ACFG0 = iv[0] #g_AC_CFG
+        self.reg.HACC_ACFG1 = iv[1]
+        self.reg.HACC_ACFG2 = iv[2]
+        self.reg.HACC_ACFG3 = iv[3]
 
         # encrypt fix pattern 3 rounds to generate a pattern from HUID/HUK
         for i in range(0, 3):
@@ -294,10 +363,10 @@ class sej(metaclass=LogBase):
                 if self.reg.HACC_ACON2 & self.HACC_AES_RDY != 0:
                     break
         self.reg.HACC_ACON2 = self.HACC_AES_CLR
-        self.reg.HACC_ACFG0 = g_AC_CFG[0]
-        self.reg.HACC_ACFG1 = g_AC_CFG[1]
-        self.reg.HACC_ACFG2 = g_AC_CFG[2]
-        self.reg.HACC_ACFG3 = g_AC_CFG[3]
+        self.reg.HACC_ACFG0 = iv[0]
+        self.reg.HACC_ACFG1 = iv[1]
+        self.reg.HACC_ACFG2 = iv[2]
+        self.reg.HACC_ACFG3 = iv[3]
         self.reg.HACC_ACON = acon_setting
         self.reg.HACC_ACONK = 0
 
@@ -389,24 +458,46 @@ class sej(metaclass=LogBase):
                 pdst.extend(pack("<I", self.reg.HACC_AOUT3))
         return pdst
 
-    def sej_init(self,swkey):
+    def sej_key_config(self,swkey):
         iv=bytes.fromhex("57325A5A125497661254976657325A5A")
         self.sej_set_mode(AES_CBC_MODE)
         self.sej_set_key(AES_HW_KEY,AES_KEY_128)
         hw_key=self.sej_do_aes(True,iv,swkey,32)
-        print(hexlify(hw_key))
+        #print(hexlify(hw_key))
         self.sej_set_key(AES_HW_WRAP_KEY,AES_KEY_256,hw_key)
 
-    def sej_sec_cfg_decrypt(self,data):
+    def sej_sec_cfg_sw(self,data, encrypt=True):
         self.sej_set_mode(AES_CBC_MODE)
         self.sej_set_key(AES_SW_KEY, AES_KEY_256, b"1A52A367CB12C458965D32CD874B36B2")
         iv = bytes.fromhex("57325A5A125497661254976657325A5A")
-        res = self.sej_do_aes(False, iv, data, len(data))
+        res = self.sej_do_aes(encrypt, iv, data, len(data))
         return res
+
+    def xor_data(self,data):
+        i=0
+        for val in self.g_HACC_CFG_1:
+            data[i:i+4]=pack("<I",unpack("<I",data[i:i+4])[0]^val)
+            i+=4
+            if i==16:
+                break
+        return data
+
+    def sej_sec_cfg_hw(self,data, encrypt=True):
+        if encrypt:
+            data = self.xor_data(bytearray(data))
+        self.info("HACC init")
+        self.SEJ_Init(encrypt=encrypt)
+        self.info("HACC run")
+        dec=self.SEJ_Run(data)
+        self.info("HACC terminate")
+        self.SEJ_Terminate()
+        if not encrypt:
+            dec=self.xor_data(dec)
+        return dec
 
     def generate_rpmb(self,meid,otp,derivedlen=32):
         #self.sej_sec_cfg_decrypt(bytes.fromhex("1FF7EB9EEA3BA346C2C94E3D44850C2172B56BC26D2450CA9ADBAB7136604542C3B2EA50057037669A4C493BF7CC7E6E2644563808F73B3AA5AFE2D48D97597E"))
-        #self.sej_init(b"1A52A367CB12C458965D32CD874B36B2")
+        #self.sej_key_config(b"1A52A367CB12C458965D32CD874B36B2")
         #self.sej_set_otp(bytes.fromhex("486973656E7365000023232323232323232323230A006420617320302C207468010000009400000040000000797B797B"))
         self.sej_set_otp(otp)
         buf=bytearray()

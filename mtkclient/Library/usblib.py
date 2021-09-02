@@ -95,8 +95,6 @@ class usb_class(metaclass=LogBase):
         self.debug = self.__logger.debug
         self.__logger.setLevel(loglevel)
         self.buffer = array.array('B', [0]) * 1048576
-        self.rpacketsize=64
-        self.wpacketsize=64
         if loglevel == logging.DEBUG:
             logfilename = os.path.join("logs", "log.txt")
             fh = logging.FileHandler(logfilename)
@@ -339,8 +337,6 @@ class usb_class(metaclass=LogBase):
                 self.EP_IN = EP_IN
 
             self.connected = True
-            self.rpacketsize = self.EP_IN.wMaxPacketSize
-            self.wpacketsize = self.EP_OUT.wMaxPacketSize
             return True
         else:
             print("Couldn't find MassStorage interface. Aborting.")
@@ -365,7 +361,7 @@ class usb_class(metaclass=LogBase):
 
     def write(self, command, pktsize=None):
         if pktsize is None:
-            pktsize = self.wpacketsize
+            pktsize = self.EP_OUT.wMaxPacketSize
         if isinstance(command, str):
             command = bytes(command, 'utf-8')
         pos = 0
@@ -399,10 +395,9 @@ class usb_class(metaclass=LogBase):
         self.verify_data(bytearray(command), "TX:")
         return True
 
-    def read(self, length=None, timeout=None, returnimmediately=False):
-        maxlength=length
-        if length is None or length > self.rpacketsize:
-            maxlength=self.rpacketsize
+    def read(self, maxlength=None, timeout=None):
+        if maxlength is None:
+            maxlength=self.EP_IN.wMaxPacketSize
         if self.loglevel == logging.DEBUG:
             self.debug(inspect.currentframe().f_back.f_code.co_name + ":" + hex(maxlength))
         rxBuffer = array.array('B')
@@ -411,15 +406,14 @@ class usb_class(metaclass=LogBase):
             timeout = self.timeout
         buffer = self.buffer[:maxlength]
         ep_read = self.EP_IN.read
-        while len(rxBuffer)<length:
+        while len(rxBuffer) == 0:
             try:
-                rlength = ep_read(buffer, timeout)
-                extend(buffer[:rlength])
+                length = ep_read(buffer, timeout)
+                extend(buffer[:length])
                 if len(rxBuffer) > 0:
                     if self.loglevel == logging.DEBUG:
                         self.verify_data(rxBuffer, "RX:")
-                    if returnimmediately:
-                        return bytearray(rxBuffer)
+                    return bytearray(rxBuffer)
             except usb.core.USBError as e:
                 error = str(e.strerror)
                 if "timed out" in error:
@@ -467,12 +461,12 @@ class usb_class(metaclass=LogBase):
     def usbreadwrite(self, data, resplen):
         self.usbwrite(data)  # size
         # port->flush()
-        res = self.read(resplen)
+        res = self.usbread(resplen)
         return res
 
     def rdword(self, count=1, little=False):
         rev = "<" if little else ">"
-        value = self.read(4 * count)
+        value = self.usbread(4 * count)
         data = unpack(rev + "I" * count, value)
         if count == 1:
             return data[0]
@@ -482,7 +476,7 @@ class usb_class(metaclass=LogBase):
         rev = "<" if little else ">"
         data = []
         for _ in range(count):
-            v = self.read(2)
+            v = self.usbread(2)
             if len(v) == 0:
                 return data
             data.append(unpack(rev + "H", v)[0])
@@ -491,7 +485,26 @@ class usb_class(metaclass=LogBase):
         return data
 
     def rbyte(self, count=1):
-        return self.read(count)
+        return self.usbread(count)
+
+    def usbread(self, resplen, size=None):
+        if size is None:
+            size = resplen
+        res = bytearray()
+        timeout = 0
+        while len(res) < resplen:
+            v=self.read(size)
+            res.extend(v)
+            if len(res) == resplen:
+                break
+            if len(res) == 0:
+                time.sleep(0.001)
+                if timeout == 4:
+                    return res
+                timeout += 1
+            elif len(v)==0:
+                break
+        return res
 
 
 class scsi_cmds(Enum):

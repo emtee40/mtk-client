@@ -164,7 +164,6 @@ class Mtk(metaclass=LogBase):
             jump_offset = unpack("<I", data[0x30:0x34])[0]
             daaddr = jump_offset + daaddr
             dadata = data[jump_offset:]
-            dadata = self.patch_preloader_security(dadata)
         else:
             self.warning("Preloader detected as shellcode, might fail to run.")
             daaddr = self.config.chipconfig.da_payload_addr
@@ -376,7 +375,7 @@ class Main(metaclass=LogBase):
                            "Trying to dump preloader from ram.")
                 plt = PLTools(mtk=mtk, loglevel=self.__logger.level)
                 dadata, filename = plt.run_dump_preloader(self.args.ptype)
-                mtk.config.preloader = dadata
+                mtk.config.preloader = self.patch_preloader_security(dadata)
             if mtk.config.preloader is not None:
                 self.info("Using custom preloader : "+filename)
                 daaddr, dadata = mtk.parse_preloader(mtk.config.preloader)

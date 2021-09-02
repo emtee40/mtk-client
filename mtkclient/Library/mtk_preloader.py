@@ -505,8 +505,6 @@ class Preloader(metaclass=LogBase):
 
     def get_hw_sw_ver(self):
         res = self.sendcmd(self.Cmd.GET_HW_SW_VER.value, 8) # 0xFC
-        if len(res)!=8:
-            res = self.sendcmd(self.Cmd.GET_HW_SW_VER.value, 8)  # 0xFC
         return unpack(">HHHH", res)
 
     def get_meid(self):

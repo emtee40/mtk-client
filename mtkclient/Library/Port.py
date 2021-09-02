@@ -25,7 +25,7 @@ class Port(metaclass=LogBase):
         self.config = mtk.config
         self.mtk = mtk
         self.cdc = usb_class(portconfig=portconfig, loglevel=loglevel, devclass=10)
-        self.usbread = self.cdc.read
+        self.usbread = self.cdc.usbread
         self.usbwrite = self.cdc.usbwrite
         self.close = self.cdc.close
         self.rdword = self.cdc.rdword
