@@ -994,6 +994,8 @@ class Main(metaclass=LogBase):
                               f"sector count {str(size // 0x200)}.")
                 self.close()
             elif cmd == "reset":
+                if os.path.exists(".state"):
+                    os.remove(".state")
                 mtk.daloader.close()
                 self.close()
 
