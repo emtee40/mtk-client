@@ -175,6 +175,12 @@ Erase boot partition (use --preloader for brom)
 python mtk e boot
 ```
 
+### Leave flash mode and reboot
+```
+python mtk reset
+```
+
+
 ---------------------------------------------------------------------------------------------------------------
 
 ### Bypass SLA, DAA and SBC (using generic_patcher_payload)
@@ -267,6 +273,8 @@ python stage2 preloader
 ### Read memory as hex data in stage2 mode
 `` 
 python stage2 memread [start addr] [length]
+python stage2 memread 0x140000 0x10
+python stage2 memread 0x140000 16
 `` 
 
 ### Read memory to file in stage2 mode
@@ -274,19 +282,17 @@ python stage2 memread [start addr] [length]
 python stage2 memread [start addr] [length] --filename filename.bin
 `` 
 
-### Write hex data to memory in stage2 mode
+### Write data to memory in stage2 mode
 `` 
-python stage2 memwrite [start addr] --data [data as hexstring]
-`` 
-
-### Write memory from file in stage2 mode
-`` 
-python stage2 memwrite [start addr] --filename filename.bin
+python stage2 memwrite [start addr] [data as hexstring or hex int or filename]
+python stage2 memwrite 0x140000 112233445566778899
+python stage2 memwrite 0x140000 0x12345678
+python stage2 memwrite 0x140000 data.bin
 `` 
 
 ### Extract keys
 `` 
-python stage2 keys --mode [sej, dxcc]
+python stage2 keys
 `` 
 For dxcc, you need to use plstage instead of stage
 

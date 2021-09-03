@@ -11,8 +11,6 @@ from mtkclient.Library.utils import LogBase, progress, logsetup
 from mtkclient.Library.error import ErrorHandler
 from mtkclient.Library.daconfig import EMMC_PartitionType, UFS_PartitionType, DaStorage
 from mtkclient.Library.partition import Partition
-from mtkclient.Library.rw_patch import write32, read32
-from mtkclient.Library.hwcrypto import crypto_setup, hwcrypto
 from mtkclient.config.payloads import pathconfig
 
 def find_binary(data, strf, pos=0):
@@ -610,7 +608,7 @@ class DAXFlash(metaclass=LogBase):
             self.error(f"Error on getting emmc info: {self.eh.status(status)}")
         return None
 
-    def get_nand_info(self):
+    def get_nand_info(self, display=True):
         resp = self.send_devctrl(self.Cmd.GET_NAND_INFO)
         status=self.status()
         if status == 0:
@@ -634,18 +632,19 @@ class DAXFlash(metaclass=LogBase):
             pos += 1
             nand.nand_id = unpack("<12B", resp[pos:pos + 12])
             if nand.type != 0:
-                self.info(f"NAND Pagesize:   {hex(nand.page_size)}")
-                self.info(f"NAND Blocksize:  {hex(nand.block_size)}")
-                self.info(f"NAND Sparesize:  {hex(nand.spare_size)}")
-                self.info(f"NAND Total size: {hex(nand.total_size)}")
-                self.info(f"NAND Avail:      {hex(nand.available_size)}")
-                self.info(f"NAND ID:         {hexlify(nand.nand_id).decode('utf-8')}")
+                if display:
+                    self.info(f"NAND Pagesize:   {hex(nand.page_size)}")
+                    self.info(f"NAND Blocksize:  {hex(nand.block_size)}")
+                    self.info(f"NAND Sparesize:  {hex(nand.spare_size)}")
+                    self.info(f"NAND Total size: {hex(nand.total_size)}")
+                    self.info(f"NAND Avail:      {hex(nand.available_size)}")
+                    self.info(f"NAND ID:         {hexlify(nand.nand_id).decode('utf-8')}")
             return nand
         else:
             self.error(f"Error on getting nand info: {self.eh.status(status)}")
         return None
 
-    def get_nor_info(self):
+    def get_nor_info(self, display=True):
         resp = self.send_devctrl(self.Cmd.GET_NOR_INFO)
         status=self.status()
         if status == 0:
@@ -657,14 +656,15 @@ class DAXFlash(metaclass=LogBase):
             nor = NorInfo()
             nor.type, nor.page_size, nor.available_size = unpack("<IIQ", resp[:16])
             if nor.type != 0:
-                self.info(f"NOR Pagesize: {hex(nor.page_size)}")
-                self.info(f"NOR Size:     {hex(nor.available_size)}")
+                if display:
+                    self.info(f"NOR Pagesize: {hex(nor.page_size)}")
+                    self.info(f"NOR Size:     {hex(nor.available_size)}")
             return nor
         else:
             self.error(f"Error on getting nor info: {self.eh.status(status)}")
         return None
 
-    def get_ufs_info(self):
+    def get_ufs_info(self, display=True):
         resp = self.send_devctrl(self.Cmd.GET_UFS_INFO)
         status=self.status()
         if status == 0:
@@ -684,12 +684,13 @@ class DAXFlash(metaclass=LogBase):
             ufs.cid = resp[pos:pos + 16]
             ufs.fwver = unpack("<I", resp[pos + 16:pos + 16 + 4])[0]
             if ufs.type != 0:
-                self.info(f"UFS FWVer:    {hex(ufs.fwver)}")
-                self.info(f"UFS Blocksize:{hex(ufs.block_size)}")
-                self.info(f"UFS CID:      {hexlify(ufs.cid).decode('utf-8')}")
-                self.info(f"UFS LU0 Size: {hex(ufs.lu0_size)}")
-                self.info(f"UFS LU1 Size: {hex(ufs.lu1_size)}")
-                self.info(f"UFS LU2 Size: {hex(ufs.lu2_size)}")
+                if display:
+                    self.info(f"UFS FWVer:    {hex(ufs.fwver)}")
+                    self.info(f"UFS Blocksize:{hex(ufs.block_size)}")
+                    self.info(f"UFS CID:      {hexlify(ufs.cid).decode('utf-8')}")
+                    self.info(f"UFS LU0 Size: {hex(ufs.lu0_size)}")
+                    self.info(f"UFS LU1 Size: {hex(ufs.lu1_size)}")
+                    self.info(f"UFS LU2 Size: {hex(ufs.lu2_size)}")
                 self.mtk.config.pagesize = ufs.block_size
                 self.mtk.daloader.daconfig.pagesize = ufs.block_size
             return ufs
@@ -954,6 +955,29 @@ class DAXFlash(metaclass=LogBase):
             else:
                 self.error("Error on sending DA.")
         return False
+
+    def reinit(self):
+        self.sram, self.dram = self.get_ram_info()
+        self.emmc = self.get_emmc_info(False)
+        self.nand = self.get_nand_info(False)
+        self.nor = self.get_nor_info(False)
+        self.ufs = self.get_ufs_info(False)
+        if self.emmc.type != 0:
+            self.daconfig.flashtype = "emmc"
+            self.daconfig.flashsize = self.emmc.user_size
+        elif self.nand.type != 0:
+            self.daconfig.flashtype = "nand"
+            self.daconfig.flashsize = self.nand.total_size
+        elif self.nor.type != 0:
+            self.daconfig.flashtype = "nor"
+            self.daconfig.flashsize = self.nor.available_size
+        elif self.ufs.type != 0:
+            self.daconfig.flashtype = "ufs"
+            self.daconfig.flashsize = [self.ufs.lu0_size, self.ufs.lu1_size, self.ufs.lu2_size]
+        self.chipid = self.get_chip_id()
+        self.randomid = self.get_random_id()
+        # if self.get_da_stor_life_check() == 0x0:
+        #   cid = self.get_chip_id()
 
     def upload_da(self):
         if self.upload():

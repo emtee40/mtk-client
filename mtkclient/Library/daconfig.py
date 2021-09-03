@@ -103,6 +103,7 @@ class DAconfig(metaclass=LogBase):
         self.usbwrite = self.mtk.port.usbwrite
         self.usbread = self.mtk.port.usbread
         self.flashsize = 0
+        self.flashtype = "emmc"
         self.sparesize = 0
         self.readsize = 0
         self.pagesize = 512

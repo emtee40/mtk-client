@@ -433,8 +433,9 @@ cmds = {
     "preloader": 'Dump preloader',
     "boot2": 'Dump boot2',
     "reboot": 'Reboot phone',
-    "memread": "Read memory [Example: memread --start 0 --length 0x10]",
-    "memwrite": "Write memory [Example: memwrite --start 0x200000 --data 11223344",
+    "memread": "Read memory [Example: memread 0 0x10]",
+    "memwrite": "Write memory [Example: memwrite 0x200000 1122334455667788, memwrite 0x0 0x12345678, " +
+                "memwrite 0x0 data.bin]",
     "keys": "Extract rpmb and fde key",
     "seccfg": "Generate unlock config"
 }
@@ -492,10 +493,8 @@ def main():
     parser_memwrite = subparsers.add_parser("memwrite", help="Write memory")
     parser_memwrite.add_argument(dest='start', type=str,
                         help='Start offset to dump')
-    parser_memwrite.add_argument('--data', dest='data', type=str,
-                        help='Data to write')
-    parser_memwrite.add_argument('--filename', dest='filename', type=str,
-                        help='Read from filename')
+    parser_memwrite.add_argument('data', type=str,
+                        help='Data to write [hexstring, dword or filename]')
 
     parser_reboot = subparsers.add_parser("reboot", help="Reboot device")
 
@@ -561,11 +560,20 @@ def main():
             if args.start is None:
                 print("Option --start is needed")
                 exit(0)
-            if args.data is None and args.filename is None:
-                print("Option --data or --filename are needed")
+            if args.data is None:
+                print("Option --data is needed")
                 exit(0)
             start = getint(args.start)
-            if st2.memwrite(start, args.data, args.filename):
+            if os.path.exists(args.data):
+                filename=args.data
+                data=None
+            else:
+                if "0x" in args.data:
+                    data=getint(args.data)
+                else:
+                    data=args.data
+                filename=None
+            if st2.memwrite(start, data, filename):
                 print(f"Successfully wrote data to {hex(start)}.")
             else:
                 print(f"Failed to write data to {hex(start)}.")

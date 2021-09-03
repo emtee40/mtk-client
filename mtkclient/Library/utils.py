@@ -16,15 +16,6 @@ import io
 sys.stdout = io.TextIOWrapper(sys.stdout.detach(), encoding = 'utf-8')
 sys.stderr = io.TextIOWrapper(sys.stderr.detach(), encoding = 'utf-8')
 
-try:
-    from capstone import *
-except ImportError:
-    print("Capstone library is missing (optional).")
-try:
-    from keystone import *
-except ImportError:
-    print("Keystone library is missing (optional).")
-
 from struct import unpack, pack
 
 
@@ -511,6 +502,10 @@ class patchtools:
         return True
 
     def disasm(self, code, size):
+        try:
+            from capstone import *
+        except ImportError:
+            print("Capstone library is missing (optional).")
         cs = Cs(CS_ARCH_ARM64, CS_MODE_LITTLE_ENDIAN)
         instr = []
         for i in cs.disasm(code, size):
@@ -519,6 +514,11 @@ class patchtools:
         return instr
 
     def assembler(self, code):
+        try:
+            from keystone import *
+        except ImportError:
+            print("Keystone library is missing (optional).")
+
         ks = Ks(KS_ARCH_ARM64, KS_MODE_LITTLE_ENDIAN)
         if self.bDebug:
             try:

@@ -1203,7 +1203,8 @@ class DALegacy(metaclass=LogBase):
             self.usbread(4)
             self.daconfig.readsize = self.daconfig.flashsize // self.daconfig.pagesize * (
                     self.daconfig.pagesize + self.daconfig.sparesize)
-        self.progress.show_progress("Read",0,100,display)
+        if display:
+            self.progress.show_progress("Read",0,100,display)
         if filename != "":
             with open(filename, "wb") as wf:
                 bytestoread = length
@@ -1211,8 +1212,7 @@ class DALegacy(metaclass=LogBase):
                     size = bytestoread
                     if bytestoread > packetsize:
                         size = packetsize
-                    #wf.write(self.usbread(size,0x400))
-                    wf.write(self.usbread(size))
+                    wf.write(self.usbread(size,0x400))
                     bytestoread -= size
                     checksum = unpack(">H", self.usbread(1)+self.usbread(1))[0]
                     self.debug("Checksum: %04X" % checksum)
@@ -1227,8 +1227,7 @@ class DALegacy(metaclass=LogBase):
                 size = bytestoread
                 if bytestoread > packetsize:
                     size = packetsize
-                #buffer.extend(self.usbread(size,0x400))
-                buffer.extend(self.usbread(size))
+                buffer.extend(self.usbread(size,0x400))
                 bytestoread -= size
                 checksum = unpack(">H", self.usbread(2))[0]
                 self.debug("Checksum: %04X" % checksum)

@@ -2,6 +2,7 @@
 # MTK Flash Client (c) B.Kerler 2018-2021.
 # Licensed under MIT License
 import os
+import json
 import sys
 import logging
 import time
@@ -274,13 +275,17 @@ class Main(metaclass=LogBase):
         sys.exit(0)
 
     def run(self):
-        if self.args.debugmode:
-            loglevel=logging.DEBUG
-            self.__logger.setLevel(logging.DEBUG)
-        else:
+        try:
+            if self.args.debugmode:
+                loglevel=logging.DEBUG
+                self.__logger.setLevel(logging.DEBUG)
+            else:
+                loglevel=logging.INFO
+                self.__logger.setLevel(logging.INFO)
+        except:
             loglevel=logging.INFO
             self.__logger.setLevel(logging.INFO)
-
+            pass
         config = Mtk_Config(loglevel=loglevel)
         ArgHandler(self.args, config)
         self.eh = ErrorHandler()
@@ -612,28 +617,36 @@ class Main(metaclass=LogBase):
             mtk.port.close()
             self.close()
         else:
-            preloader = self.args.preloader
-            if mtk.preloader.init():
-                if mtk.config.target_config["daa"]:
-                    mtk = mtk.bypass_security()
-                    self.info("Device is protected.")
-                    if mtk is not None:
-                        if mtk.config.is_brom:
-                            self.info("Device is in BROM mode. Trying to dump preloader.")
-                            if preloader is None:
-                                preloader = self.dump_preloader_ram(mtk)
-                else:
-                    self.info("Device is unprotected.")
-                    if mtk.config.is_brom:
-                        #mtk = mtk.bypass_security()
-                        if preloader is None:
-                            self.warning("Device is in BROM mode. No preloader given, trying to dump preloader from ram.")
-                            preloader = self.dump_preloader_ram(mtk)
-                if not mtk.daloader.upload_da(preloader=preloader):
-                    self.error("Error uploading da")
-                    return False
+            # DA / FLash commands start here
+
+            mtk.port.cdc.connected=mtk.port.cdc.connect()
+            if mtk.port.cdc.connected:
+                info=mtk.daloader.reinit()
             else:
-                return False
+                preloader = self.args.preloader
+                if mtk.preloader.init():
+                    if mtk.config.target_config["daa"]:
+                        mtk = mtk.bypass_security()
+                        self.info("Device is protected.")
+                        if mtk is not None:
+                            if mtk.config.is_brom:
+                                self.info("Device is in BROM mode. Trying to dump preloader.")
+                                if preloader is None:
+                                    preloader = self.dump_preloader_ram(mtk)
+                    else:
+                        self.info("Device is unprotected.")
+                        if mtk.config.is_brom:
+                            #mtk = mtk.bypass_security()
+                            if preloader is None:
+                                self.warning("Device is in BROM mode. No preloader given, trying to dump preloader from ram.")
+                                preloader = self.dump_preloader_ram(mtk)
+                    if not mtk.daloader.upload_da(preloader=preloader):
+                        self.error("Error uploading da")
+                        return False
+                    else:
+                        mtk.daloader.writestate()
+                else:
+                    return False
 
             if cmd == "gpt":
                 directory = self.args.directory
@@ -644,8 +657,7 @@ class Main(metaclass=LogBase):
                 data, guid_gpt = mtk.daloader.get_gpt(self.args)
                 if guid_gpt is None:
                     self.error("Error reading gpt")
-                    mtk.daloader.close()
-                    exit(1)
+                    self.close()
                 else:
                     with open(sfilename, "wb") as wf:
                         wf.write(data)
@@ -655,7 +667,6 @@ class Main(metaclass=LogBase):
                     with open(sfilename, "wb") as wf:
                         wf.write(data[mtk.daloader.daconfig.pagesize:])
                     print(f"Dumped Backup GPT to {sfilename}")
-                mtk.daloader.close()
                 self.close()
             elif cmd == "printgpt":
                 data, guid_gpt = mtk.daloader.get_gpt(self.args)
@@ -663,7 +674,6 @@ class Main(metaclass=LogBase):
                     self.error("Error reading gpt")
                 else:
                     guid_gpt.print()
-                mtk.daloader.close()
                 self.close()
             elif cmd == "r":
                 partitionname = self.args.partitionname
@@ -673,8 +683,7 @@ class Main(metaclass=LogBase):
                 partitions = partitionname.split(",")
                 if len(partitions) != len(filenames):
                     self.error("You need to gives as many filenames as given partitions.")
-                    mtk.daloader.close()
-                    exit(1)
+                    self.close()
                 if parttype == "user" or parttype is None:
                     i = 0
                     self.info("Requesting available partitions ....")
@@ -694,7 +703,7 @@ class Main(metaclass=LogBase):
                                     rpartition = gptentry
                                     break
                             if rpartition is not None:
-                                self.info(f"Dumping partition {rpartition.name}")
+                                self.info(f"Dumping partition \"{rpartition.name}\"")
                                 if mtk.daloader.readflash(addr=rpartition.sector * mtk.daloader.daconfig.pagesize,
                                                           length=rpartition.sectors * mtk.daloader.daconfig.pagesize,
                                                           filename=partfilename, parttype=parttype):
@@ -717,7 +726,6 @@ class Main(metaclass=LogBase):
                         else:
                             print(f"Failed to dump partition {str(partitionname)} as {partfilename}.")
                         i += 1
-                mtk.daloader.close()
                 self.close()
             elif cmd == "rl":
                 directory = self.args.directory
@@ -755,7 +763,6 @@ class Main(metaclass=LogBase):
                                                length=partition.sectors * mtk.daloader.daconfig.pagesize,
                                                filename=filename,
                                                parttype=parttype)
-                mtk.daloader.close()
                 self.close()
             elif cmd == "rf":
                 filename = self.args.filename
@@ -776,7 +783,6 @@ class Main(metaclass=LogBase):
                     print(f"Dumped sector 0 with flash size {hex(length)} as {filename}.")
                 else:
                     print(f"Failed to dump sector 0 with flash size {hex(length)} as {filename}.")
-                mtk.daloader.close()
                 self.close()
             elif cmd == "rs":
                 start = getint(self.args.start_sector)
@@ -789,15 +795,13 @@ class Main(metaclass=LogBase):
                     print(f"Dumped sector {str(start)} with sector count {str(sectors)} as {filename}.")
                 else:
                     print(f"Failed to dump sector {str(start)} with sector count {str(sectors)} as {filename}.")
-                mtk.daloader.close()
                 self.close()
             elif cmd == "footer":
                 filename = self.args.filename
                 data, guid_gpt = mtk.daloader.get_gpt(self.args)
                 if guid_gpt is None:
                     self.error("Error reading gpt")
-                    mtk.daloader.close()
-                    exit(1)
+                    self.close()
                 else:
                     pnames = ["userdata2", "metadata", "userdata", "reserved1", "reserved2", "reserved3"]
                     for partition in guid_gpt.partentries:
@@ -819,10 +823,9 @@ class Main(metaclass=LogBase):
                                 with open(filename, "wb") as wf:
                                     wf.write(data)
                                     print(f"Dumped footer from {partition.name} as {filename}.")
-                                    mtk.daloader.close()
-                                    exit(0)
+                                    self.close()
+                                    return
                 self.error(f"Error: Couldn't detect footer partition.")
-                mtk.daloader.close()
                 self.close()
             elif cmd == "w":
                 partitionname = self.args.partitionname
@@ -832,7 +835,7 @@ class Main(metaclass=LogBase):
                 partitions = partitionname.split(",")
                 if len(partitions) != len(filenames):
                     self.error("You need to gives as many filenames as given partitions.")
-                    mtk.daloader.close()
+                    self.close()
                     exit(0)
                 if parttype == "user" or parttype is None:
                     i = 0
@@ -879,7 +882,6 @@ class Main(metaclass=LogBase):
                         if size % 0x200 != 0:
                             psize += 0x200
                         pos += psize
-                mtk.daloader.close()
                 self.close()
             elif cmd == "wl":
                 directory = self.args.directory
@@ -940,7 +942,6 @@ class Main(metaclass=LogBase):
                         if size % 0x200 != 0:
                             psize += 0x200
                         pos += psize
-                mtk.daloader.close()
                 self.close()
             elif cmd == "e":
                 partitionname = self.args.partitionname
@@ -974,7 +975,6 @@ class Main(metaclass=LogBase):
                                                  parttype=parttype,
                                                  display=True)
                         print(f"Formatted sector {str(pos // 0x200)}")
-                mtk.daloader.close()
                 self.close()
             elif cmd == "wf":
                 filename = self.args.filename
@@ -992,14 +992,13 @@ class Main(metaclass=LogBase):
                     else:
                         print(f"Failed to write {partfilename} to sector {str(pos // 0x200)} with " +
                               f"sector count {str(size // 0x200)}.")
-                mtk.daloader.close()
                 self.close()
             elif cmd == "reset":
                 mtk.daloader.close()
                 self.close()
 
 
-info = "MTK Flash/Exploit Client V1.42 (c) B.Kerler 2018-2021"
+info = "MTK Flash/Exploit Client V1.43 (c) B.Kerler 2018-2021"
 
 cmds = {
     "printgpt": "Print GPT Table information",

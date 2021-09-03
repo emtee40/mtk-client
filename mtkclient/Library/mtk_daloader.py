@@ -1,7 +1,9 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 # (c) B.Kerler 2018-2021 MIT License
+import json
 import logging
+import os
 from mtkclient.Library.utils import LogBase, logsetup
 from mtkclient.Library.error import ErrorHandler
 from mtkclient.Library.daconfig import DAconfig
@@ -26,16 +28,60 @@ class DAloader(metaclass=LogBase):
                                  preloader=self.mtk.config.preloader, loglevel=loglevel)
         self.da = None
 
+    def writestate(self):
+        config = {}
+        config["xflash"] = self.xflash
+        config["flashtype"] = self.daconfig.flashtype
+        config["flashsize"] = self.daconfig.flashsize
+        if not self.xflash:
+            config["m_emmc_ua_size"] = self.da.emmc["m_emmc_ua_size"]
+            config["m_emmc_boot1_size"] = self.da.emmc["m_emmc_boot1_size"]
+            config["m_emmc_boot2_size"] = self.da.emmc["m_emmc_boot2_size"]
+            config["m_emmc_gp_size"] = self.da.emmc["m_emmc_gp_size"]
+            config["m_nand_flash_size"] = self.da.nand["m_nand_flash_size"]
+            config["m_sdmmc_ua_size"] = self.da.sdc["m_sdmmc_ua_size"]
+            config["m_nor_flash_size"] = self.da.nor["m_nor_flash_size"]
+
+        open(".state", "w").write(json.dumps(config))
+
+    def reinit(self):
+        if os.path.exists(".state"):
+            config = json.loads(open(".state", "r").read())
+            xflash = config["xflash"]
+            if xflash:
+                self.da = DAXFlash(self.mtk, self.daconfig, self.loglevel)
+                self.daconfig.flashtype = config["flashtype"]
+                self.daconfig.flashsize = config["flashsize"]
+                self.da.reinit()
+            else:
+                self.da = DALegacy(self.mtk, self.daconfig, self.loglevel)
+                self.daconfig.flashtype = config["flashtype"]
+                self.daconfig.flashsize = config["flashsize"]
+                self.da.nor = {}
+                self.da.nand = {}
+                self.da.emmc = {}
+                self.da.sdc = {}
+
+                self.da.emmc["m_emmc_ua_size"] = config["m_emmc_ua_size"]
+                self.da.emmc["m_emmc_boot1_size"] = config["m_emmc_boot1_size"]
+                self.da.emmc["m_emmc_boot2_size"] = config["m_emmc_boot2_size"]
+                self.da.emmc["m_emmc_gp_size"] = config["m_emmc_gp_size"]
+                self.da.nand["m_nand_flash_size"] = config["m_nand_flash_size"]
+                self.da.sdc["m_sdmmc_ua_size"] = config["m_sdmmc_ua_size"]
+                self.da.nor["m_nor_flash_size"] = config["m_nor_flash_size"]
+            return True
+        return False
+
     def set_da(self):
-        xflash = False
+        self.xflash = False
         if self.mtk.config.plcap is not None:
             PL_CAP0_XFLASH_SUPPORT = (0x1 << 0)
             if self.mtk.config.plcap[
                 0] & PL_CAP0_XFLASH_SUPPORT == PL_CAP0_XFLASH_SUPPORT and self.mtk.config.blver > 1:
-                xflash = True
+                self.xflash = True
         if self.mtk.config.chipconfig.damode == 1:
-            xflash = True
-        if xflash:
+            self.xflash = True
+        if self.xflash:
             self.da = DAXFlash(self.mtk, self.daconfig, self.loglevel)
         else:
             self.da = DALegacy(self.mtk, self.daconfig, self.loglevel)
@@ -81,7 +127,7 @@ class DAloader(metaclass=LogBase):
 
     def upload_da(self, preloader=None):
         self.daconfig.setup()
-        self.daconfig.extract_emi(preloader,legacy=self.mtk.config.chipconfig.damode==0)
+        self.daconfig.extract_emi(preloader, legacy=self.mtk.config.chipconfig.damode == 0)
         self.set_da()
         return self.da.upload_da()
 
