@@ -222,10 +222,14 @@ class DAXFlash(metaclass=LogBase):
     def status(self):
         status = None
         bytestoread = 4 + 4 + 4
-        hdr = self.usbread(bytestoread)
-        magic, datatype, length = unpack("<III", hdr)
+        try:
+            hdr = self.usbread(bytestoread)
+            magic, datatype, length = unpack("<III", hdr)
+        except Exception as err:
+            self.error("Status error: "+str(err))
+            return -1
         if magic != 0xFEEEEEEF:
-            self.error("Status error")
+            self.error("Status error: Wrong magic")
             return -1
         tmp = self.usbread(length)
         try:
@@ -300,8 +304,12 @@ class DAXFlash(metaclass=LogBase):
         if self.send(self.Cmd.INIT_EXT_RAM):
             status=self.status()
             if status==0:
-                if self.send(pack("<I", len(emi))):
-                    return self.send_param([emi])
+                try:
+                    if self.send(pack("<I", len(emi))):
+                        return self.send_param([emi])
+                except Exception as err:
+                    self.error(f"Error on sending emi: {str(err)}")
+                    return False
             else:
                 self.error(f"Error on sending emi: {self.eh.status(status)}")
         return False
@@ -997,6 +1005,7 @@ class DAXFlash(metaclass=LogBase):
                 if self.daconfig.emi is None:
                     self.info("No preloader given. Searching for preloader")
                     found = False
+                    self.info("Sending emi data ...")
                     for root, dirs, files in os.walk(os.path.join(self.pathconfig.get_loader_path(), 'Preloader')):
                         for file in files:
                             with open(os.path.join(root, file), "rb") as rf:
@@ -1015,6 +1024,7 @@ class DAXFlash(metaclass=LogBase):
                     if not found:
                         self.warning("No preloader given. Operation may fail due to missing dram setup.")
                 else:
+                    self.info("Sending emi data ...")
                     if not self.send_emi(self.daconfig.emi):
                         return False
             elif connagent == b"preloader":
