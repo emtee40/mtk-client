@@ -187,6 +187,10 @@ python mtk reset
 
 and disconnect usb cable to let the phone reboot.
 
+If you are getting a dm-verity error on Android 11, just press the power button,
+then the device should boot and show a yellow warning about unlocked bootloader and
+then the device should boot within 5 seconds.
+
 
 ### Read flash
 
