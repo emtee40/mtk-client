@@ -40,7 +40,7 @@ class Stage2(metaclass=LogBase):
             self.__logger.setLevel(logging.INFO)
 
         self.cdc = usb_class(portconfig=default_ids, loglevel=loglevel, devclass=10)
-        self.usbread=self.cdc.read
+        self.usbread=self.cdc.usbread
         self.usbwrite=self.cdc.usbwrite
 
     def preinit(self):
@@ -352,32 +352,36 @@ class Stage2(metaclass=LogBase):
             print_progress(100, 100, prefix='Complete: ', suffix=filename, bar_length=50)
         print("Done")
 
-    def keys(self, data=b"", otp=None, mode="dxcc") -> tuple[list or bytes or None,str]:
+    def keys(self, data=b"", otp=None, mode="dxcc"):
         # self.hwcrypto.disable_range_blacklist("cqdma",self.cmd_C8)
         keyinfo=""
         if self.setup.dxcc_base is not None and mode not in ["sej_aes_decrypt","sej_aes_encrypt","dxcc_sha256"]:
             rpmbkey = self.hwcrypto.aes_hwcrypt(btype="dxcc",mode="rpmb")
+            rpmb2key = self.hwcrypto.aes_hwcrypt(btype="dxcc", mode="rpmb2")
             fdekey = self.hwcrypto.aes_hwcrypt(btype="dxcc",mode="fde")
-            tfdekey = self.hwcrypto.aes_hwcrypt(btype="dxcc",mode="itrustee-fde")
+            ikey = self.hwcrypto.aes_hwcrypt(btype="dxcc",mode="itrustee")
             platkey, provkey = self.hwcrypto.aes_hwcrypt(btype="dxcc",mode="prov")
             keyinfo+="\nKeys :\n-----------------------------------------\n"
-            keyinfo+="RPMB: " + hexlify(rpmbkey).decode('utf-8')+"\n"
-            keyinfo+="FDE : " + hexlify(fdekey).decode('utf-8')+"\n"
-            keyinfo+="iTrustee-FDE: " + hexlify(tfdekey).decode('utf-8')+"\n"
-            keyinfo+="Platform: " + hexlify(platkey).decode('utf-8')+"\n"
+            keyinfo+="RPMB:         " + hexlify(rpmbkey).decode('utf-8')+"\n"
+            keyinfo+="RPMB2:         " + hexlify(rpmb2key).decode('utf-8') + "\n"
+            keyinfo+="FDE :         " + hexlify(fdekey).decode('utf-8')+"\n"
+            keyinfo+="iTrustee:     " + hexlify(ikey).decode('utf-8')+"\n"
+            keyinfo+="Platform:     " + hexlify(platkey).decode('utf-8')+"\n"
             keyinfo+="Provisioning: " + hexlify(provkey).decode('utf-8')+"\n"
             keyinfo+="\n"
             with open(os.path.join("logs", "rpmbkey.txt"), "wb") as wf:
                 wf.write(hexlify(rpmbkey))
+            with open(os.path.join("logs", "rpmbkey2.txt"), "wb") as wf:
+                wf.write(hexlify(rpmbkey))
             with open(os.path.join("logs", "fdekey.txt"), "wb") as wf:
                 wf.write(hexlify(fdekey))
-            with open(os.path.join("logs", "itrustee-fdekey.txt"), "wb") as wf:
-                wf.write(hexlify(tfdekey))
+            with open(os.path.join("logs", "itrustee_fbe.txt"), "wb") as wf:
+                wf.write(hexlify(ikey))
             with open(os.path.join("logs", "platkey.txt"), "wb") as wf:
                 wf.write(hexlify(platkey))
             with open(os.path.join("logs", "provkey.txt"), "wb") as wf:
                 wf.write(hexlify(provkey))
-            return [rpmbkey, fdekey, tfdekey, platkey, provkey], keyinfo
+            return [rpmbkey, fdekey, ikey, platkey, provkey], keyinfo
         elif self.setup.sej_base is not None and mode not in ["sej_aes_decrypt","sej_aes_encrypt","dxcc_sha256"]:
             rpmbkey = self.hwcrypto.aes_hwcrypt(mode="rpmb", data=data, otp=otp, btype="sej")
             keyinfo+="\nKeys :\n-----------------------------------------\n"
@@ -589,7 +593,7 @@ def main():
                 socid = st2.memread(st2.hwcrypto.socid_addr, 32)
                 keyinfo += f"SOCID: {hexlify(socid).decode('utf-8')}\n"
                 with open(os.path.join("logs", "socid.txt"), "wb") as wf:
-                    wf.write(hexlify(meid))
+                    wf.write(hexlify(socid))
             if st2.setup.sej_base or args.mode == "sej":
                 data = meid
                 # if not args.otp:

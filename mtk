@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # MTK Flash Client (c) B.Kerler 2018-2021.
 # Licensed under MIT License
+import shutil
 import os
 import json
 import sys
@@ -86,6 +87,11 @@ class ArgHandler(metaclass=LogBase):
         try:
             if args.preloader is not None:
                 config.preloader = args.preloader
+        except AttributeError:
+            pass
+        try:
+            if args.generatekeys is not None:
+                config.generatekeys = args.generatekeys
         except AttributeError:
             pass
         try:
@@ -194,7 +200,7 @@ class Mtk(metaclass=LogBase):
     def crasher(self, display=True, mode=None):
         rmtk = self
         plt = PLTools(self, self.__logger.level)
-        if self.config.enforcecrash or not (self.port.cdc.vid == 0xE8D and self.port.cdc.pid == 0x0003):
+        if self.config.enforcecrash or self.config.meid is None:
             self.info("We're not in bootrom, trying to crash da...")
             if mode is None:
                 for crashmode in range(0, 3):
@@ -256,6 +262,7 @@ class Main(metaclass=LogBase):
             if idx != -1:
                 data = data[idx:]
                 length = unpack("<I", data[0x20:0x24])[0]
+                time.sleep(0.05)
                 data = b"".join([pack("<I", val) for val in mtk.preloader.read32(0x200000 + idx, length + 4 // 4)])
                 preloader = data[:length]
                 idx = data.find(b"MTK_BLOADER_INFO")
@@ -268,7 +275,8 @@ class Main(metaclass=LogBase):
                                 wf.write(preloader)
                                 print(f"Successfully extracted preloader for this device to: {pfilename}")
                 return preloader
-        except:
+        except Exception as err:
+            self.error(str(err))
             return None
 
     def close(self):
@@ -426,7 +434,7 @@ class Main(metaclass=LogBase):
                 return
             self.close()
         elif cmd == "peek":
-            addr = getint(self.args.offset)
+            addr = getint(self.args.address)
             length = getint(self.args.length)
             if self.args.preloader is not None:
                 preloader = self.args.preloader
@@ -608,7 +616,7 @@ class Main(metaclass=LogBase):
                 if self.args.ptype is not None:
                     ptype = self.args.ptype
                 plt.runpayload(filename=payloadfile)
-            mtk.port.close()
+            mtk.port.close(reset=True)
             self.close()
         elif cmd == "gettargetconfig":
             if mtk.preloader.init():
@@ -620,10 +628,16 @@ class Main(metaclass=LogBase):
             # DA / FLash commands start here
 
             mtk.port.cdc.connected=mtk.port.cdc.connect()
-            if mtk.port.cdc.connected:
+            if mtk.port.cdc.connected and os.path.exists(".state"):
                 info=mtk.daloader.reinit()
             else:
-                preloader = self.args.preloader
+                if os.path.exists("logs"):
+                    shutil.rmtree("logs", ignore_errors=False, onerror=None)
+                    os.mkdir("logs")
+                try:
+                    preloader = self.args.preloader
+                except:
+                    preloader = None
                 if mtk.preloader.init():
                     if mtk.config.target_config["daa"]:
                         mtk = mtk.bypass_security()
@@ -636,10 +650,12 @@ class Main(metaclass=LogBase):
                     else:
                         self.info("Device is unprotected.")
                         if mtk.config.is_brom:
-                            #mtk = mtk.bypass_security()
+                            mtk = mtk.bypass_security() # Needed for dumping preloader
                             if preloader is None:
                                 self.warning("Device is in BROM mode. No preloader given, trying to dump preloader from ram.")
                                 preloader = self.dump_preloader_ram(mtk)
+                                if preloader is None:
+                                    self.error("Failed to dump preloader from ram.")
                     if not mtk.daloader.upload_da(preloader=preloader):
                         self.error("Error uploading da")
                         return False
@@ -809,8 +825,8 @@ class Main(metaclass=LogBase):
                             print(f"Detected partition: {partition.name}")
                             if partition.name in ["userdata2", "userdata"]:
                                 data = mtk.daloader.readflash(
-                                    addr=(
-                                                     partition.sector + partition.sectors) * mtk.daloader.daconfig.pagesize - 0x4000,
+                                    addr=(partition.sector + partition.sectors) *
+                                         mtk.daloader.daconfig.pagesize - 0x4000,
                                     length=0x4000, filename="", parttype="user", display=False)
                             else:
                                 data = mtk.daloader.readflash(addr=partition.sector * mtk.daloader.daconfig.pagesize,
@@ -846,7 +862,7 @@ class Main(metaclass=LogBase):
                             mtk.daloader.writeflash(addr=0,
                                                     length=os.stat(partfilename).st_size,
                                                     filename=partfilename,
-                                                    partitionname=partition, parttype=parttype)
+                                                    parttype=parttype)
                             continue
                         res = mtk.daloader.detect_partition(self.args, partition, parttype)
                         if res[0]:
@@ -854,7 +870,7 @@ class Main(metaclass=LogBase):
                             if mtk.daloader.writeflash(addr=rpartition.sector * mtk.daloader.daconfig.pagesize,
                                                        length=rpartition.sectors * mtk.daloader.daconfig.pagesize,
                                                        filename=partfilename,
-                                                       partitionname=partition, parttype=parttype):
+                                                       parttype=parttype):
                                 print(
                                     f"Wrote {partfilename} to sector {str(rpartition.sector)} with " +
                                     f"sector count {str(rpartition.sectors)}.")
@@ -902,7 +918,7 @@ class Main(metaclass=LogBase):
                             if mtk.daloader.writeflash(addr=0,
                                                        length=os.stat(partfilename).st_size,
                                                        filename=partfilename,
-                                                       partitionname=partition, parttype=parttype):
+                                                       parttype=parttype):
                                 print(f"Wrote {partition} to sector {str(0)}")
                             else:
                                 print(f"Failed to write {partition} to sector {str(0)}")
@@ -913,7 +929,7 @@ class Main(metaclass=LogBase):
                             if mtk.daloader.writeflash(addr=rpartition.sector * mtk.daloader.daconfig.pagesize,
                                                        length=rpartition.sectors * mtk.daloader.daconfig.pagesize,
                                                        filename=partfilename,
-                                                       partitionname=partition, parttype=parttype):
+                                                       parttype=parttype):
                                 print(
                                     f"Wrote {partfilename} to sector {str(rpartition.sector)} with " +
                                     f"sector count {str(rpartition.sectors)}.")
@@ -968,6 +984,54 @@ class Main(metaclass=LogBase):
                             self.error(f"Error: Couldn't detect partition: {partition}\nAvailable partitions:")
                             for rpartition in res[1]:
                                 self.info(rpartition.name)
+                self.close()
+            elif cmd == "es":
+                partitionname = self.args.partitionname
+                parttype = self.args.parttype
+                sectors = getint(self.args.sectors)
+                if self.args.sectors is None:
+                    self.error("Sector count is missing. Usage: es [partname] [sector count]")
+                    self.close()
+                partitions = partitionname.split(",")
+                if parttype == "user" or parttype is None:
+                    i = 0
+                    for partition in partitions:
+                        i += 1
+                        res = mtk.daloader.detect_partition(self.args, partition, parttype)
+                        if res[0]:
+                            rpartition = res[1]
+                            rsectors=min(sectors*mtk.daloader.daconfig.pagesize,
+                                         rpartition.sectors * mtk.daloader.daconfig.pagesize)
+                            if sectors>rsectors:
+                                self.error(f"Partition {partition} only has {rsectors}, you were using {sectors}. " +
+                                           f"Aborting")
+                                continue
+                            wipedata = b"\x00" * 0x200000
+                            error=False
+                            sector=rpartition.sector
+                            while sectors:
+                                sectorsize=sectors * mtk.daloader.daconfig.pagesize
+                                wsize=min(sectorsize,0x200000)
+                                if mtk.daloader.writeflash(addr=sector * mtk.daloader.daconfig.pagesize,
+                                                           length=wsize,
+                                                           filename=None,
+                                                           wdata=wipedata[:wsize],
+                                                           parttype=parttype):
+                                    print(
+                                        f"Failed to format sector {str(sector)} with " +
+                                        f"sector count {str(sectors)}.")
+                                    error = True
+                                    break
+                                sectors -= (wsize//mtk.daloader.daconfig.pagesize)
+                                sector += (wsize//mtk.daloader.daconfig.pagesize)
+                            if not error:
+                                print(
+                                        f"Formatted sector {str(rpartition.sector)} with " +
+                                        f"sector count {str(sectors)}.")
+                        else:
+                            self.error(f"Error: Couldn't detect partition: {partition}\nAvailable partitions:")
+                            for rpartition in res[1]:
+                                self.info(rpartition.name)
                 else:
                     pos = 0
                     for partitionname in partitions:
@@ -998,9 +1062,49 @@ class Main(metaclass=LogBase):
                     os.remove(".state")
                 mtk.daloader.close()
                 self.close()
+                print("Reset command was sent. Disconnect usb cable to power off.")
+            elif cmd == "xflash":
+                subcmd = args.subcmd
+                if subcmd is None:
+                    print("Available xflash cmds are: [peek, poke, generatekeys, unlock, rpmb]")
+                    return
+                if subcmd == "peek":
+                    addr = getint(self.args.address)
+                    length = getint(self.args.length)
+                    data=mtk.daloader.peek(addr=addr,length=length)
+                    if data!=b"":
+                        if self.args.filename is not None:
+                            filename = self.args.filename
+                            open(filename,"wb").write(data)
+                            self.info(f"Successfully wrote data from {hex(addr)}, length {hex(length)} to {filename}")
+                        else:
+                            self.info(f"Data read from {hex(addr)}, length: {hex(length)}:\n{hexlify(data).decode('utf-8')}\n")
+                elif subcmd == "poke":
+                    addr = getint(self.args.address)
+                    if self.args.filename is not None:
+                        if os.path.exists(self.args.filename):
+                            data=open(self.args.filename,"rb").read()
+                    else:
+                        if "0x" in self.args.data:
+                            data = pack("<I",int(self.args.data,16))
+                        else:
+                            data = bytes.fromhex(self.args.data)
+                    if mtk.daloader.poke(addr=addr, data=data):
+                        self.info(f"Successfully wrote data to {hex(addr)}, length {hex(len(data))}")
+                elif subcmd == "generatekeys":
+                    mtk.daloader.keys()
+                elif subcmd == "seccfg":
+                    mtk.daloader.seccfg(args.flag)
+                elif subcmd == "rpmb":
+                    rpmb_subcmd = args.rpmb_subcmd
+                    if rpmb_subcmd is None:
+                        print('Available xflash rpmb cmds are: [r w]')
+                    if rpmb_subcmd == "r":
+                        mtk.daloader.read_rpmb(args.filename)
+                self.close()
 
 
-info = "MTK Flash/Exploit Client V1.43 (c) B.Kerler 2018-2021"
+info = "MTK Flash/Exploit Client V1.50 (c) B.Kerler 2018-2021"
 
 cmds = {
     "printgpt": "Print GPT Table information",
@@ -1013,6 +1117,7 @@ cmds = {
     "wf": "Write flash from filename",
     "wl": "Write partitions from directory path to flash",
     "e": "Erase partition",
+    "es": "Erase partition with sector count",
     "footer": "Read crypto footer from flash",
     "reset": "Send mtk reset command",
     "dumpbrom": "Try to dump the bootrom",
@@ -1023,7 +1128,8 @@ cmds = {
     "gettargetconfig": "Get target config (sbc, daa, etc.)",
     "peek": "Read memory in patched preloader mode",
     "stage": "Run stage2 payload via boot rom mode (kamakiri)",
-    "plstage": "Run stage2 payload via preloader mode (send_da)"
+    "plstage": "Run stage2 payload via preloader mode (send_da)",
+    "xflash" : "Run da xflash special commands"
 }
 
 
@@ -1037,13 +1143,14 @@ def showcommands():
 
 
 if __name__ == '__main__':
+    print(info)
     print("")
     parser = argparse.ArgumentParser(description=info)
     subparsers = parser.add_subparsers(dest="cmd",
                                        help='Valid commands are: \n' +
-                                            'printgpt, gpt, r, rl, rf, rs, w, wf, wl, e, footer, reset, dumpbrom, \n' +
-                                            'dumppreloader, payload, crash, brute, gettargetconfig, peek, \n' +
-                                            'stage, plstage \n')
+                                            'printgpt, gpt, r, rl, rf, rs, w, wf, wl, e, es, footer, reset, \n' +
+                                            'dumpbrom, dumppreloader, payload, crash, brute, gettargetconfig, \n' +
+                                            'peek, stage, plstage, da \n')
 
     parser_printgpt = subparsers.add_parser("printgpt", help="Print GPT Table information")
     parser_gpt = subparsers.add_parser("gpt", help="Save gpt table to given directory")
@@ -1055,6 +1162,7 @@ if __name__ == '__main__':
     parser_wf = subparsers.add_parser("wf", help="Write flash from filename")
     parser_wl = subparsers.add_parser("wl", help="Write partitions from directory path to flash")
     parser_e = subparsers.add_parser("e", help="Erase partition")
+    parser_es = subparsers.add_parser("es", help="Erase partition with sector count")
     parser_footer = subparsers.add_parser("footer", help="Read crypto footer from flash")
 
     parser_reset = subparsers.add_parser("reset", help="Send mtk reset command")
@@ -1069,6 +1177,31 @@ if __name__ == '__main__':
     parser_peek = subparsers.add_parser("peek", help="Read memory in patched preloader mode")
     parser_stage = subparsers.add_parser("stage", help="Run stage2 payload via boot rom mode (kamakiri)")
     parser_plstage = subparsers.add_parser("plstage", help="Run stage2 payload via preloader mode (send_da)")
+
+    parser_xflash = subparsers.add_parser("xflash", help="Run xflash special commands")
+    da_cmds   = parser_xflash.add_subparsers(dest='subcmd', help='Commands: peek poke keys unlock')
+    da_peek = da_cmds.add_parser("peek", help="Read memory")
+    da_poke = da_cmds.add_parser("poke", help="Write memory")
+    da_keys = da_cmds.add_parser("generatekeys", help="Generate keys")
+    da_unlock = da_cmds.add_parser("seccfg", help="Unlock device / Configure seccfg")
+    da_rpmb = da_cmds.add_parser("rpmb", help="RPMB Tools")
+
+    da_rpmb_cmds = da_rpmb.add_subparsers(dest='rpmb_subcmd', help='Commands: r w')
+    da_rpmb_r = da_rpmb_cmds.add_parser("r", help="Read rpmb")
+    da_rpmb_r.add_argument('--filename', type=str, help="Filename to write data into")
+
+    da_rpmb_w = da_rpmb_cmds.add_parser("w", help="Write rpmb")
+    da_rpmb_w.add_argument('--filename', type=str, help="Filename to write from")
+
+    da_peek.add_argument('address', type=str, help="Address to read from (hex value)")
+    da_peek.add_argument('length', type=str, help="Length to read")
+    da_peek.add_argument('--filename', type=str, help="Filename to write data into")
+
+    da_poke.add_argument('address', type=str, help="Address to read from (hex value)")
+    da_poke.add_argument('data', type=str, help="Data to write")
+    da_poke.add_argument('--filename', type=str, help="Filename to read data from")
+
+    da_unlock.add_argument('flag', type=str, help="Needed flag (unlock,lock)")
 
     parser_printgpt.add_argument('--loader', type=str, help='Use specific DA loader, disable autodetection')
     parser_printgpt.add_argument('--vid', type=str, help='Set usb vendor id used for MTK Preloader')
@@ -1345,6 +1478,35 @@ if __name__ == '__main__':
     parser_e.add_argument('--crash', help='Enforce crash if device is in pl mode to enter brom mode')
     parser_e.add_argument('--socid', help='Read Soc ID')
 
+    parser_es.add_argument('partitionname', help='Partitionname to erase from flash')
+    parser_es.add_argument('sectors', help='Sectors to erase')
+    parser_es.add_argument('--loader', type=str, help='Use specific DA loader, disable autodetection')
+    parser_es.add_argument('--vid', type=str, help='Set usb vendor id used for MTK Preloader')
+    parser_es.add_argument('--pid', type=str, help='Set usb product id used for MTK Preloader')
+    parser_es.add_argument('--sectorsize', default='0x200', help='Set default sector size')
+    parser_es.add_argument('--debugmode', action='store_true', default=False, help='Enable verbose mode')
+    parser_es.add_argument('--gpt-num-part-entries', default='0', help='Set GPT entry count')
+    parser_es.add_argument('--gpt-part-entry-size', default='0', help='Set GPT entry size')
+    parser_es.add_argument('--gpt-part-entry-start-lba', default='0', help='Set GPT entry start lba sector')
+    parser_es.add_argument('--skip', help='Skip reading partition with names "partname1,partname2,etc."')
+    parser_es.add_argument('--skipwdt', help='Skip wdt init')
+    parser_es.add_argument('--wdt', help='Set a specific watchdog addr')
+    parser_es.add_argument('--mode', help='Set a crash mode (0=dasend1,1=dasend2,2=daread)')
+    parser_es.add_argument('--var1', help='Set kamakiri specific var1 value')
+    parser_es.add_argument('--uart_addr', help='Set payload uart_addr value')
+    parser_es.add_argument('--da_addr', help='Set a specific da payload addr')
+    parser_es.add_argument('--brom_addr', help='Set a specific brom payload addr')
+    parser_es.add_argument('--ptype',
+                          help='Set the payload type ( "amonet","kamakiri","kamakiri2", kamakiri2/da used by default)')
+    parser_es.add_argument('--preloader', help='Set the preloader filename for dram config')
+    parser_es.add_argument('--verifystage2', help='Verify if stage2 data has been written correctly')
+    parser_es.add_argument('--parttype', help='Partition type\n' +
+                                             '\t\tEMMC: [user, boot1, boot2, gp1, gp2, gp3, gp4, rpmb]' +
+                                             '\t\tUFS: [lu0, lu1, lu2, lu0_lu1]')
+    parser_es.add_argument('--filename', help='Optional filename')
+    parser_es.add_argument('--crash', help='Enforce crash if device is in pl mode to enter brom mode')
+    parser_es.add_argument('--socid', help='Read Soc ID')
+
     parser_footer.add_argument('filename', help='Filename to store footer')
     parser_footer.add_argument('--loader', type=str, help='Use specific DA loader, disable autodetection')
     parser_footer.add_argument('--vid', type=str, help='Set usb vendor id used for MTK Preloader')
@@ -1456,7 +1618,7 @@ if __name__ == '__main__':
     parser_gettargetconfig.add_argument('--debugmode', action='store_true', default=False, help='Enable verbose mode')
     parser_gettargetconfig.add_argument('--socid', help='Read Soc ID')
 
-    parser_peek.add_argument('offset', help='Offset to read from memory')
+    parser_peek.add_argument('address', help='Address to read from memory')
     parser_peek.add_argument('length', help='Bytes to read from memory')
     parser_peek.add_argument('--filename', help='Optional filename to write dumped data')
     parser_peek.add_argument('--loader', type=str, help='Use specific DA loader, disable autodetection')
@@ -1519,6 +1681,19 @@ if __name__ == '__main__':
     parser_plstage.add_argument('--crash', help='Enforce crash if device is in pl mode to enter brom mode')
     parser_plstage.add_argument('--socid', help='Read Soc ID')
     parser_plstage.add_argument('--startpartition', help='Option for plstage - Boot to (lk, tee1)')
+
+    parser_printgpt.add_argument('--generatekeys', action="store_true", help='Option for deriving hw keys')
+    parser_footer.add_argument('--generatekeys', action="store_true", help='Option for deriving hw keys')
+    parser_e.add_argument('--generatekeys', action="store_true", help='Option for deriving hw keys')
+    parser_es.add_argument('--generatekeys', action="store_true", help='Option for deriving hw keys')
+    parser_wl.add_argument('--generatekeys', action="store_true", help='Option for deriving hw keys')
+    parser_wf.add_argument('--generatekeys', action="store_true", help='Option for deriving hw keys')
+    parser_w.add_argument('--generatekeys', action="store_true", help='Option for deriving hw keys')
+    parser_rs.add_argument('--generatekeys', action="store_true", help='Option for deriving hw keys')
+    parser_rf.add_argument('--generatekeys', action="store_true", help='Option for deriving hw keys')
+    parser_rl.add_argument('--generatekeys', action="store_true", help='Option for deriving hw keys')
+    parser_gpt.add_argument('--generatekeys', action="store_true", help='Option for deriving hw keys')
+    parser_r.add_argument('--generatekeys', action="store_true", help='Option for deriving hw keys')
 
     args = parser.parse_args()
     cmd = args.cmd

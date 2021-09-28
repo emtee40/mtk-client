@@ -9,7 +9,6 @@ import usb.util
 import time
 import inspect
 import traceback
-import array
 import usb.backend.libusb0
 import usb.backend.libusb1
 from struct import calcsize
@@ -73,7 +72,7 @@ class usb_class(metaclass=LogBase):
     def __init__(self, loglevel=logging.INFO, portconfig=None, devclass=-1):
         self.load_windows_dll()
         self.connected = False
-        self.timeout = None
+        self.timeout = 1000
         self.vid = None
         self.pid = None
         self.stopbits = None
@@ -94,7 +93,6 @@ class usb_class(metaclass=LogBase):
         self.warning = self.__logger.warning
         self.debug = self.__logger.debug
         self.__logger.setLevel(loglevel)
-        self.buffer = array.array('B', [0]) * 1048576
         if loglevel == logging.DEBUG:
             logfilename = os.path.join("logs", "log.txt")
             fh = logging.FileHandler(logfilename)
@@ -103,7 +101,7 @@ class usb_class(metaclass=LogBase):
         if sys.platform.startswith('freebsd') or sys.platform.startswith('linux'):
             self.backend = usb.backend.libusb1.get_backend(find_library=lambda x: "libusb-1.0.so")
         elif sys.platform.startswith('win32'):
-            if calcsize("P")*8==64:
+            if calcsize("P") * 8 == 64:
                 self.backend = usb.backend.libusb1.get_backend(find_library=lambda x: "libusb-1.0.dll")
             else:
                 self.backend = usb.backend.libusb1.get_backend(find_library=lambda x: "libusb32-1.0.dll")
@@ -284,6 +282,9 @@ class usb_class(metaclass=LogBase):
             if e.errno == 13:
                 self.backend = usb.backend.libusb0.get_backend()
                 self.device = usb.core.find(idVendor=self.vid, idProduct=self.pid, backend=self.backend)
+        if self.configuration is None:
+            self.error("Couldn't get device configuration.")
+            return False
         if self.interface == -1:
             for interfacenum in range(0, self.configuration.bNumInterfaces):
                 itf = usb.util.find_descriptor(self.configuration, bInterfaceNumber=interfacenum)
@@ -303,9 +304,9 @@ class usb_class(metaclass=LogBase):
         if self.interface != -1:
             itf = usb.util.find_descriptor(self.configuration, bInterfaceNumber=self.interface)
             try:
-                if self.device.is_kernel_driver_active(self.interface):
+                if self.device.is_kernel_driver_active(0):
                     self.debug("Detaching kernel driver")
-                    self.device.detach_kernel_driver(self.interface)
+                    self.device.detach_kernel_driver(0)
             except Exception as err:
                 self.debug("No kernel driver supported: " + str(err))
             try:
@@ -314,7 +315,13 @@ class usb_class(metaclass=LogBase):
                 pass
 
             try:
-                if self.interface!=0:
+                if self.device.is_kernel_driver_active(self.interface):
+                    self.debug("Detaching kernel driver")
+                    self.device.detach_kernel_driver(self.interface)
+            except Exception as err:
+                self.debug("No kernel driver supported: " + str(err))
+            try:
+                if self.interface != 0:
                     usb.util.claim_interface(self.device, self.interface)
             except:
                 pass
@@ -346,12 +353,11 @@ class usb_class(metaclass=LogBase):
     def close(self, reset=False):
         if self.connected:
             try:
-                # self.device.reset()
+                if reset:
+                    self.device.reset()
                 if not self.device.is_kernel_driver_active(self.interface):
                     # self.device.attach_kernel_driver(self.interface) #Do NOT uncomment
                     self.device.attach_kernel_driver(0)
-                if reset:
-                    self.device.reset()
             except Exception as err:
                 self.debug(str(err))
                 pass
@@ -371,7 +377,7 @@ class usb_class(metaclass=LogBase):
             except usb.core.USBError as err:
                 error = str(err.strerror)
                 if "timeout" in error:
-                    time.sleep(0.01)
+                    # time.sleep(0.01)
                     try:
                         self.EP_OUT.write(b'')
                     except Exception as err:
@@ -382,12 +388,14 @@ class usb_class(metaclass=LogBase):
             i = 0
             while pos < len(command):
                 try:
-                    self.EP_OUT.write(command[pos:pos + pktsize])
+                    ctr = self.EP_OUT.write(command[pos:pos + pktsize])
+                    if ctr <= 0:
+                        self.info(ctr)
                     pos += pktsize
                 except Exception as err:
                     self.debug(str(err))
                     # print("Error while writing")
-                    time.sleep(0.01)
+                    # time.sleep(0.01)
                     i += 1
                     if i == 3:
                         return False
@@ -395,43 +403,38 @@ class usb_class(metaclass=LogBase):
         self.verify_data(bytearray(command), "TX:")
         return True
 
-    def read(self, maxlength=None, timeout=None):
-        if maxlength is None:
-            maxlength=self.EP_IN.wMaxPacketSize
-        if self.loglevel == logging.DEBUG:
-            self.debug(inspect.currentframe().f_back.f_code.co_name + ":" + hex(maxlength))
-        rxBuffer = array.array('B')
-        extend = rxBuffer.extend
-        if timeout is None:
-            timeout = self.timeout
-        buffer = self.buffer[:maxlength]
-        ep_read = self.EP_IN.read
-        while len(rxBuffer) == 0:
+    def usbread(self, resplen):
+        if resplen <= 0:
+            self.info("Warning !")
+        res = bytearray()
+        timeout = 0
+        loglevel = self.loglevel
+        epr = self.EP_IN.read
+        wMaxPacketSize = self.EP_IN.wMaxPacketSize
+        extend = res.extend
+        while len(res) < resplen:
             try:
-                length = ep_read(buffer, timeout)
-                extend(buffer[:length])
-                if len(rxBuffer) > 0:
-                    if self.loglevel == logging.DEBUG:
-                        self.verify_data(rxBuffer, "RX:")
-                    return bytearray(rxBuffer)
+                extend(epr(resplen))
             except usb.core.USBError as e:
                 error = str(e.strerror)
                 if "timed out" in error:
-                    # if platform.system()=='Windows':
-                    # time.sleep(0.05)
-                    # print("Waiting...")
                     self.debug("Timed out")
-                    self.debug(rxBuffer)
-                    return bytearray(rxBuffer)
+                    if timeout == 4:
+                        return b""
+                    timeout += 1
+                    pass
                 elif "Overflow" in error:
                     self.error("USB Overflow")
-                    sys.exit(0)
-                elif e.errno is not None:
-                    print(repr(e), type(e), e.errno)
-                    sys.exit(0)
+                    return b""
                 else:
-                    break
-        return bytearray(rxBuffer)
+                    self.info(repr(e), type(e), e.errno)
+                    return b""
+
+        if loglevel == logging.DEBUG:
+            self.debug(inspect.currentframe().f_back.f_code.co_name + ":" + hex(resplen))
+            if self.loglevel == logging.DEBUG:
+                self.verify_data(res[:resplen], "RX:")
+        return res[:resplen]
 
     def ctrl_transfer(self, bmRequestType, bRequest, wValue, wIndex, data_or_wLength):
         ret = self.device.ctrl_transfer(bmRequestType=bmRequestType, bRequest=bRequest, wValue=wValue, wIndex=wIndex,
@@ -454,9 +457,9 @@ class usb_class(metaclass=LogBase):
     def usbwrite(self, data, pktsize=None):
         if pktsize is None:
             pktsize = len(data)
-        size = self.write(data, pktsize)
+        res = self.write(data, pktsize)
         # port->flush()
-        return size
+        return res
 
     def usbreadwrite(self, data, resplen):
         self.usbwrite(data)  # size
@@ -486,25 +489,6 @@ class usb_class(metaclass=LogBase):
 
     def rbyte(self, count=1):
         return self.usbread(count)
-
-    def usbread(self, resplen, size=None):
-        if size is None:
-            size = resplen
-        res = bytearray()
-        timeout = 0
-        while len(res) < resplen:
-            v=self.read(size)
-            res.extend(v)
-            if len(res) == resplen:
-                break
-            if len(res) == 0:
-                time.sleep(0.001)
-                if timeout == 4:
-                    return res
-                timeout += 1
-            elif len(v)==0:
-                break
-        return res
 
 
 class scsi_cmds(Enum):
@@ -671,8 +655,9 @@ class scsi:
         print("Sent HTC ums adb enable command: %x" % ret)
 
     def send_zte_adbenable(self):  # zte blade
-        common_cmnd = b"\x86zte\x80\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"  # reserve_cmd + 'zte' + len + flag
-        common_cmnd2 = b"\x86zte\x80\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"  # reserve_cmd + 'zte' + len + flag
+        # reserve_cmd + 'zte' + len + flag
+        cmnds = [b"\x86zte\x80\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
+                 b"\x86zte\x80\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"]
         '''
         Flag values:
             0: disable adbd ---for 736T
@@ -681,23 +666,24 @@ class scsi:
             3: enable adbd ---for All except 736T
         '''
         lun = 0
-        datasize = common_cmnd[4]
         timeout = 5000
-        ret_tag = self.send_mass_storage_command(lun, common_cmnd, USB_DIR_IN, datasize)
-        ret_tag += self.send_mass_storage_command(lun, common_cmnd, USB_DIR_IN, datasize)
-        ret_tag = self.send_mass_storage_command(lun, common_cmnd2, USB_DIR_IN, datasize)
-        ret_tag += self.send_mass_storage_command(lun, common_cmnd2, USB_DIR_IN, datasize)
+        for cmnd in cmnds:
+            datasize = cmnd[4]
+            ret_tag = self.send_mass_storage_command(lun, cmnd, USB_DIR_IN, datasize)
+            ret_tag += self.send_mass_storage_command(lun, cmnd, USB_DIR_IN, datasize)
         if datasize > 0:
             data = self.usb.read(datasize, timeout)
             print("DATA: " + hexlify(data).decode('utf-8'))
         print("Send HTC adb enable command")
 
-    def send_fih_adbenable(self):  # motorola xt560, nokia 3.1, #f_mass_storage.c
+    def send_fih_adbenable(self):
+        # motorola xt560, nokia 3.1, #f_mass_storage.c
         if self.usb.connect():
             print("Sending FIH adb enable command")
             datasize = 0x24
             common_cmnd = bytes([self.SC_SWITCH_PORT]) + b"FI1" + struct.pack("<H",
-                                                                              datasize)  # reserve_cmd + 'FI' + flag + len + none
+                                                                              datasize)
+            # reserve_cmd + 'FI' + flag + len + none
             '''
             Flag values:
                 common_cmnd[3]->1: Enable adb daemon from mass_storage
@@ -728,13 +714,15 @@ class scsi:
             print("Sent alcatel adb enable command")
             self.usb.close()
 
-    def send_fih_root(
-            self):  # motorola xt560, nokia 3.1, huawei u8850, huawei Ideos X6, lenovo s2109, triumph M410, viewpad 7, #f_mass_storage.c
+    def send_fih_root(self):
+        # motorola xt560, nokia 3.1, huawei u8850, huawei Ideos X6,
+        # lenovo s2109, triumph M410, viewpad 7, #f_mass_storage.c
         if self.usb.connect():
             print("Sending FIH root command")
             datasize = 0x24
             common_cmnd = bytes([self.SC_SWITCH_ROOT]) + b"FIH" + struct.pack("<H",
-                                                                              datasize)  # reserve_cmd + 'FIH' + len + flag + none
+                                                                              datasize)
+            # reserve_cmd + 'FIH' + len + flag + none
             lun = 0
             # datasize = common_cmnd[4]
             timeout = 5000

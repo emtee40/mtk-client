@@ -182,7 +182,7 @@ class PLTools(metaclass=LogBase):
 
     def crasher(self, mtk, enforcecrash):
         plt = PLTools(mtk, self.__logger.level)
-        if enforcecrash or not (mtk.port.cdc.vid == 0xE8D and mtk.port.cdc.pid == 0x0003):
+        if enforcecrash or self.config.meid is None:
             self.info("We're not in bootrom, trying to crash da...")
             for crashmode in range(0, 3):
                 try:

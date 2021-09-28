@@ -105,6 +105,7 @@ class Port(metaclass=LogBase):
         resp = b""
         dlen = len(value)
         wr = self.usbwrite(value)
+        time.sleep(0.05)
         if wr:
             if nocmd:
                 cmdrsp = self.usbread(bytestoread)

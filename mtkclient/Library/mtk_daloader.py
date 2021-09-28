@@ -9,12 +9,14 @@ from mtkclient.Library.error import ErrorHandler
 from mtkclient.Library.daconfig import DAconfig
 from mtkclient.Library.mtk_dalegacy import DALegacy
 from mtkclient.Library.mtk_daxflash import DAXFlash
-
+from mtkclient.config.brom_config import damodes
+from mtkclient.Library.xflash_ext import xflashext
 
 class DAloader(metaclass=LogBase):
     def __init__(self, mtk, loglevel=logging.INFO):
         self.__logger = logsetup(self, self.__logger, loglevel)
         self.mtk = mtk
+        self.config = mtk.config
         self.loglevel = loglevel
         self.eh = ErrorHandler()
         self.config = self.mtk.config
@@ -26,14 +28,16 @@ class DAloader(metaclass=LogBase):
         self.rword = self.mtk.port.rword
         self.daconfig = DAconfig(mtk=self.mtk, loader=self.mtk.config.loader,
                                  preloader=self.mtk.config.preloader, loglevel=loglevel)
+        self.xft = None
         self.da = None
 
     def writestate(self):
         config = {}
-        config["xflash"] = self.xflash
+        config["xflash"] = self.mtk.config.chipconfig.damode==damodes.XFLASH
+        config["hwcode"] = self.config.hwcode
         config["flashtype"] = self.daconfig.flashtype
         config["flashsize"] = self.daconfig.flashsize
-        if not self.xflash:
+        if not self.mtk.config.chipconfig.damode==damodes.XFLASH:
             config["m_emmc_ua_size"] = self.da.emmc["m_emmc_ua_size"]
             config["m_emmc_boot1_size"] = self.da.emmc["m_emmc_boot1_size"]
             config["m_emmc_boot2_size"] = self.da.emmc["m_emmc_boot2_size"]
@@ -47,12 +51,15 @@ class DAloader(metaclass=LogBase):
     def reinit(self):
         if os.path.exists(".state"):
             config = json.loads(open(".state", "r").read())
-            xflash = config["xflash"]
-            if xflash:
+            self.config.hwcode = config["hwcode"]
+            self.xflash = config["xflash"]
+            self.config.init_hwcode(self.config.hwcode)
+            if self.xflash:
                 self.da = DAXFlash(self.mtk, self.daconfig, self.loglevel)
                 self.daconfig.flashtype = config["flashtype"]
                 self.daconfig.flashsize = config["flashsize"]
                 self.da.reinit()
+                self.xft=xflashext(self.mtk, self.da, self.loglevel)
             else:
                 self.da = DALegacy(self.mtk, self.daconfig, self.loglevel)
                 self.daconfig.flashtype = config["flashtype"]
@@ -69,6 +76,7 @@ class DAloader(metaclass=LogBase):
                 self.da.nand["m_nand_flash_size"] = config["m_nand_flash_size"]
                 self.da.sdc["m_sdmmc_ua_size"] = config["m_sdmmc_ua_size"]
                 self.da.nor["m_nor_flash_size"] = config["m_nor_flash_size"]
+                self.xft = None
             return True
         return False
 
@@ -83,6 +91,7 @@ class DAloader(metaclass=LogBase):
             self.xflash = True
         if self.xflash:
             self.da = DAXFlash(self.mtk, self.daconfig, self.loglevel)
+            self.xft = xflashext(self.mtk, self.da, self.loglevel)
         else:
             self.da = DALegacy(self.mtk, self.daconfig, self.loglevel)
 
@@ -127,16 +136,52 @@ class DAloader(metaclass=LogBase):
 
     def upload_da(self, preloader=None):
         self.daconfig.setup()
-        self.daconfig.extract_emi(preloader, legacy=self.mtk.config.chipconfig.damode == 0)
+        self.daconfig.extract_emi(preloader)
         self.set_da()
         return self.da.upload_da()
 
-    def writeflash(self, addr, length, filename, partitionname, offset=0, parttype=None, display=True):
+    def writeflash(self, addr, length, filename, offset=0, parttype=None, wdata=None, display=True):
         return self.da.writeflash(addr=addr, length=length, filename=filename, offset=offset,
-                                  partitionname=partitionname, parttype=parttype, display=display)
+                                  parttype=parttype, wdata=wdata, display=display)
 
     def formatflash(self, addr, length, partitionname, parttype, display=True):
         return self.da.formatflash(addr=addr, length=length, parttype=parttype)
 
     def readflash(self, addr, length, filename, parttype, display=True):
         return self.da.readflash(addr=addr, length=length, filename=filename, parttype=parttype, display=display)
+
+    def peek(self, addr: int, length:int):
+        if self.xflash:
+            return self.xft.custom_read(addr=addr, length=length)
+        self.error("Device is not in xflash mode, cannot run peek cmd.")
+        return b""
+
+    def poke(self, addr: int, data: bytes or bytearray):
+        if self.xflash:
+            return self.xft.custom_write(addr=addr, data=data)
+        self.error("Device is not in xflash mode, cannot run poke cmd.")
+        return False
+
+    def keys(self):
+        if self.xflash:
+            return self.xft.generate_keys()
+        self.error("Device is not in xflash mode, cannot run keys cmd.")
+        return False
+
+    def seccfg(self, lockflag):
+        if self.xflash:
+            return self.xft.seccfg(lockflag)
+        self.error("Device is not in xflash mode, cannot run unlock cmd.")
+        return False
+
+    def read_rpmb(self, filename=None):
+        if self.xflash:
+            return self.xft.read_rpmb(filename)
+        self.error("Device is not in xflash mode, cannot run read rpmb cmd.")
+        return False
+
+    def write_rpmb(self, filename=None):
+        if self.xflash:
+            return self.xft.write_rpmb(filename)
+        self.error("Device is not in xflash mode, cannot run write rpmb cmd.")
+        return False

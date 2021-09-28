@@ -124,6 +124,8 @@ class Preloader(metaclass=LogBase):
         self.sendcmd = self.mtk.port.mtk_cmd
 
     def init(self, maxtries=None, display=True):
+        if os.path.exists(".state"):
+            os.remove(".state")
         readsocid=self.config.readsocid
         skipwdt = self.config.skipwdt
 
@@ -166,6 +168,15 @@ class Preloader(metaclass=LogBase):
                 self.info("\tCQ_DMA addr:\t\t" + hex(self.config.chipconfig.cqdma_base))
             self.info("\tVar1:\t\t\t" + hex(self.config.chipconfig.var1))
 
+        if not skipwdt:
+            if self.display:
+                self.info("Disabling Watchdog...")
+            self.setreg_disablewatchdogtimer(self.config.hwcode)  # D4
+        if self.display:
+            self.info("HW code:\t\t\t" + hex(self.config.hwcode))
+            with open(os.path.join("logs", "hwcode.txt"), "w") as wf:
+                wf.write(hex(self.config.hwcode))
+        self.config.target_config = self.get_target_config(self.display)
         res = self.get_hw_sw_ver()
         self.config.hwsubcode = 0
         self.config.hwver = 0
@@ -178,17 +189,6 @@ class Preloader(metaclass=LogBase):
             self.info("\tHW subcode:\t\t" + hex(self.config.hwsubcode))
             self.info("\tHW Ver:\t\t\t" + hex(self.config.hwver))
             self.info("\tSW Ver:\t\t\t" + hex(self.config.swver))
-
-        if not skipwdt:
-            if self.display:
-                self.info("Disabling Watchdog...")
-            self.setreg_disablewatchdogtimer(self.config.hwcode)  # D4
-        if self.display:
-            self.info("HW code:\t\t\t" + hex(self.config.hwcode))
-            with open(os.path.join("logs", "hwcode.txt"), "w") as wf:
-                wf.write(hex(self.config.hwcode))
-        self.config.target_config = self.get_target_config(self.display)
-        # blver = self.get_blver()
         meid = self.get_meid()
         if len(meid) >= 16:
             with open(os.path.join("logs", "meid.txt"), "wb") as wf:

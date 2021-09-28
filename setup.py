@@ -4,7 +4,7 @@ import os
 
 setup(
     name='mtkclient',
-    version='1.43',
+    version='1.4',
     packages=find_packages(),
     long_description=open("README.md").read(),
     scripts=['mtk','stage2'],

@@ -64,11 +64,13 @@ class hwcrypto(metaclass=LogBase):
                     return self.gcpu.aes_read_cbc(addr=addr, encrypt=encrypt)
         elif btype == "dxcc":
             if mode == "fde":
-                return self.dxcc.generate_fde()
+                return self.dxcc.generate_rpmb(1)
+            elif mode == "rpmb2":
+                return self.dxcc.generate_rpmb(2)
             elif mode == "rpmb":
                 return self.dxcc.generate_rpmb()
-            elif mode == "itrustee-fde":
-                return self.dxcc.generate_itrustee_fde()
+            elif mode == "itrustee":
+                return self.dxcc.generate_itrustee_fbe()
             elif mode == "prov":
                 return self.dxcc.generate_provision_key()
             elif mode == "sha256":
