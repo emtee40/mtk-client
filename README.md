@@ -127,7 +127,7 @@ python mtk reset
 ```
 
 3. Download patched magisk for mtk:
-Download [here][https://raw.githubusercontent.com/vvb2060/magisk_files/44ca9ed38c29e22fa276698f6c03bc1168df2c10/app-release.apk]
+Download (here)[https://raw.githubusercontent.com/vvb2060/magisk_files/44ca9ed38c29e22fa276698f6c03bc1168df2c10/app-release.apk]
 
 4. Install on target phone
 - you need to enable usb-debugging via Settings/About phone/Version, Tap 7x on build number
