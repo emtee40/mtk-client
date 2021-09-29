@@ -406,27 +406,7 @@ python stage2 keys --mode [sej, dxcc]
 `` 
 For dxcc, you need to use plstage instead of stage
 
----------------------------------------------------------------------------------------------------------------
-
-
-## Compile payloads (optional)
-
-### Install gcc armeabi compiler
-
-```
-sudo apt-get install gcc-arm-none-eabi
-```
-
-### Compile
-
-See src/readme.build for detailed instructions.
-
-```
-cd src
-make
-```
----------------------------------------------------------------------------------------------------------------
-
+---------------------------------------------------------------------
 
 ### I have issues ....... please send logs and full console details !
 
