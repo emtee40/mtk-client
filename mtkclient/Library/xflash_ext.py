@@ -204,23 +204,28 @@ class xflashext(metaclass=LogBase):
         is_security_enabled = find_binary(da2, b"\x01\x23\x03\x60\x00\x20\x70\x47")
         if is_security_enabled != -1:
             da2patched[is_security_enabled:is_security_enabled + 2] = b"\x00\x23"
+        else:
+            self.warning("Security not patched.")
         # Patch hash check
         authaddr = find_binary(da2, b"\x04\x00\x07\xC0")
         if authaddr:
             da2patched[authaddr:authaddr + 4] = b"\x00\x00\x00\x00"
         elif authaddr is None:
-            authaddr = find_binary(da2, b"\x4F\xF0\x04\x09\xCC\xF2\x07\x09")
+            authaddr = find_binary(da2, b"\x4F\xF0\x04.\xCC\xF2\x07\x09")
             if authaddr:
-                da2patched[authaddr:authaddr + 8] = b"\x4F\xF0\x00\x09\x4F\xF0\x00\x09"
-
+                reg = da2patched[authaddr+3]
+                da2patched[authaddr:authaddr + 8] = b"\x4F\xF0\x00" + pack("B", reg) + b"\x4F\xF0\x00\x09"
+            else:
+                self.warning("Patch check not patched.")
         # Patch write not allowed
-        open("da2.bin","wb").write(da2patched)
+        #open("da2.bin","wb").write(da2patched)
         idx = 0
         while idx != -1:
             idx = da2patched.find(b"\x37\xB5\x00\x23\x04\x46\x02\xA8")
             if idx != -1:
                 da2patched[idx:idx + 8] = b"\x37\xB5\x00\x20\x03\xB0\x30\xBD"
-
+            else:
+                self.warning("Write allowed not patched.")
         return da2patched
 
     def fix_hash(self, da1, da2, hashpos, hashmode):

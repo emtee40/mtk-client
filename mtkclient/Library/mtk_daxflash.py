@@ -325,6 +325,7 @@ class DAXFlash(metaclass=LogBase):
             hashmode = 2
         if idx != -1:
             return idx, hashmode
+        self.error("Hash computation failed.")
         return None, None
 
     def boot_to(self, at_address, da, display=True, timeout=0.5):  # =0x40000000
@@ -941,7 +942,7 @@ class DAXFlash(metaclass=LogBase):
             self.error("No valid da loader found... aborting.")
             return False
         loader = self.daconfig.loader
-        self.info("Uploading stage 1...")
+        self.info(f"Uploading stage 1 from {os.path.basename(loader)}")
         with open(loader, 'rb') as bootldr:
             # stage 1
             da1offset = self.daconfig.da[2]["m_buf"]

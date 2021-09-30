@@ -427,7 +427,7 @@ class usb_class(metaclass=LogBase):
                     self.error("USB Overflow")
                     return b""
                 else:
-                    self.info(repr(e), type(e), e.errno)
+                    self.info(repr(e))
                     return b""
 
         if loglevel == logging.DEBUG:
