@@ -1101,6 +1101,8 @@ class Main(metaclass=LogBase):
                         print('Available xflash rpmb cmds are: [r w]')
                     if rpmb_subcmd == "r":
                         mtk.daloader.read_rpmb(args.filename)
+                    elif rpmb_subcmd == "w":
+                        mtk.daloader.write_rpmb(args.filename)
                 self.close()
 
 
