@@ -212,7 +212,7 @@ class xflashext(metaclass=LogBase):
         return None
 
     def patch_da2(self, da2):
-        open("da2.bin","wb").write(da2)
+        #open("da2.bin","wb").write(da2)
         da2patched = bytearray(da2)
         # Patch security
         is_security_enabled = find_binary(da2, b"\x01\x23\x03\x60\x00\x20\x70\x47")
@@ -235,7 +235,7 @@ class xflashext(metaclass=LogBase):
                 else:
                     self.warning("Hash check not patched.")
         # Patch write not allowed
-        open("da2.bin","wb").write(da2patched)
+        #open("da2.bin","wb").write(da2patched)
         idx = 0
         patched=False
         while idx != -1:
