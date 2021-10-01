@@ -1066,7 +1066,7 @@ class Main(metaclass=LogBase):
             elif cmd == "xflash":
                 subcmd = args.subcmd
                 if subcmd is None:
-                    print("Available xflash cmds are: [peek, poke, generatekeys, unlock, rpmb]")
+                    print("Available xflash cmds are: [peek, poke, generatekeys, seccfg, rpmb]")
                     return
                 if subcmd == "peek":
                     addr = getint(self.args.address)
