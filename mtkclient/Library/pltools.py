@@ -58,7 +58,7 @@ class PLTools(metaclass=LogBase):
             with open(filename, "rb") as rf:
                 rf.seek(offset)
                 payload = rf.read()
-                self.info(f"Loading payload from {os.path.basename(filename)}, {hex(len(payload))} bytes")
+                self.info(f"Loading payload from {filename}, {hex(len(payload))} bytes")
         except FileNotFoundError:
             self.info(f"Couldn't open {filename} for reading.")
             return False

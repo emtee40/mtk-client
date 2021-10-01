@@ -212,11 +212,14 @@ class xflashext(metaclass=LogBase):
         return None
 
     def patch_da2(self, da2):
+        open("da2.bin","wb").write(da2)
         da2patched = bytearray(da2)
         # Patch security
         is_security_enabled = find_binary(da2, b"\x01\x23\x03\x60\x00\x20\x70\x47")
         if is_security_enabled != -1:
             da2patched[is_security_enabled:is_security_enabled + 2] = b"\x00\x23"
+        else:
+            self.warning("Security check not patched.")
         # Patch hash check
         authaddr = find_binary(da2, b"\x04\x00\x07\xC0")
         if authaddr:
@@ -225,15 +228,36 @@ class xflashext(metaclass=LogBase):
             authaddr = find_binary(da2, b"\x4F\xF0\x04\x09\xCC\xF2\x07\x09")
             if authaddr:
                 da2patched[authaddr:authaddr + 8] = b"\x4F\xF0\x00\x09\x4F\xF0\x00\x09"
-
+            else:
+                authaddr = find_binary(da2,b"\x4F\xF0\x04\x09\x32\x46\x01\x98\x03\x99\xCC\xF2\x07\x09")
+                if authaddr:
+                    da2patched[authaddr:authaddr + 14] = b"\x4F\xF0\x00\x09\x32\x46\x01\x98\x03\x99\x4F\xF0\x00\x09"
+                else:
+                    self.warning("Hash check not patched.")
         # Patch write not allowed
         open("da2.bin","wb").write(da2patched)
         idx = 0
+        patched=False
         while idx != -1:
             idx = da2patched.find(b"\x37\xB5\x00\x23\x04\x46\x02\xA8")
             if idx != -1:
                 da2patched[idx:idx + 8] = b"\x37\xB5\x00\x20\x03\xB0\x30\xBD"
-
+                patched=True
+            else:
+                idx = da2patched.find(b"\x0C\x23\xCC\xF2\x02\x03")
+                if idx != -1:
+                    da2patched[idx:idx + 6] = b"\x00\x23\x00\x23\x00\x23"
+                    idx2 = da2patched.find(b"\x2A\x23\xCC\xF2\x02\x03")
+                    if idx2 != -1:
+                        da2patched[idx2:idx2+6]=b"\x00\x23\x00\x23\x00\x23"
+                    """
+                    idx3 = da2patched.find(b"\x2A\x24\xE4\xF7\x89\xFB\xCC\xF2\x02\x04")
+                    if idx3 != -1:
+                        da2patched[idx3:idx3 + 10] = b"\x00\x24\xE4\xF7\x89\xFB\x00\x24\x00\x24"
+                    """
+                    patched = True
+        if not patched:
+            self.warning("Write not allowed not patched.")
         return da2patched
 
     def fix_hash(self, da1, da2, hashpos, hashmode):
