@@ -55,23 +55,36 @@ class seccfg:
         SBOOT_RUNTIME_ON  = 1
         """
 
-    def create(self, lockflag: str, locktype: str):
-        if lockflag == "unlock":
-            self.lock_state = 3
-            self.critical_lock_state = 1
-        elif lockflag == "lock":
-            self.lock_state = 1
-            self.critical_lock_state = 0
-        self.seccfg_ver = 4
-        self.seccfg_size = 0x3C
-        self.sboot_runtime = 0
+    def create(self, sc_org, hwtype: str, lockflag: str = "unlock", V3=False):
+        if sc_org is None:
+            if lockflag == "unlock":
+                self.lock_state = 3
+                self.critical_lock_state = 1
+                self.seccfg_ver = 4
+                self.seccfg_size = 0x3C
+                self.sboot_runtime = 0
+            elif lockflag == "lock":
+                self.lock_state = 1
+                self.critical_lock_state = 1
+                self.seccfg_ver = 4
+                self.seccfg_size = 0x3C
+                self.sboot_runtime = 0
+        else:
+            self.lock_state = sc_org.lock_state
+            self.critical_lock_state = sc_org.critical_lock_state
+            self.seccfg_size = sc_org.seccfg_size
+            self.sboot_runtime = sc_org.sboot_runtime
+            self.seccfg_ver = sc_org.seccfg_ver
         seccfg_data = pack("<IIIIIII", self.magic, self.seccfg_ver, self.seccfg_size, self.lock_state,
                            self.critical_lock_state, self.sboot_runtime, 0x45454545)
         dec_hash = hashlib.sha256(seccfg_data).digest()
-        if locktype == "sw":
+        if hwtype == "sw":
             enc_hash = self.hwc.sej.sej_sec_cfg_sw(dec_hash, True)
         else:
-            enc_hash = self.hwc.sej.sej_sec_cfg_hw(dec_hash, True)
+            if not V3:
+                enc_hash = self.hwc.sej.sej_sec_cfg_hw(dec_hash, True)
+            else:
+                enc_hash = self.hwc.sej.sej_sec_cfg_hw_V3(dec_hash, True)
         self.hash = enc_hash
         data = seccfg_data + enc_hash
         data += b"\x00" * (0x200 - len(data))
@@ -204,28 +217,23 @@ class xflashext(metaclass=LogBase):
         is_security_enabled = find_binary(da2, b"\x01\x23\x03\x60\x00\x20\x70\x47")
         if is_security_enabled != -1:
             da2patched[is_security_enabled:is_security_enabled + 2] = b"\x00\x23"
-        else:
-            self.warning("Security not patched.")
         # Patch hash check
         authaddr = find_binary(da2, b"\x04\x00\x07\xC0")
         if authaddr:
             da2patched[authaddr:authaddr + 4] = b"\x00\x00\x00\x00"
         elif authaddr is None:
-            authaddr = find_binary(da2, b"\x4F\xF0\x04.\xCC\xF2\x07\x09")
+            authaddr = find_binary(da2, b"\x4F\xF0\x04\x09\xCC\xF2\x07\x09")
             if authaddr:
-                reg = da2patched[authaddr+3]
-                da2patched[authaddr:authaddr + 8] = b"\x4F\xF0\x00" + pack("B", reg) + b"\x4F\xF0\x00\x09"
-            else:
-                self.warning("Patch check not patched.")
+                da2patched[authaddr:authaddr + 8] = b"\x4F\xF0\x00\x09\x4F\xF0\x00\x09"
+
         # Patch write not allowed
-        #open("da2.bin","wb").write(da2patched)
+        open("da2.bin","wb").write(da2patched)
         idx = 0
         while idx != -1:
             idx = da2patched.find(b"\x37\xB5\x00\x23\x04\x46\x02\xA8")
             if idx != -1:
                 da2patched[idx:idx + 8] = b"\x37\xB5\x00\x20\x03\xB0\x30\xBD"
-            else:
-                self.warning("Write allowed not patched.")
+
         return da2patched
 
     def fix_hash(self, da1, da2, hashpos, hashmode):
@@ -347,6 +355,16 @@ class xflashext(metaclass=LogBase):
                 return True
         return False
 
+    def setotp(self, hwc):
+        otp = None
+        if self.mtk.config.preloader is not None:
+            idx = self.mtk.config.preloader.find(b"\x4D\x4D\x4D\x01\x30")
+            if idx != -1:
+                otp = self.mtk.config.preloader[idx + 0xC:idx + 0xC + 32]
+        if otp is None:
+            otp = 32 * b"\x00"
+        hwc.sej.sej_set_otp(otp)
+
     def read_rpmb(self, filename=None, display=True):
         progressbar = progress(1)
         sectors = 0
@@ -441,19 +459,20 @@ class xflashext(metaclass=LogBase):
         if not sc_org.parse(seccfg_data):
             return False
         sc_new = seccfg(hwc)
-        if lockflag == "unlock":
-            prelock = "lock"
-        else:
-            prelock = "unlock"
+        self.setotp(hwc)
         hwtype = "hw"
-        sc_new.create(prelock, hwtype)
+        V3 = True
+        sc_new.create(sc_org=sc_org, hwtype=hwtype, V3=V3)
+        if sc_org.hash != sc_new.hash:
+            V3=False
+            sc_new.create(sc_org=sc_org, hwtype=hwtype, V3=V3)
         if sc_org.hash != sc_new.hash:
             hwtype = "sw"
-            sc_new.create(prelock, hwtype)
+            sc_new.create(sc_org=sc_org, hwtype=hwtype)
             if sc_org.hash != sc_new.hash:
                 self.error("Device has is either already unlocked or algo is unknown. Aborting.")
                 return False
-        writedata = sc_new.create(lockflag, hwtype)
+        writedata = sc_new.create(sc_org=None, hwtype=hwtype, lockflag=lockflag, V3=V3)
         if self.xflash.writeflash(addr=partition.sector * self.mtk.daloader.daconfig.pagesize,
                                   length=len(writedata),
                                   filename=None, wdata=writedata, parttype="user", display=True):
@@ -502,14 +521,8 @@ class xflashext(metaclass=LogBase):
         elif self.config.chipconfig.sej_base is not None:
             if meid != b"":
                 self.info("Generating sej rpmbkey...")
-                otp = None
-                if self.mtk.config.preloader is not None:
-                    idx = self.mtk.config.preloader.find(b"\x4D\x4D\x4D\x01\x30")
-                    if idx != -1:
-                        otp = self.mtk.config.preloader[idx + 0xC:idx + 0xC + 32]
-                if otp is None:
-                    otp = 32 * b"\x00"
-                rpmbkey = hwc.aes_hwcrypt(mode="rpmb", data=meid, otp=otp, btype="sej")
+                self.setotp(hwc)
+                rpmbkey = hwc.aes_hwcrypt(mode="rpmb", data=meid, btype="sej")
                 self.info("RPMB        : " + hexlify(rpmbkey).decode('utf-8'))
                 open(os.path.join("logs", "rpmbkey.txt"), "wb").write(hexlify(rpmbkey))
         return True

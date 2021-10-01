@@ -346,6 +346,7 @@ class sej(metaclass=LogBase):
 
         # clear HACC_ASRC/HACC_ACFG/HACC_AOUT
         self.reg.HACC_ACON2 = self.HACC_AES_CLR
+        self.reg.HACC_UNK = 1
         self.reg.HACC_ACFG0 = iv[0] #g_AC_CFG
         self.reg.HACC_ACFG1 = iv[1]
         self.reg.HACC_ACFG2 = iv[2]
@@ -493,6 +494,15 @@ class sej(metaclass=LogBase):
         self.SEJ_Terminate()
         if not encrypt:
             dec=self.xor_data(dec)
+        return dec
+
+    def sej_sec_cfg_hw_V3(self,data, encrypt=True):
+        self.info("HACC init")
+        self.SEJ_V3_Init(encrypt=encrypt)
+        self.info("HACC run")
+        dec=self.SEJ_V3_Run(data)
+        self.info("HACC terminate")
+        self.SEJ_V3_Terminate()
         return dec
 
     def generate_rpmb(self,meid,otp,derivedlen=32):
