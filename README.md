@@ -166,9 +166,9 @@ python mtk reset
 
 ### Unlock bootloader
 
-1. Erase metadata and userdata (and md_udt if existing):
+1. Erase metadata and userdata (and md_udc if existing):
 ```
-python mtk e metadata, userdata
+python mtk e metadata, userdata, md_udc
 ```
 
 2. Unlock bootloader:
