@@ -1050,7 +1050,7 @@ class Main(metaclass=LogBase):
                     if mtk.daloader.writeflash(addr=pos,
                                                length=size,
                                                filename=partfilename,
-                                               partitionname=None, parttype=parttype):
+                                               parttype=parttype):
                         print(f"Wrote {partfilename} to sector {str(pos // 0x200)} with " +
                               f"sector count {str(size // 0x200)}.")
                     else:
