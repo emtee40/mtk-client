@@ -632,8 +632,11 @@ class Main(metaclass=LogBase):
                 info=mtk.daloader.reinit()
             else:
                 if os.path.exists("logs"):
-                    shutil.rmtree("logs", ignore_errors=False, onerror=None)
-                    os.mkdir("logs")
+                    try:
+                        shutil.rmtree("logs", ignore_errors=True, onerror=None)
+                        os.mkdir("logs")
+                    except:
+                        pass
                 try:
                     preloader = self.args.preloader
                 except:
