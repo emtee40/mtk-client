@@ -1005,7 +1005,7 @@ class Main(metaclass=LogBase):
                                 self.info(rpartition.name)
                 if (countFP == len(partitions) and countFP > 1):
                           print(f"All partitions formatted.")
-                    elif (countFP != len(partitions) and countFP > 1):
+                elif (countFP != len(partitions) and countFP > 1):
                           print(f"Failed to format all partitions.")
                 self.close()
             elif cmd == "es":
