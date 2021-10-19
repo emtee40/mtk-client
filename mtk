@@ -793,6 +793,8 @@ class Main(metaclass=LogBase):
                     partitionsForRead = len(guid_gpt.partentries) - len(skip)
                     if countGPT == partitionsForRead:
                         self.info(f"All Dumped partitions success.")
+                    else:
+                        self.error(f"Failed to dump all partitions")
                 self.close()
             elif cmd == "rf":
                 filename = self.args.filename
@@ -978,6 +980,7 @@ class Main(metaclass=LogBase):
                 parttype = self.args.parttype
                 partitions = partitionname.split(",")
                 if parttype == "user" or parttype is None:
+                    countFP = 0
                     i = 0
                     for partition in partitions:
                         i += 1
@@ -990,14 +993,20 @@ class Main(metaclass=LogBase):
                                 print(
                                     f"Formatted sector {str(rpartition.sector)} with " +
                                     f"sector count {str(rpartition.sectors)}.")
+                                countFP += 1
                             else:
                                 print(
                                     f"Failed to format sector {str(rpartition.sector)} with " +
                                     f"sector count {str(rpartition.sectors)}.")
+                                countFP -= 1
                         else:
                             self.error(f"Error: Couldn't detect partition: {partition}\nAvailable partitions:")
                             for rpartition in res[1]:
                                 self.info(rpartition.name)
+                if (countFP == len(partitions) and countFP > 1):
+                          print(f"All partitions formatted.")
+                elif (countFP != len(partitions) and countFP > 1):
+                          print(f"Failed to format all partitions.")
                 self.close()
             elif cmd == "es":
                 partitionname = self.args.partitionname
