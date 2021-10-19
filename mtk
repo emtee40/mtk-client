@@ -793,6 +793,8 @@ class Main(metaclass=LogBase):
                     partitionsForRead = len(guid_gpt.partentries) - len(skip)
                     if countGPT == partitionsForRead:
                         self.info(f"All Dumped partitions success.")
+                    else:
+                        self.error(f"Failed to dump all partitions")
                 self.close()
             elif cmd == "rf":
                 filename = self.args.filename
