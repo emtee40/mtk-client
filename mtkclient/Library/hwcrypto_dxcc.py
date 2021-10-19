@@ -29,7 +29,29 @@ oem_pubk = "DACD8B5FDA8A766FB7BCAA43F0B16915" + \
            "5CD9D430F02EE46F80DE6C63EA802BEF" + \
            "90673AAC4C6667F2883FB4501FA77455"
 
-mtk_oem_key = hashlib.sha256(bytes.fromhex(oem_pubk)).digest()
+huawei_med_lx9 = "C1A9D3E65C7EAEB31932E9DD224C07C0" + \
+                 "70D879FB4FE518C64E92C24B79DC1EE1" + \
+                 "535D91D38DD34D7E32A22DEED60F0727" + \
+                 "FF8F8747E2598ACB5DDC73C61D2434A9" + \
+                 "1D568FE3E773BD0D17AA46B0364E0DCF" + \
+                 "3B41E0034605D572B6CD7DD8A816E7D6" + \
+                 "84181B1646628576D1E22F55071687B9" + \
+                 "E5B2F9C9536167B7EDCF10F1F85BE57B" + \
+                 "6EE873BFE952BB33F0001140E0E46AF2" + \
+                 "D64D39C568D8E372BCE3609BCACA5316" + \
+                 "E4EBDDE5721B33611E064DF41A4BCF0A" + \
+                 "3A395791D3203BF220DC71F4267093CE" + \
+                 "B78E30A844D4631DE8CE6D0514202BB5" + \
+                 "8AD2024B16558C2AD9B30CE05043FF67" + \
+                 "C4D265A3D5F3275D93AFDC1A39625C2C" + \
+                 "5BD6FDCDBD75E76E6D9E74E9672B5897"
+
+buffer = bytearray(b"\x00" * 0x20C)
+buffer[0:4] = pack("<I", 3)
+buffer[4:8] = pack("<I", 256)
+buffer[12:15] = b"\x01\x00\x01"
+buffer[0x10C:0x20C] = bytes.fromhex(huawei_med_lx9)
+huawei_oem_key = bytearray(hashlib.sha256(buffer).digest())
 
 regval = {
     "DXCC_CON": 0x0000,
@@ -1072,7 +1094,7 @@ class dxcc(metaclass=LogBase):
             itrustee = b"TrustedCorekeymaster" + b"\x07" * 0x10
             seed = itrustee + pack("<B", ctr)
             paddr = self.SBROM_AesCmac(1, 0x0, seed, 0x0, len(seed), dstaddr)
-            for field in self.read32(paddr + 0x108, 4):
+            for field in self.read32(paddr, 4):
                 fdekey += pack("<I", field)
         self.tzcc_clk(0)
         return fdekey
@@ -1099,8 +1121,29 @@ class dxcc(metaclass=LogBase):
         prov_key = b"PROVISION KEY"
         self.tzcc_clk(1)
         dstaddr = self.da_payload_addr - 0x300
-        platkey = self.SBROM_KeyDerivation(2, plat_key, mtk_oem_key, 0x20, dstaddr)
-        provkey = self.SBROM_KeyDerivation(5, prov_key, mtk_oem_key, 0x20, dstaddr)
+
+        mtk_oem_key = hashlib.sha256(bytes.fromhex(oem_pubk)).digest()
+        provkey = self.SBROM_KeyDerivation(HwCryptoKey.PROVISIONING_KEY, plat_key, mtk_oem_key, 0x10, dstaddr)
+        while True:
+            val = self.read32(self.dxcc_base + 0xAF4) & 1
+            if val != 0:
+                break
+        platkey = self.SBROM_KeyDerivation(HwCryptoKey.PLATFORM_KEY, prov_key, mtk_oem_key, 0x10, dstaddr)
+        self.write32(self.dxcc_base + 0xAC0, 0)
+        self.write32(self.dxcc_base + 0xAC4, 0)
+        self.write32(self.dxcc_base + 0xAC8, 0)
+        self.write32(self.dxcc_base + 0xACC, 0)
+        pdesc = hw_desc_init()
+        pdesc[0] = 0
+        pdesc[1] = 0x8000081
+        pdesc[2] = 0
+        pdesc[3] = 0
+        pdesc[4] = 0x4801C20
+        pdesc[5] = 0
+        self.sasi_sb_adddescsequence(pdesc)
+        dstaddr = self.da_payload_addr - 0x300
+        self.SB_HalWaitDescCompletion(dstaddr)
+        # data=self.read32(0x200D90)
         self.tzcc_clk(0)
         return platkey, provkey
 
@@ -1112,54 +1155,39 @@ class dxcc(metaclass=LogBase):
             result.extend(pack("<I", field))
         return result
 
-    # SBROM_KeyDerivation(dxcc_base,encmode=1,fde1,8,fde2,4,fdekey,fdekey>>31,fdekeylen
-    """
-    SBROM_KeyDerivation PC(00230B77) R0:10210000,R1:00000001,R2:001209D8,R3:00000008,R4:00100000,R5:00233760,R6:00000010
-    R2:53514e43214c465a
-    R5:52504d42204b45595341534953514e43
-    key="SQNC!LFZ",8
-    salt="SASI",4
-    requestedlen=0x10
-    """
-
-    def SBROM_KeyDerivation(self, aeskeytype, key, salt, requestedlen, destaddr):
+    def SBROM_KeyDerivation(self, aeskeytype, label, salt, requestedlen, destaddr):
         result = bytearray()
-        buffer = bytearray(b"\x00" * 0x43)
         if aeskeytype - 1 > 4 or (1 << (aeskeytype - 1) & 0x17) == 0:
             return 0xF2000002
         if requestedlen > 0xFF or (requestedlen << 28) & 0xFFFFFFFF:
             return 0xF2000003
-        if 0x0 >= len(key) > 0x20:
+        if 0x0 >= len(label) > 0x20:
             return 0xF2000003
-        bufferlen = len(salt) + 3 + len(key)
+        bufferlen = len(salt) + 3 + len(label)
         iterlength = (requestedlen + 0xF) >> 4
-        if len(key) == 0:
-            keyend = 1
-        else:
-            buffer[1:1 + len(key)] = key
-            keyend = len(key) + 1
-        saltstart = keyend + 1
-        if len(salt) > 0:
-            buffer[saltstart:saltstart + len(salt)] = salt
-        # ToDo: verify buffer structure
-        buffer[saltstart + len(salt):saltstart + len(salt) + 4] = pack("<I", 8 * requestedlen)
-        # buffer=0153514e43214c465a005442544a80
         for i in range(0, iterlength):
-            buffer[0] = i + 1
-            dstaddr = self.SBROM_AesCmac(aeskeytype, 0x0, buffer, 0, bufferlen, destaddr)
+            buffer = pack("<B", i + 1) + label + b"\x00" + salt + pack("<B", (8 * requestedlen) & 0xFF)
+            dstaddr = self.SBROM_AesCmac(aeskeytype, 0x0, buffer[:bufferlen], 0, bufferlen, destaddr)
             if dstaddr != 0:
-                for field in self.read32(dstaddr + 0x108, 4):
+                for field in self.read32(dstaddr, 4):
                     result.extend(pack("<I", field))
         return result
 
-    def SBROM_AesCmac(self, aesKeyType, pInternalKey, buffer, flag, bufferlen, destaddr):
-        dataptr = destaddr + 0x118  # SP - 0xA8 - 0x24 - 0x28 - 0x38 - 0x88 - 0x30 - ((12 * 8) - 16)
-        pInternalKeyptr = destaddr + 0x108  # dataptr - 0x10
-        destptr = destaddr
-        self.writemem(dataptr, buffer[:bufferlen])
-        self.writemem(pInternalKeyptr, pack("<Q", pInternalKey))
-        if self.SBROM_AesCmacDriver(aesKeyType, pInternalKeyptr, dataptr, DmaMode.DMA_DLLI, bufferlen, destaddr):
-            return destptr
+    def SBROM_AesCmac(self, aesKeyType, InternalKey, DataIn, dmaMode, bufferlen, destaddr):
+        sramAddr = destaddr
+        ivSramAddr = sramAddr
+        inputSramAddr = ivSramAddr + AES_IV_COUNTER_SIZE_IN_BYTES
+        blockSize = len(DataIn) // 0x20 * 0x20
+        outputSramAddr = inputSramAddr + blockSize
+        keySramAddr = outputSramAddr + blockSize
+        pInternalKey = keySramAddr
+        if InternalKey != 0:
+            self.writemem(keySramAddr, InternalKey)
+        if dmaMode != 0:
+            dmaMode = dmaMode
+        self.writemem(inputSramAddr, DataIn[:bufferlen])
+        if self.SBROM_AesCmacDriver(aesKeyType, pInternalKey, inputSramAddr, dmaMode, bufferlen, sramAddr):
+            return pInternalKey
         return 0
 
     def SB_HalInit(self):
@@ -1191,6 +1219,7 @@ class dxcc(metaclass=LogBase):
             return 0xF6000001
 
     def SBROM_AesCmacDriver(self, aesKeyType, pInternalKey, pDataIn, dmaMode, blockSize, pCMacResult):
+        ivSramAddr = 0
         if aesKeyType == HwCryptoKey.ROOT_KEY:
             if self.read32(self.dxcc_base + self.DX_HOST_SEP_HOST_GPR4) & 2 != 0:
                 keySizeInBytes = 0x20  # SEP_AES_256_BIT_KEY_SIZE
@@ -1204,22 +1233,25 @@ class dxcc(metaclass=LogBase):
         pdesc = hw_desc_set_cipher_mode(pdesc, sep_cipher_mode.SEP_CIPHER_CMAC)  # desc[4]=0x1C00
         pdesc = hw_desc_set_cipher_config0(pdesc, DescDirection.DESC_DIRECTION_ENCRYPT_ENCRYPT)
         pdesc = hw_desc_set_key_size_aes(pdesc, keySizeInBytes)  # desc[4]=0x801C00
-        # pdesc = hw_desc_set_din_sram(pdesc, ivSramAddr, AES_IV_COUNTER_SIZE_IN_BYTES)
+        pdesc = hw_desc_set_din_sram(pdesc, ivSramAddr, AES_IV_COUNTER_SIZE_IN_BYTES)
         pdesc = hw_desc_set_din_const(pdesc, 0, AES_IV_COUNTER_SIZE_IN_BYTES)  # desc[1]=0x8000041
         pdesc = hw_desc_set_flow_mode(pdesc, FlowMode.S_DIN_to_AES)  # desc[4]=0x801C20
         pdesc = hw_desc_set_setup_mode(pdesc, SetupOp.SETUP_LOAD_STATE0)  # desc[4]=0x1801C20
+        pdesc[1] |= 0x8000000
         self.sasi_sb_adddescsequence(pdesc)
 
         # Load key
         mdesc = hw_desc_init()
         if aesKeyType == HwCryptoKey.USER_KEY:
-            mdesc = hw_desc_set_din_sram(mdesc, pInternalKey, AES_Key128Bits_SIZE_IN_BYTES)
+            keySramAddr = pInternalKey
+            mdesc = hw_desc_set_din_sram(mdesc, keySramAddr, AES_Key128Bits_SIZE_IN_BYTES)
         mdesc = hw_desc_set_cipher_do(mdesc, aesKeyType)  # desc[4]=0x8000
         mdesc = hw_desc_set_cipher_mode(mdesc, sep_cipher_mode.SEP_CIPHER_CMAC)  # desc[4]=0x9C00
         mdesc = hw_desc_set_cipher_config0(mdesc, DescDirection.DESC_DIRECTION_ENCRYPT_ENCRYPT)
         mdesc = hw_desc_set_key_size_aes(mdesc, keySizeInBytes)  # desc[4]=0x809C00
         mdesc = hw_desc_set_flow_mode(mdesc, FlowMode.S_DIN_to_AES)  # desc[4]=0x809C20
         mdesc = hw_desc_set_setup_mode(mdesc, SetupOp.SETUP_LOAD_KEY0)  # desc[4]=0x4809C20
+        mdesc[4] |= ((aesKeyType >> 2) & 3) << 20
         self.sasi_sb_adddescsequence(mdesc)
 
         # Process input data

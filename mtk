@@ -302,7 +302,7 @@ class Main(metaclass=LogBase):
             logfilename = os.path.join("logs", "log.txt")
             if os.path.exists(logfilename):
                 os.remove(logfilename)
-            fh = logging.FileHandler(logfilename)
+            fh = logging.FileHandler(logfilename, encoding='utf-8')
             self.__logger.addHandler(fh)
 
         self.debug(" ".join(sys.argv))
@@ -388,15 +388,17 @@ class Main(metaclass=LogBase):
                            "Trying to dump preloader from ram.")
                 plt = PLTools(mtk=mtk, loglevel=self.__logger.level)
                 dadata, filename = plt.run_dump_preloader(self.args.ptype)
-                mtk.config.preloader = self.patch_preloader_security(dadata)
+                mtk.config.preloader = mtk.patch_preloader_security(dadata)
             if mtk.config.preloader is not None:
                 self.info("Using custom preloader : "+filename)
                 daaddr, dadata = mtk.parse_preloader(mtk.config.preloader)
+                mtk.config.preloader = mtk.patch_preloader_security(dadata)
                 if mtk.preloader.send_da(daaddr, len(dadata), 0x100, dadata):
                     self.info(f"Sent preloader to {hex(daaddr)}, length {hex(len(dadata))}")
                     if mtk.preloader.jump_da(daaddr):
                         self.info(f"PL Jumped to daaddr {hex(daaddr)}.")
                         time.sleep(2)
+                        sys.exit(1)
                         mtk = Mtk(config=mtk.config, loglevel=self.__logger.level)
                         res = mtk.preloader.init()
                         if not res:
@@ -412,6 +414,9 @@ class Main(metaclass=LogBase):
                                     #    data=0x200*b"\x00"+data
                             mtk.preloader.send_partition_data(partition, pldata)
                             status = mtk.preloader.jump_to_partition(partition)  # Do not remove !
+                            res=mtk.preloader.read32(0x10C180,10)
+                            for val in res:
+                                print(hex(val))
                             if status!=0x0:
                                 self.error("Error on jumping to partition: "+self.eh.status(status))
                             else:
@@ -631,12 +636,6 @@ class Main(metaclass=LogBase):
             if mtk.port.cdc.connected and os.path.exists(".state"):
                 info=mtk.daloader.reinit()
             else:
-                if os.path.exists("logs"):
-                    try:
-                        shutil.rmtree("logs", ignore_errors=True, onerror=None)
-                        os.mkdir("logs")
-                    except:
-                        pass
                 try:
                     preloader = self.args.preloader
                 except:
@@ -1109,7 +1108,7 @@ class Main(metaclass=LogBase):
                 self.close()
 
 
-info = "MTK Flash/Exploit Client V1.50 (c) B.Kerler 2018-2021"
+info = "MTK Flash/Exploit Client V1.51 (c) B.Kerler 2018-2021"
 
 cmds = {
     "printgpt": "Print GPT Table information",

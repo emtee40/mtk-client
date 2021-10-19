@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # (c) B.Kerler 2018-2021 MIT License
 import os
+import shutil
 import logging
 from enum import Enum
 from struct import unpack, pack

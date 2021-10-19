@@ -611,29 +611,30 @@ hwconfig = {
         description="Helio P20",
         loader="mt6757_payload.bin"),
     0x688: chipconfig(
-        # var1
-        watchdog=0x10210000,
+        var1=0xA,
+        watchdog=0x10211000, #
         uart=0x11020000,
-        brom_payload_addr=0x100A00,
-        da_payload_addr=0x201000,
+        brom_payload_addr=0x100A00, #
+        da_payload_addr=0x201000, #
         pl_payload_addr=0x40200000,  #
-        gcpu_base=0x10050000,
+        gcpu_base=0x10050000, #
         sej_base=0x10080000,  # hacc
-        dxcc_base=0x11240000,
-        cqdma_base=0x10200000,
-        ap_dma_mem=0x11000000 + 0x1A0,
-        # blacklist
-        # blacklist_count
-        # send_ptr
-        # ctrl_buffer
-        # cmd_handler
-        # brom_Register_access
-        # meid_addr
+        dxcc_base=0x11240000, #
+        cqdma_base=0x10200000, #
+        ap_dma_mem=0x11000000 + 0x1A0, #
+        blacklist=[(0x102830,0),(0x106A60,0)],
+        blacklist_count=0xA,
+        send_ptr=(0x102874,0xd860),
+        ctrl_buffer=0x102B28,
+        cmd_handler=0xE58D, 
+        brom_register_access=(0xdc74,0xdd2c),
+        meid_addr=0x102bf8,
+        socid_addr=0x102c08,
         damode=damodes.XFLASH,
         dacode=0x6758,
         name="MT6758",
         description="Helio P30",
-        # loader
+        loader="mt6758_payload.bin"
     ),
     0x507: chipconfig(  # var1
         watchdog=0x10210000,

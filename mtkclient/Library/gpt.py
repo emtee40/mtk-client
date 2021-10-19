@@ -145,7 +145,7 @@ class gpt(metaclass=LogBase):
         self.__logger.setLevel(loglevel)
         if loglevel == logging.DEBUG:
             logfilename = "log.txt"
-            fh = logging.FileHandler(logfilename)
+            fh = logging.FileHandler(logfilename, encoding='utf-8')
             self.__logger.addHandler(fh)
 
     def parseheader(self, gptdata, sectorsize=512):

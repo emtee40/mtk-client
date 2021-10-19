@@ -58,7 +58,7 @@ class cqdma(metaclass=LogBase):
         self.reg = cqdma_reg(setup)
         if loglevel == logging.DEBUG:
             logfilename = os.path.join("logs", "log.txt")
-            fh = logging.FileHandler(logfilename)
+            fh = logging.FileHandler(logfilename, encoding='utf-8')
             self.__logger.addHandler(fh)
             self.__logger.setLevel(logging.DEBUG)
         else:

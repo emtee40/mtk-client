@@ -95,7 +95,7 @@ class usb_class(metaclass=LogBase):
         self.__logger.setLevel(loglevel)
         if loglevel == logging.DEBUG:
             logfilename = os.path.join("logs", "log.txt")
-            fh = logging.FileHandler(logfilename)
+            fh = logging.FileHandler(logfilename, encoding='utf-8')
             self.__logger.addHandler(fh)
 
         if sys.platform.startswith('freebsd') or sys.platform.startswith('linux'):

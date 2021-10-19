@@ -14,8 +14,9 @@ import copy
 import time
 import io
 import datetime as dt
-sys.stdout = io.TextIOWrapper(sys.stdout.detach(), encoding = 'utf-8')
-sys.stderr = io.TextIOWrapper(sys.stderr.detach(), encoding = 'utf-8')
+
+sys.stdout = io.TextIOWrapper(sys.stdout.detach(), encoding='utf-8')
+sys.stderr = io.TextIOWrapper(sys.stderr.detach(), encoding='utf-8')
 
 try:
     from capstone import *
@@ -59,6 +60,7 @@ def find_binary(data, strf, pos=0):
             pre += 1
     return None
 
+
 class progress:
     def __init__(self, pagesize):
         self.progtime = 0
@@ -76,7 +78,7 @@ class progress:
             lefttime = testimated - telapsed  # in seconds
             return (int(telapsed), int(lefttime), finishtime)
         else:
-            return 0,0,""
+            return 0, 0, ""
 
     def show_progress(self, prefix, pos, total, display=True):
         prog = round(float(pos) / float(total) * float(100), 1)
@@ -136,28 +138,39 @@ class structhelper:
         self.pos = 0
         self.data = data
 
-    def qword(self):
-        dat = unpack("<Q", self.data[self.pos:self.pos + 8])[0]
+    def qword(self, big=False):
+        e = ">" if big else "<"
+        dat = unpack(e + "Q", self.data[self.pos:self.pos + 8])[0]
         self.pos += 8
         return dat
 
-    def dword(self):
-        dat = unpack("<I", self.data[self.pos:self.pos + 4])[0]
+    def dword(self, big=False):
+        e = ">" if big else "<"
+        dat = unpack(e + "I", self.data[self.pos:self.pos + 4])[0]
         self.pos += 4
         return dat
 
-    def dwords(self, dwords=1):
-        dat = unpack("<" + str(dwords) + "I", self.data[self.pos:self.pos + 4 * dwords])
+    def dwords(self, dwords=1, big=False):
+        e = ">" if big else "<"
+        dat = unpack(e + str(dwords) + "I", self.data[self.pos:self.pos + 4 * dwords])
         self.pos += 4 * dwords
         return dat
 
-    def short(self):
-        dat = unpack("<H", self.data[self.pos:self.pos + 2])[0]
+    def qwords(self, qwords=1, big=False):
+        e = ">" if big else "<"
+        dat = unpack(e + str(qwords) + "Q", self.data[self.pos:self.pos + 8 * qwords])
+        self.pos += 4 * qwords
+        return dat
+
+    def short(self, big=False):
+        e = ">" if big else "<"
+        dat = unpack(e + "H", self.data[self.pos:self.pos + 2])[0]
         self.pos += 2
         return dat
 
-    def shorts(self, shorts):
-        dat = unpack("<" + str(shorts) + "H", self.data[self.pos:self.pos + 2 * shorts])
+    def shorts(self, shorts, big=False):
+        e = ">" if big else "<"
+        dat = unpack(e + str(shorts) + "H", self.data[self.pos:self.pos + 2 * shorts])
         self.pos += 2 * shorts
         return dat
 
@@ -358,7 +371,7 @@ def logsetup(self, logger, loglevel):
     self.warning = logger.warning
     if loglevel == logging.DEBUG:
         logfilename = os.path.join("logs", "log.txt")
-        fh = logging.FileHandler(logfilename)
+        fh = logging.FileHandler(logfilename, encoding='utf-8')
         logger.addHandler(fh)
         logger.setLevel(logging.DEBUG)
     else:

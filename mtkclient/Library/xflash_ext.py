@@ -120,7 +120,7 @@ class xflashext(metaclass=LogBase):
 
     def patch(self):
         self.da2 = self.xflash.daconfig.da2
-        self.da2address = self.xflash.daconfig.da[3]["m_start_addr"]  # at_address
+        self.da2address = self.xflash.daconfig.da.region[2].m_start_addr  # at_address
         daextensions = os.path.join(self.pathconfig.get_payloads_path(), "da_x.bin")
         if os.path.exists(daextensions):
             daextdata = bytearray(open(daextensions, "rb").read())
@@ -515,6 +515,8 @@ class xflashext(metaclass=LogBase):
             socid = bytes.fromhex(open(os.path.join("logs", "socid.txt"), "r").read())
             self.info("SOCID        : " + hexlify(socid).decode('utf-8'))
         if self.config.chipconfig.dxcc_base is not None:
+            self.info("Generating dxcc platkey + provkey key...")
+            platkey, provkey = hwc.aes_hwcrypt(btype="dxcc", mode="prov")
             self.info("Generating dxcc rpmbkey...")
             rpmbkey = hwc.aes_hwcrypt(btype="dxcc", mode="rpmb")
             self.info("Generating dxcc fdekey...")
@@ -523,7 +525,8 @@ class xflashext(metaclass=LogBase):
             rpmb2key = hwc.aes_hwcrypt(btype="dxcc", mode="rpmb2")
             self.info("Generating dxcc itrustee key...")
             ikey = hwc.aes_hwcrypt(btype="dxcc", mode="itrustee")
-
+            self.info("Provkey     : " + hexlify(provkey).decode('utf-8'))
+            self.info("Platkey     : " + hexlify(platkey).decode('utf-8'))
             if rpmbkey is not None:
                 self.info("RPMB        : " + hexlify(rpmbkey).decode('utf-8'))
                 open(os.path.join("logs", "rpmbkey.txt"), "wb").write(hexlify(rpmbkey))
@@ -543,10 +546,15 @@ class xflashext(metaclass=LogBase):
                 open(os.path.join("logs", "hrid.txt"), "wb").write(hexlify(hrid))
             """
         elif self.config.chipconfig.sej_base is not None:
+            if meid == b"":
+                if self.config.chipconfig.meid_addr:
+                    meid = self.custom_read(self.config.chipconfig.meid_addr,16)
             if meid != b"":
                 self.info("Generating sej rpmbkey...")
                 self.setotp(hwc)
                 rpmbkey = hwc.aes_hwcrypt(mode="rpmb", data=meid, btype="sej")
                 self.info("RPMB        : " + hexlify(rpmbkey).decode('utf-8'))
                 open(os.path.join("logs", "rpmbkey.txt"), "wb").write(hexlify(rpmbkey))
+            else:
+                self.info("SEJ Mode: No meid found. Are you in brom mode ?")
         return True
