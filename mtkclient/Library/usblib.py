@@ -419,7 +419,7 @@ class usb_class(metaclass=LogBase):
                 error = str(e.strerror)
                 if "timed out" in error:
                     self.debug("Timed out")
-                    if timeout == 4:
+                    if timeout == 10:
                         return b""
                     timeout += 1
                     pass
