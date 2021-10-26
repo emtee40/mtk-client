@@ -159,7 +159,7 @@ class structhelper:
     def qwords(self, qwords=1, big=False):
         e = ">" if big else "<"
         dat = unpack(e + str(qwords) + "Q", self.data[self.pos:self.pos + 8 * qwords])
-        self.pos += 4 * qwords
+        self.pos += 8 * qwords
         return dat
 
     def short(self, big=False):

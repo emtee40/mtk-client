@@ -1116,19 +1116,37 @@ class dxcc(metaclass=LogBase):
         self.tzcc_clk(0)
         return rpmbkey
 
+    def salt_func(self, value):
+        while True:
+            val=self.read32(self.dxcc_base+(0x2AF*4))&1
+            if val!=0:
+                break
+        self.write32(self.dxcc_base + (0x2A9*4),(4*value)|0x10000)
+        while True:
+            val=self.read32(self.dxcc_base+(0x2AD*4))<<31
+            if val!=0:
+                break
+        res=self.read32(self.dxcc_base+(0x2AB*4))
+        return res
+
     def generate_provision_key(self):
         plat_key = b"KEY PLAT"
         prov_key = b"PROVISION KEY"
         self.tzcc_clk(1)
         dstaddr = self.da_payload_addr - 0x300
 
-        mtk_oem_key = hashlib.sha256(bytes.fromhex(oem_pubk)).digest()
-        provkey = self.SBROM_KeyDerivation(HwCryptoKey.PROVISIONING_KEY, plat_key, mtk_oem_key, 0x10, dstaddr)
+        salt = hashlib.sha256(bytes.fromhex(oem_pubk)).digest()
+        """
+        salt = bytearray(b"\x00"*0x20)
+        for i in range(8):
+            salt[i*4]=self.salt_func(0x10+i)
+        """
+        provkey = self.SBROM_KeyDerivation(HwCryptoKey.PROVISIONING_KEY, plat_key, salt, 0x10, dstaddr)
         while True:
             val = self.read32(self.dxcc_base + 0xAF4) & 1
             if val != 0:
                 break
-        platkey = self.SBROM_KeyDerivation(HwCryptoKey.PLATFORM_KEY, prov_key, mtk_oem_key, 0x10, dstaddr)
+        platkey = self.SBROM_KeyDerivation(HwCryptoKey.PLATFORM_KEY, prov_key, salt, 0x10, dstaddr)
         self.write32(self.dxcc_base + 0xAC0, 0)
         self.write32(self.dxcc_base + 0xAC4, 0)
         self.write32(self.dxcc_base + 0xAC8, 0)

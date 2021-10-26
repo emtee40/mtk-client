@@ -23,7 +23,9 @@ class norinfo:
     m_nor_flash_otp_status = None
     m_nor_flash_otp_size = None
 
-    def __init__(self, data):
+    def __init__(self, data = None):
+        if data is None:
+            return
         sh = structhelper(data)
         self.m_nor_ret = sh.dword(True)
         self.m_nor_chip_select = sh.bytes(2)
@@ -32,6 +34,20 @@ class norinfo:
         self.m_nor_flash_dev_code = sh.shorts(4, True)
         self.m_nor_flash_otp_status = sh.dword(True)
         self.m_nor_flash_otp_size = sh.dword(True)
+
+    def __repr__(self):
+        res = f"m_nor_ret = {hex(self.m_nor_ret)}\n"
+        res += f"m_nor_chip_select = {hexlify(self.m_nor_chip_select).decode('utf-8')}\n"
+        res += f"m_nor_flash_id = {hex(self.m_nor_flash_id)}\n"
+        res += f"m_nor_flash_size = {hex(self.m_nor_flash_size)}\n"
+        val = pack("<HHHH", self.m_nor_flash_dev_code[0], self.m_nor_flash_dev_code[1], self.m_nor_flash_dev_code[2],
+                   self.m_nor_flash_dev_code[3])
+        res += f"m_nor_flash_dev_code = {hexlify(val).decode('utf-8')}\n"
+        res += f"m_nor_flash_otp_status = {hex(self.m_nor_flash_otp_status)}\n"
+        res += f"m_nor_flash_otp_size = {hex(self.m_nor_flash_otp_size)}\n"
+
+        res += f"m_sdmmc_cid = {hexlify(val).decode('utf-8')}\n"
+        return res
 
 
 class nandinfo32:
@@ -42,14 +58,24 @@ class nandinfo32:
     m_nand_flash_id_count = None
     info2 = None
 
-    def __init__(self, data):
+    def __init__(self, data = None):
+        if data is None:
+            return
         sh = structhelper(data)
         self.m_nand_info = sh.dword(True)
-        self.m_nand_chip_select = sh.bytes(1)
+        self.m_nand_chip_select = sh.bytes()
         self.m_nand_flash_id = sh.short(True)
         self.m_nand_flash_size = sh.dword(True)
         self.m_nand_flash_id_count = sh.short(True)
         self.info2 = None
+
+    def __repr__(self):
+        res = f"m_nand_info = {hex(self.m_nand_info)}\n"
+        res += f"m_nand_chip_select = {hex(self.m_nand_chip_select)}\n"
+        res += f"m_nand_flash_id = {hex(self.m_nand_flash_id)}\n"
+        res += f"m_nand_flash_size = {hex(self.m_nand_flash_size)}\n"
+        res += f"m_nand_flash_id_count = {hex(self.m_nand_flash_id_count)}\n"
+        return res
 
 
 class nandinfo64:
@@ -60,14 +86,24 @@ class nandinfo64:
     m_nand_flash_id_count = None
     info2 = None
 
-    def __init__(self, data):
+    def __init__(self, data = None):
+        if data is None:
+            return
         sh = structhelper(data)
         self.m_nand_info = sh.dword(True)
-        self.m_nand_chip_select = sh.bytes(1)
+        self.m_nand_chip_select = sh.bytes()
         self.m_nand_flash_id = sh.short(True)
         self.m_nand_flash_size = sh.qword(True)
         self.m_nand_flash_id_count = sh.short(True)
         self.info2 = None
+
+    def __repr__(self):
+        res = f"m_nand_info = {hex(self.m_nand_info)}\n"
+        res += f"m_nand_chip_select = {hex(self.m_nand_chip_select)}\n"
+        res += f"m_nand_flash_id = {hex(self.m_nand_flash_id)}\n"
+        res += f"m_nand_flash_size = {hex(self.m_nand_flash_size)}\n"
+        res += f"m_nand_flash_id_count = {hex(self.m_nand_flash_id_count)}\n"
+        return res
 
 
 # ('m_nand_flash_dev_code', '>7H'),
@@ -80,14 +116,25 @@ class nandinfo2:
     m_nand_addr_cycle = None
     m_nand_bmt_exist = None
 
-    def __init__(self, data):
+    def __init__(self, data = None):
+        if data is None:
+            return
         sh = structhelper(data)
         self.m_nand_pagesize = sh.short(True)
         self.m_nand_sparesize = sh.short(True)
         self.m_nand_pages_per_block = sh.short(True)
-        self.m_nand_io_interface = sh.bytes(1)
-        self.m_nand_addr_cycle = sh.bytes(1)
-        self.m_nand_bmt_exist = sh.bytes(1)
+        self.m_nand_io_interface = sh.bytes()
+        self.m_nand_addr_cycle = sh.bytes()
+        self.m_nand_bmt_exist = sh.bytes()
+
+    def __repr__(self):
+        res = f"m_nand_pagesize = {hex(self.m_nand_pagesize)}\n"
+        res += f"m_nand_sparesize = {hex(self.m_nand_sparesize)}\n"
+        res += f"m_nand_pages_per_block = {hex(self.m_nand_pages_per_block)}\n"
+        res += f"m_nand_io_interface = {hex(self.m_nand_io_interface)}\n"
+        res += f"m_nand_addr_cycle = {hex(self.m_nand_addr_cycle)}\n"
+        res += f"m_nand_bmt_exist = {hex(self.m_nand_bmt_exist)}\n"
+        return res
 
 
 class emmcinfo:
@@ -100,7 +147,9 @@ class emmcinfo:
     m_emmc_cid = None
     m_emmc_fwver = None
 
-    def __init__(self, data):
+    def __init__(self, data = None):
+        if data is None:
+            return
         sh = structhelper(data)
         self.m_emmc_ret = sh.dword(True)
         self.m_emmc_boot1_size = sh.qword(True)
@@ -111,17 +160,40 @@ class emmcinfo:
         self.m_emmc_cid = sh.qwords(2, True)
         self.m_emmc_fwver = sh.bytes(8)
 
+    def __repr__(self):
+        res = f"m_emmc_ret = {hex(self.m_emmc_ret)}\n"
+        res += f"m_emmc_boot1_size = {hex(self.m_emmc_boot1_size)}\n"
+        res += f"m_emmc_boot2_size = {hex(self.m_emmc_boot2_size)}\n"
+        res += f"m_emmc_rpmb_size = {hex(self.m_emmc_rpmb_size)}\n"
+        res += f"m_emmc_gp_size[0] = {hex(self.m_emmc_gp_size[0])}\n"
+        res += f"m_emmc_gp_size[1] = {hex(self.m_emmc_gp_size[1])}\n"
+        res += f"m_emmc_gp_size[2] = {hex(self.m_emmc_gp_size[2])}\n"
+        res += f"m_emmc_gp_size[3] = {hex(self.m_emmc_gp_size[3])}\n"
+        res += f"m_emmc_ua_size = {hex(self.m_emmc_ua_size)}\n"
+        val = pack("<QQ", self.m_emmc_cid[0], self.m_emmc_cid[1])
+        res += f"m_emmc_cid = {hexlify(val).decode('utf-8')}\n"
+        res += f"m_emmc_fwver = {hexlify(self.m_emmc_fwver).decode('utf-8')}\n"
+        return res
+
 
 class sdcinfo:
     m_sdmmc_info = None
     m_sdmmc_ua_size = None
     m_sdmmc_cid = None
 
-    def __init__(self, data):
+    def __init__(self, data = None):
+        if data is None:
+            return
         sh = structhelper(data)
         self.m_sdmmc_info = sh.dword(True)
         self.m_sdmmc_ua_size = sh.qword(True)
         self.m_sdmmc_cid = sh.qwords(2, True)
+
+    def __repr__(self):
+        print(f"m_sdmmc_info = {hex(self.m_sdmmc_info)}")
+        print(f"m_sdmmc_ua_size = {hex(self.m_sdmmc_ua_size)}")
+        val = pack("<QQ", self.m_sdmmc_cid[0], self.m_sdmmc_cid[1])
+        print(f"m_sdmmc_cid = {hexlify(val).decode('utf-8')}")
 
 
 class configinfo:
@@ -142,6 +214,17 @@ class configinfo:
         self.m_ext_ram_chip_select = sh.bytes()
         self.m_ext_ram_size = sh.qword(True)
         self.randomid = sh.qwords(2, True)
+
+    def __repr__(self):
+        res = "m_int_sram_ret = 0x%X\n" % self.m_int_sram_ret
+        res += "m_int_sram_size = 0x%X\n" % self.m_int_sram_size
+        res += "m_ext_ram_ret = 0x%X\n" % self.m_ext_ram_ret
+        res += "m_ext_ram_type = 0x%X\n" % self.m_ext_ram_type
+        res += "m_ext_ram_chip_select = 0x%X\n" % self.m_ext_ram_chip_select
+        res += "m_int_sram_ret = 0x%X\n" % self.m_int_sram_ret
+        res += f"m_ext_ram_size = {hex(self.m_ext_ram_size)}\n"
+        res += "randomid = 0x%X%X\n" % (self.randomid[0], self.randomid[1])
+        return res
 
 
 class passinfo:
@@ -785,7 +868,7 @@ class DALegacy(metaclass=LogBase):
                         break
             if self.usbread(4) == pack(">I", 0xBC4):  # Nand_Status
                 nand_id_count = unpack(">H", self.usbread(2))[0]
-                self.info("Reading nand info ...")
+                self.info("Reading dram nand info ...")
                 nand_ids = []
                 for i in range(0, nand_id_count):
                     nand_ids.append(unpack(">H", self.usbread(2))[0])
@@ -851,13 +934,13 @@ class DALegacy(metaclass=LogBase):
         m_nand_dev_code = unpack(">" + str(nandcount) + "H", nc)
         self.nand.m_nand_flash_dev_code = m_nand_dev_code
         self.nand.info2 = nandinfo2(self.usbread(9))
-        self.emmc = read_object(self.usbread(0x5C), emmcinfo)
-        self.sdc = read_object(self.usbread(0x1C), sdcinfo)
-        self.flashconfig = read_object(self.usbread(0x26), configinfo)
-        pi = read_object(self.usbread(0xA), passinfo)
-        if pi["ack"] == 0x5A:
+        self.emmc = emmcinfo(self.usbread(0x5C))
+        self.sdc = sdcinfo(self.usbread(0x1C))
+        self.flashconfig = configinfo(self.usbread(0x26))
+        pi = passinfo(self.usbread(0xA))
+        if pi.ack == 0x5A:
             return True
-        elif pi['m_download_status'] == 0x5A:
+        elif pi.m_download_status == 0x5A:
             tmp = self.usbread(1)
             return True
         return False
@@ -949,32 +1032,17 @@ class DALegacy(metaclass=LogBase):
     def upload_da(self):
         self.info("Uploading da...")
         if self.upload():
-            if self.emmc == "nor":
-                flashinfo = self.nor
-            elif self.emmc == "nand":
-                flashinfo = self.nand
-            else:
-                fo = self.emmc
-                fo2 = self.sdc
-                flashinfo = {}
-                for v in fo:
-                    flashinfo[v] = fo[v]
-                for v in fo2:
-                    flashinfo[v] = fo2[v]
-            self.printinfo(flashinfo)
-            self.printinfo(self.flashconfig)
+            self.info(self.flashconfig)
+            if self.daconfig.flashtype == "emmc":
+                print(self.emmc)
+            elif self.daconfig.flashtype == "nand":
+                print(self.nand)
+            elif self.daconfig.flashtype == "nor":
+                print(self.nor)
+            elif self.daconfig.flashtype == "sdc":
+                print(self.sdc)
             return True
         return False
-
-    def printinfo(self, fi):
-        for info in fi:
-            value = fi[info]
-            if info != "raw_data":
-                subtype = type(value)
-                if subtype is bytes:
-                    self.info(info + ": " + hexlify(value).decode('utf-8'))
-                elif subtype is int:
-                    self.info(info + ": " + hex(value))
 
     def close(self):
         self.finish(0x0)  # DISCONNECT_USB_AND_RELEASE_POWERKEY
@@ -1192,16 +1260,16 @@ class DALegacy(metaclass=LogBase):
             length = min(length, self.emmc.m_emmc_boot2_size)
             parttype = EMMC_PartitionType.MTK_DA_EMMC_PART_BOOT2
         elif parttype == "gp1":
-            length = min(length, self.emmc.m_emmc_gp_size)
+            length = min(length, self.emmc.m_emmc_gp_size[0])
             parttype = EMMC_PartitionType.MTK_DA_EMMC_PART_GP1
         elif parttype == "gp2":
-            length = min(length, self.emmc.m_emmc_gp_size)
+            length = min(length, self.emmc.m_emmc_gp_size[1])
             parttype = EMMC_PartitionType.MTK_DA_EMMC_PART_GP2
         elif parttype == "gp3":
-            length = min(length, self.emmc.m_emmc_gp_size)
+            length = min(length, self.emmc.m_emmc_gp_size[2])
             parttype = EMMC_PartitionType.MTK_DA_EMMC_PART_GP3
         elif parttype == "gp4":
-            length = min(length, self.emmc.m_emmc_gp_size)
+            length = min(length, self.emmc.m_emmc_gp_size[3])
             parttype = EMMC_PartitionType.MTK_DA_EMMC_PART_GP4
         elif parttype == "rpmb":
             parttype = EMMC_PartitionType.MTK_DA_EMMC_PART_RPMB

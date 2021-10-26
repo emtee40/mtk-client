@@ -194,18 +194,17 @@ class Preloader(metaclass=LogBase):
         if len(meid) >= 16:
             with open(os.path.join("logs", "meid.txt"), "wb") as wf:
                 wf.write(hexlify(meid))
-        if self.display:
-            if meid != b"":
-                self.info("ME_ID:\t\t\t" + hexlify(meid).decode('utf-8').upper())
-        if readsocid or self.config.chipconfig.socid_addr:
-            socid = self.get_socid()
-            if len(socid) >= 16:
-                with open(os.path.join("logs", "socid.txt"), "wb") as wf:
-                    wf.write(hexlify(socid))
+        if meid != b"":
             if self.display:
-                if socid != b"":
-                    self.info("SOC_ID:\t\t\t" + hexlify(socid).decode('utf-8').upper())
-
+                self.info("ME_ID:\t\t\t" + hexlify(meid).decode('utf-8').upper())
+            if readsocid or self.config.chipconfig.socid_addr:
+                socid = self.get_socid()
+                if len(socid) >= 16:
+                    with open(os.path.join("logs", "socid.txt"), "wb") as wf:
+                        wf.write(hexlify(socid))
+                if self.display:
+                    if socid != b"":
+                        self.info("SOC_ID:\t\t\t" + hexlify(socid).decode('utf-8').upper())
         return True
 
     def read32(self, addr, dwords=1) -> list:

@@ -854,13 +854,6 @@ class DAXFlash(metaclass=LogBase):
         return part_info
 
     def writeflash(self, addr, length, filename, offset=0, parttype=None, wdata=None, display=True):
-        partinfo = self.getstorage(parttype, length)
-        if not partinfo:
-            return False
-        storage, parttype, length = partinfo
-        # self.send_devctrl(self.Cmd.START_DL_INFO)
-        plen = self.get_packet_length()
-        write_packet_size = plen.write_packet_length
         fh = None
         fill=0
         if filename is not None:
@@ -875,7 +868,16 @@ class DAXFlash(metaclass=LogBase):
             else:
                 self.error(f"Filename doesn't exists: {filename}, aborting flash write.")
                 return False
-        bytestowrite = length
+
+        partinfo = self.getstorage(parttype, length)
+        if not partinfo:
+            return False
+        storage, parttype, rlength = partinfo
+        # self.send_devctrl(self.Cmd.START_DL_INFO)
+        plen = self.get_packet_length()
+        write_packet_size = plen.write_packet_length
+
+        bytestowrite = rlength
         if self.cmd_write_data(addr, length, storage, parttype):
             try:
                 pos = 0
@@ -885,7 +887,7 @@ class DAXFlash(metaclass=LogBase):
                     dsize = min(write_packet_size, bytestowrite)
                     if fh:
                         data = bytearray(fh.read(dsize))
-                        if len(data)<write_packet_size:
+                        if len(data)<dsize:
                             data.extend(b"\x00"*fill)
                     else:
                         data = wdata[pos:pos + dsize]

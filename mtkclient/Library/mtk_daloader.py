@@ -7,7 +7,7 @@ import os
 from mtkclient.Library.utils import LogBase, logsetup
 from mtkclient.Library.error import ErrorHandler
 from mtkclient.Library.daconfig import DAconfig
-from mtkclient.Library.mtk_dalegacy import DALegacy
+from mtkclient.Library.mtk_dalegacy import DALegacy, norinfo, emmcinfo, sdcinfo, nandinfo64
 from mtkclient.Library.mtk_daxflash import DAXFlash
 from mtkclient.config.brom_config import damodes
 from mtkclient.Library.xflash_ext import xflashext
@@ -38,13 +38,13 @@ class DAloader(metaclass=LogBase):
         config["flashtype"] = self.daconfig.flashtype
         config["flashsize"] = self.daconfig.flashsize
         if not self.mtk.config.chipconfig.damode==damodes.XFLASH:
-            config["m_emmc_ua_size"] = self.da.emmc["m_emmc_ua_size"]
-            config["m_emmc_boot1_size"] = self.da.emmc["m_emmc_boot1_size"]
-            config["m_emmc_boot2_size"] = self.da.emmc["m_emmc_boot2_size"]
-            config["m_emmc_gp_size"] = self.da.emmc["m_emmc_gp_size"]
-            config["m_nand_flash_size"] = self.da.nand["m_nand_flash_size"]
-            config["m_sdmmc_ua_size"] = self.da.sdc["m_sdmmc_ua_size"]
-            config["m_nor_flash_size"] = self.da.nor["m_nor_flash_size"]
+            config["m_emmc_ua_size"] = self.da.emmc.m_emmc_ua_size
+            config["m_emmc_boot1_size"] = self.da.emmc.m_emmc_boot1_size
+            config["m_emmc_boot2_size"] = self.da.emmc.m_emmc_boot2_size
+            config["m_emmc_gp_size"] = self.da.emmc.m_emmc_gp_size
+            config["m_nand_flash_size"] = self.da.nand.m_nand_flash_size
+            config["m_sdmmc_ua_size"] = self.da.sdc.m_sdmmc_ua_size
+            config["m_nor_flash_size"] = self.da.nor.m_nor_flash_size
 
         open(".state", "w").write(json.dumps(config))
 
@@ -64,18 +64,18 @@ class DAloader(metaclass=LogBase):
                 self.da = DALegacy(self.mtk, self.daconfig, self.loglevel)
                 self.daconfig.flashtype = config["flashtype"]
                 self.daconfig.flashsize = config["flashsize"]
-                self.da.nor = {}
-                self.da.nand = {}
-                self.da.emmc = {}
-                self.da.sdc = {}
+                self.da.nor = norinfo()
+                self.da.nand = nandinfo64()
+                self.da.emmc = emmcinfo()
+                self.da.sdc = sdcinfo()
 
-                self.da.emmc["m_emmc_ua_size"] = config["m_emmc_ua_size"]
-                self.da.emmc["m_emmc_boot1_size"] = config["m_emmc_boot1_size"]
-                self.da.emmc["m_emmc_boot2_size"] = config["m_emmc_boot2_size"]
-                self.da.emmc["m_emmc_gp_size"] = config["m_emmc_gp_size"]
-                self.da.nand["m_nand_flash_size"] = config["m_nand_flash_size"]
-                self.da.sdc["m_sdmmc_ua_size"] = config["m_sdmmc_ua_size"]
-                self.da.nor["m_nor_flash_size"] = config["m_nor_flash_size"]
+                self.da.emmc.m_emmc_ua_size = config["m_emmc_ua_size"]
+                self.da.emmc.m_emmc_boot1_size = config["m_emmc_boot1_size"]
+                self.da.emmc.m_emmc_boot2_size = config["m_emmc_boot2_size"]
+                self.da.emmc.m_emmc_gp_size = config["m_emmc_gp_size"]
+                self.da.nand.m_nand_flash_size = config["m_nand_flash_size"]
+                self.da.sdc.m_sdmmc_ua_size = config["m_sdmmc_ua_size"]
+                self.da.nor.m_nor_flash_size = config["m_nor_flash_size"]
                 self.xft = None
             return True
         return False

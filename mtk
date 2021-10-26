@@ -704,6 +704,7 @@ class Main(metaclass=LogBase):
                     self.close()
                 if parttype == "user" or parttype is None:
                     i = 0
+                    countDump = 0
                     self.info("Requesting available partitions ....")
                     gpttable = mtk.daloader.get_partition_data(self.args, parttype=parttype)
                     for partition in partitions:
@@ -727,13 +728,19 @@ class Main(metaclass=LogBase):
                                                           filename=partfilename, parttype=parttype):
                                     self.info(f"Dumped sector {str(rpartition.sector)} with sector count " +
                                               f"{str(rpartition.sectors)} as {partfilename}.")
+                                    countDump += 1
                                 else:
                                     self.info(f"Failed to dump sector {str(rpartition.sector)} with sector count " +
                                               f"{str(rpartition.sectors)} as {partfilename}.")
+                                    countDump += 1
                             else:
                                 self.error(f"Error: Couldn't detect partition: {partition}\nAvailable partitions:")
                                 for rpartition in gpttable:
                                     self.info(rpartition.name)
+                    if countDump > 1 and countDump == len(filenames):
+                        self.info(f"All partitions were dumped")
+                    elif countDump > 1 and countDump != len(filenames):
+                        self.info(f"Failed to dump some partitions")
                 else:
                     i = 0
                     for partfilename in filenames:
@@ -1129,7 +1136,7 @@ class Main(metaclass=LogBase):
                 self.close()
 
 
-info = "MTK Flash/Exploit Client V1.51 (c) B.Kerler 2018-2021"
+info = "MTK Flash/Exploit Client V1.52 (c) B.Kerler 2018-2021"
 
 cmds = {
     "printgpt": "Print GPT Table information",
