@@ -824,7 +824,7 @@ class Main(metaclass=LogBase):
                     print(f"Failed to dump sector 0 with flash size {hex(length)} as {filename}.")
                 self.close()
             elif cmd == "rs":
-                start = getint(self.args.start_sector)
+                start = getint(self.args.startsector)
                 sectors = getint(self.args.sectors)
                 filename = self.args.filename
                 parttype = self.args.parttype
