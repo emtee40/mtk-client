@@ -207,10 +207,22 @@ python mtk r boot boot.bin [--preloader=Loader/Preloader/your_device_preloader.b
 ```
 
 
+Dump preloader partition to filename preloader.bin via bootrom
+
+```
+python mtk r preloader preloader.bin --parttype=boot1 [--preloader=Loader/Preloader/your_device_preloader.bin]
+```
+
 Read full flash to filename flash.bin (use --preloader for brom)
 
 ```
 python mtk rf flash.bin
+```
+
+Read flash offset 0x128000 with length 0x200000 to filename flash.bin (use --preloader for brom)
+
+```
+python mtk ro 0x128000 0x200000 flash.bin
 ```
 
 Dump all partitions to directory "out". (use --preloader for brom)
@@ -245,6 +257,12 @@ Write all files in directory "out" to the flash partitions
 
 ```
 python mtk wl out
+```
+
+write file flash.bin to flash offset 0x128000 with length 0x200000 (use --preloader for brom)
+
+```
+python mtk wo 0x128000 0x200000 flash.bin
 ```
 
 ### Erase flash
