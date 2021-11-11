@@ -880,6 +880,8 @@ class DALegacy(metaclass=LogBase):
                         val = 0x15
                     elif self.config.hwcode == 0x6572:
                         val = 0x0B
+                    elif self.config.hwcode == 0x321:
+                        val = 0x05
                     else:
                         val = 0x14
                     self.usbwrite(pack(">I", val))
@@ -1001,7 +1003,7 @@ class DALegacy(metaclass=LogBase):
                 ackval += self.usbread(1)
                 ackval += self.usbread(1)
                 self.debug("ACK: " + hexlify(ackval).decode('utf-8'))
-
+                self.info("Setting stage 2 config ...")
                 self.set_stage2_config(self.config.hwcode)
                 self.info("Uploading stage 2...")
                 # stage 2
