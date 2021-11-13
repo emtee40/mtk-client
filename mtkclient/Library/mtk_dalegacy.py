@@ -897,11 +897,11 @@ class DALegacy(metaclass=LogBase):
                             self.mtk.port.close(reset=False)
                             sys.exit(0)
                         m_ext_ram_type = self.usbread(1)[0]  # 0x02 HW_RAM_DRAM
-                        self.info(f"M_EXT_RAM_TYPE : {m_ext_ram_type}")
+                        self.info(f"M_EXT_RAM_TYPE : {hex(m_ext_ram_type)}")
                         m_ext_ram_chip_select = self.usbread(1)[0]  # 0x00 CS_0
-                        self.info(f"M_EXT_RAM_CHIP_SELECT : {m_ext_ram_chip_select}")
-                        m_ext_ram_size = unpack(">Q", self.usbread(8))  # 0x80000000
-                        self.info(f"M_EXT_RAM_SIZE : {m_ext_ram_size}")
+                        self.info(f"M_EXT_RAM_CHIP_SELECT : {hex(m_ext_ram_chip_select)}")
+                        m_ext_ram_size = unpack(">Q", self.usbread(8))[0]  # 0x80000000
+                        self.info(f"M_EXT_RAM_SIZE : {hex(m_ext_ram_size)}")
                 else:
                     self.error("Preloader needed due to dram config.")
                     self.mtk.port.close(reset=True)
