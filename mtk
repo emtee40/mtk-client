@@ -927,7 +927,6 @@ class Main(metaclass=LogBase):
                     for partfilename in filenames:
                         size = os.stat(partfilename).st_size
                         if mtk.daloader.writeflash(addr=pos, length=size, filename=partfilename,
-                                                   partitionname=partitionname,
                                                    parttype=parttype):
                             print(f"Wrote {partfilename} to sector {str(pos // 0x200)} with " +
                                   f"sector count {str(size)}.")
@@ -1000,8 +999,8 @@ class Main(metaclass=LogBase):
                         pos += psize
                 self.close()
             elif cmd == "wo":
-                start = self.args.offset
-                length = self.args.length
+                start = getint(self.args.offset)
+                length = getint(self.args.length)
                 filename = self.args.filename
                 parttype = self.args.parttype
                 if filename is None:
