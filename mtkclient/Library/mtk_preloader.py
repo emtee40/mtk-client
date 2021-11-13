@@ -178,6 +178,9 @@ class Preloader(metaclass=LogBase):
             with open(os.path.join("logs", "hwcode.txt"), "w") as wf:
                 wf.write(hex(self.config.hwcode))
         self.config.target_config = self.get_target_config(self.display)
+        self.info("Get Target info")
+        self.get_blver()
+        self.get_bromver()
         res = self.get_hw_sw_ver()
         self.config.hwsubcode = 0
         self.config.hwver = 0
@@ -314,17 +317,21 @@ class Preloader(metaclass=LogBase):
             return True
         return False
 
+    def get_bromver(self):
+        if self.usbwrite(self.Cmd.GET_VERSION.value):
+            res = self.usbread(1)
+            self.mtk.config.bromver = unpack("B", res)[0]
+            return self.mtk.config.bromver
+        return -1
+
     def get_blver(self):
         if self.usbwrite(self.Cmd.GET_BL_VER.value):
             res = self.usbread(1)
             if res == self.Cmd.GET_BL_VER.value:
                 # We are in boot rom ...
                 self.info("BROM mode detected.")
-                self.mtk.config.blver = -2
-                return -2
-            else:
-                self.mtk.config.blver = unpack("B", res)[0]
-                return self.mtk.config.blver
+            self.mtk.config.blver = unpack("B", res)[0]
+            return self.mtk.config.blver
         return -1
 
     def get_target_config(self, display=True):

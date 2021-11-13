@@ -128,6 +128,8 @@ class DAconfig(metaclass=LogBase):
         self.dasetup = {}
         self.loader = loader
         self.extract_emi(preloader)
+        self.blver = None
+        self.bromver = None
 
         if loader is None:
             loaders = []
@@ -153,11 +155,15 @@ class DAconfig(metaclass=LogBase):
             siglen = unpack("<I", data[0x2C:0x2C + 4])[0]
             data = data[:mlen]
 
-        idx = data.find(b"MTK_BLOADER_INFO")
+        bldrstring = b"MTK_BLOADER_INFO_v"
+        len_bldrstring = len(bldrstring)
+        idx = data.find(bldrstring)
         if idx == -1:
             return None
         elif idx == 0:
-            return data
+            ver = int(data[idx + len_bldrstring:idx + len_bldrstring + 2].rstrip(b"\x00"))
+            return ver, data
+        ver = int(data[idx + len_bldrstring:idx + len_bldrstring + 2].rstrip(b"\x00"))
         emi = data[idx:-siglen]
         rlen = len(emi) - 4
         if len(emi) > 4:
@@ -167,7 +173,7 @@ class DAconfig(metaclass=LogBase):
                 if not self.config.chipconfig.damode == damodes.XFLASH:
                     if emi.find(b"MTK_BIN") != -1:
                         emi = emi[emi.find(b"MTK_BIN") + 0xC:]
-                return emi
+                return ver, emi
         return None
 
     def extract_emi(self, preloader=None) -> bytearray:
@@ -183,7 +189,7 @@ class DAconfig(metaclass=LogBase):
             else:
                 assert "Preloader :" + preloader + " doesn't exist. Aborting."
                 exit(1)
-        self.emi = self.m_extract_emi(data)
+        self.emiver, self.emi = self.m_extract_emi(data)
 
     def parse_da_loader(self, loader):
         try:

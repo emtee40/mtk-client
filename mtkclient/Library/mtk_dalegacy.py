@@ -791,12 +791,8 @@ class DALegacy(metaclass=LogBase):
 
     def set_stage2_config(self, hwcode):
         # m_nor_chip_select[0]="CS_0"(0x00), m_nor_chip_select[1]="CS_WITH_DECODER"(0x08)
-        if hwcode == 0x6572:
-            self.usbwrite(self.Cmd.ENTER_RELAY_MODE_CMD)
-            self.usbwrite(pack("B", 0x01))
-        else:
-            self.usbwrite(self.Cmd.GET_PROJECT_ID_CMD)
-            self.usbwrite(pack("B", 1))
+        self.usbwrite(pack("B",self.mtk.config.blver))
+        self.usbwrite(pack("B",self.mtk.config.bromver))
         m_nor_chip = 0x08
         self.usbwrite(pack(">H", m_nor_chip))
         m_nor_chip_select = 0x00
@@ -872,27 +868,19 @@ class DALegacy(metaclass=LogBase):
                 nand_ids = []
                 for i in range(0, nand_id_count):
                     nand_ids.append(unpack(">H", self.usbread(2))[0])
-                if self.daconfig.emi is not None:
+                if self.daconfig.emi is not None: # toDo
                     self.usbwrite(self.Cmd.ENABLE_DRAM)  # E8
-                    if self.config.hwcode == 0x8163:
-                        val = 0x10
-                    elif self.config.hwcode == 0x6580:
-                        val = 0x15
-                    elif self.config.hwcode == 0x6572:
-                        val = 0x0B
-                    else:
-                        val = 0x14
-                    self.usbwrite(pack(">I", val))
+                    self.usbwrite(pack(">I", self.daconfig.emiver))
                     if self.usbread(1) == self.Rsp.ACK:
                         self.info("Sending dram info ...")
                         dramlength = len(self.daconfig.emi)
-                        if val in [0x10, 0x14, 0x15]:
+                        if self.daconfig.emiver in [0x10, 0x14, 0x15]:
                             dramlength = unpack(">I", self.usbread(0x4))[0]  # 0x000000BC
                             self.debug("Info: " + hex(dramlength))
                             self.usbwrite(self.Rsp.ACK)
                             lendram = len(self.daconfig.emi)
                             self.usbwrite(pack(">I", lendram))
-                        elif val in [0x0B]:
+                        elif self.daconfig.emiver in [0x0B]:
                             info = self.usbread(0x10)  # 0x000000BC
                             self.debug("Info: " + hexlify(info).decode('utf-8'))
                             dramlength = unpack(">I", self.usbread(0x4))[0]
@@ -903,17 +891,17 @@ class DALegacy(metaclass=LogBase):
                         self.usbwrite(self.Rsp.ACK)
                         self.usbwrite(pack(">I", 0x80000001))  # Send DRAM config
                         m_ext_ram_ret = unpack(">I", self.usbread(4))[0]  # 0x00000000 S_DONE
-                        self.debug(f"M_EXT_RAM_RET : {m_ext_ram_ret}")
+                        self.info(f"M_EXT_RAM_RET : {m_ext_ram_ret}")
                         if m_ext_ram_ret != 0:
                             self.error("Preloader error: %d => %s" % (m_ext_ram_ret, error_to_string(m_ext_ram_ret)))
                             self.mtk.port.close(reset=False)
                             sys.exit(0)
                         m_ext_ram_type = self.usbread(1)[0]  # 0x02 HW_RAM_DRAM
-                        self.debug(f"M_EXT_RAM_TYPE : {m_ext_ram_type}")
+                        self.info(f"M_EXT_RAM_TYPE : {m_ext_ram_type}")
                         m_ext_ram_chip_select = self.usbread(1)[0]  # 0x00 CS_0
-                        self.debug(f"M_EXT_RAM_CHIP_SELECT : {m_ext_ram_chip_select}")
+                        self.info(f"M_EXT_RAM_CHIP_SELECT : {m_ext_ram_chip_select}")
                         m_ext_ram_size = unpack(">Q", self.usbread(8))  # 0x80000000
-                        self.debug(f"M_EXT_RAM_SIZE : {m_ext_ram_size}")
+                        self.info(f"M_EXT_RAM_SIZE : {m_ext_ram_size}")
                 else:
                     self.error("Preloader needed due to dram config.")
                     self.mtk.port.close(reset=True)
@@ -950,83 +938,79 @@ class DALegacy(metaclass=LogBase):
             self.error("No valid da loader found... aborting.")
             return False
         loader = self.daconfig.loader
-        if self.config.blver == -2 or self.config.blver <= 0x80:
-            self.info("Uploading stage 1...")
-            with open(loader, 'rb') as bootldr:
-                # stage 1
-                stage = 1
-                offset = self.daconfig.da.region[stage].m_buf
-                size = self.daconfig.da.region[stage].m_len
-                address = self.daconfig.da.region[stage].m_start_addr
-                sig_len = self.daconfig.da.region[stage].m_sig_len
-                bootldr.seek(offset)
-                dadata = bootldr.read(size)
-                if self.mtk.preloader.send_da(address, size, sig_len, dadata):
-                    if self.mtk.preloader.jump_da(address):
-                        sync = self.usbread(1)
-                        if sync != b"\xC0":
-                            self.error("Error on DA sync")
-                            return False
-                        else:
-                            self.info("Got loader sync !")
-                    else:
+        self.info("Uploading stage 1...")
+        with open(loader, 'rb') as bootldr:
+            # stage 1
+            stage = 1
+            offset = self.daconfig.da.region[stage].m_buf
+            size = self.daconfig.da.region[stage].m_len
+            address = self.daconfig.da.region[stage].m_start_addr
+            sig_len = self.daconfig.da.region[stage].m_sig_len
+            bootldr.seek(offset)
+            dadata = bootldr.read(size)
+            if self.mtk.preloader.send_da(address, size, sig_len, dadata):
+                if self.mtk.preloader.jump_da(address):
+                    sync = self.usbread(1)
+                    if sync != b"\xC0":
+                        self.error("Error on DA sync")
                         return False
+                    else:
+                        self.info("Got loader sync !")
                 else:
                     return False
-                self.info("Reading nand info")
-                nandinfo = unpack(">I", self.usbread(4))[0]
-                self.debug("NAND_INFO: " + hex(nandinfo))
-                ids = unpack(">H", self.usbread(2))[0]
-                nandids = []
-                for i in range(0, ids):
-                    tmp = unpack(">H", self.usbread(2))[0]
-                    nandids.append(tmp)
-                self.info("Reading emmc info")
-                emmcinfolegacy = unpack(">I", self.usbread(4))[0]
-                self.debug("EMMC_INFO: " + hex(emmcinfolegacy))
-                emmcids = []
-                for i in range(0, 4):
-                    tmp = unpack(">I", self.usbread(4))[0]
-                    emmcids.append(tmp)
-
-                if nandids[0] != 0:
-                    self.daconfig.flashtype = "nand"
-                elif emmcids[0] != 0:
-                    self.daconfig.flashtype = "emmc"
-                else:
-                    self.daconfig.flashtype = "nor"
-
-                self.usbwrite(self.Rsp.ACK)
-                ackval = self.usbread(1)
-                ackval += self.usbread(1)
-                ackval += self.usbread(1)
-                self.debug("ACK: " + hexlify(ackval).decode('utf-8'))
-
-                self.set_stage2_config(self.config.hwcode)
-                self.info("Uploading stage 2...")
-                # stage 2
-                if self.brom_send(self.daconfig, bootldr, 2):
-                    if self.read_flash_info():
-                        if self.daconfig.flashtype == "nand":
-                            self.daconfig.flashsize = self.nand.m_nand_flash_size
-                        elif self.daconfig.flashtype == "emmc":
-                            self.daconfig.flashsize = self.emmc.m_emmc_ua_size
-                            if self.daconfig.flashsize == 0:
-                                self.daconfig.flashsize = self.sdc.m_sdmmc_ua_size
-                        elif self.daconfig.flashtype == "nor":
-                            self.daconfig.flashsize = self.nor.m_nor_flash_size
-                        self.info("Reconnecting to preloader")
-                        self.set_usb_cmd()
-                        self.mtk.port.close(reset=False)
-                        time.sleep(2)
-                        while not self.mtk.port.cdc.connect():
-                            time.sleep(0.5)
-                        self.info("Connected to preloader")
-                        self.check_usb_cmd()
-                        return True
+            else:
                 return False
-        else:
-            self.error("Unknown bloader version. Aborting.")
+            self.info("Reading nand info")
+            nandinfo = unpack(">I", self.usbread(4))[0]
+            self.debug("NAND_INFO: " + hex(nandinfo))
+            ids = unpack(">H", self.usbread(2))[0]
+            nandids = []
+            for i in range(0, ids):
+                tmp = unpack(">H", self.usbread(2))[0]
+                nandids.append(tmp)
+            self.info("Reading emmc info")
+            emmcinfolegacy = unpack(">I", self.usbread(4))[0]
+            self.debug("EMMC_INFO: " + hex(emmcinfolegacy))
+            emmcids = []
+            for i in range(0, 4):
+                tmp = unpack(">I", self.usbread(4))[0]
+                emmcids.append(tmp)
+
+            if nandids[0] != 0:
+                self.daconfig.flashtype = "nand"
+            elif emmcids[0] != 0:
+                self.daconfig.flashtype = "emmc"
+            else:
+                self.daconfig.flashtype = "nor"
+
+            self.usbwrite(self.Rsp.ACK)
+            ackval = self.usbread(1)
+            ackval += self.usbread(1)
+            ackval += self.usbread(1)
+            self.debug("ACK: " + hexlify(ackval).decode('utf-8'))
+            self.info("Setting stage 2 config ...")
+            self.set_stage2_config(self.config.hwcode)
+            self.info("Uploading stage 2...")
+            # stage 2
+            if self.brom_send(self.daconfig, bootldr, 2):
+                if self.read_flash_info():
+                    if self.daconfig.flashtype == "nand":
+                        self.daconfig.flashsize = self.nand.m_nand_flash_size
+                    elif self.daconfig.flashtype == "emmc":
+                        self.daconfig.flashsize = self.emmc.m_emmc_ua_size
+                        if self.daconfig.flashsize == 0:
+                            self.daconfig.flashsize = self.sdc.m_sdmmc_ua_size
+                    elif self.daconfig.flashtype == "nor":
+                        self.daconfig.flashsize = self.nor.m_nor_flash_size
+                    self.info("Reconnecting to preloader")
+                    self.set_usb_cmd()
+                    self.mtk.port.close(reset=False)
+                    time.sleep(2)
+                    while not self.mtk.port.cdc.connect():
+                        time.sleep(0.5)
+                    self.info("Connected to preloader")
+                    self.check_usb_cmd()
+                    return True
             return False
 
     def upload_da(self):
