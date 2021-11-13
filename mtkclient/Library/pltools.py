@@ -221,6 +221,13 @@ class PLTools(metaclass=LogBase):
                 self.error("Error on sending payload: " + filename)
         elif btype == "kamakiri2" or btype is None:
             self.info("Kamakiri2")
+            if self.mtk.config.chipconfig.send_ptr[0] is None:
+                self.info("Unknown chipset, please run \"brute\" command and send the brom as an issue on github")
+                return False
+                if self.kama.bruteforce2(self.args, 0x9900):
+                    return True
+                else:
+                    self.error("Error on bruteforcing.")
             if self.runpayload(filename=pfilename, ack=0xC1C2C3C4, offset=0):
                 if self.kama.dump_brom(filename):
                     self.info("Bootrom dumped as: " + filename)
