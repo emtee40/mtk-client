@@ -852,7 +852,7 @@ hwconfig = {
         damode=damodes.XFLASH,
         dacode=0x6781,
         name="MT6781",
-        description="Helio A22",
+        description="Helio G96",
         loader="mt6781_payload.bin"
     ),
     0x813: chipconfig(var1=0xA,  # confirmed
