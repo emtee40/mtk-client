@@ -16,8 +16,8 @@ release the buttons.
 ## Installation
 
 ### Use Re LiveDVD (everything ready to go, based on Ubuntu):
-[Download Re Live DVD V2](https://drive.google.com/file/d/1VUK0toC6I0jhJ4ZTFPREhSXFTkSe9_gl/view?usp=sharing)
-User: livedvd, Password:livedvd
+[Download Re Live DVD V3](https://drive.google.com/file/d/1OoGWFSZTqWqwfU35W6UAUwc20CJrK95t/view?usp=sharing)
+User: user, Password:user (based on Ubuntu 22.04 LTS)
 
 
 ## Install
