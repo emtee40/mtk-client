@@ -1274,7 +1274,9 @@ class DALegacy(metaclass=LogBase):
             self.usbwrite(pack(">I", packetsize))
             ack = self.usbread(1)[0]
             if ack is not self.Rsp.ACK[0]:
-                self.error(f"Error on sending emmc read command, response: {hex(ack)}")
+                self.usbwrite(b"\xA5")
+                res=unpack("<I",self.usbread(4))[0]
+                self.error(f"Error on sending emmc read command, response: {hex(ack)}, status: {hex(res)}")
                 exit(1)
             self.daconfig.readsize = self.daconfig.flashsize
         elif self.daconfig.flashtype == "nand":
