@@ -7,6 +7,7 @@ import os
 import hashlib
 from binascii import hexlify
 from struct import pack, unpack
+from mtkclient.Library.settings import writesetting
 from mtkclient.Library.utils import LogBase, progress, logsetup
 from mtkclient.Library.error import ErrorHandler
 from mtkclient.Library.daconfig import EMMC_PartitionType, UFS_PartitionType, DaStorage
@@ -1087,7 +1088,7 @@ class DAXFlash(metaclass=LogBase):
                         # if self.get_da_stor_life_check() == 0x0:
                         cid = self.get_chip_id()
                         self.info("DA-CODE      : 0x%X", (cid.hw_code << 4) + (cid.hw_code >> 4))
-                        open(os.path.join("logs", "hwcode.txt"), "w").write(hex(self.config.hwcode))
+                        writesetting("hwcode", hex(self.config.hwcode))
 
                         daextdata = self.xft.patch()
                         if daextdata is not None:

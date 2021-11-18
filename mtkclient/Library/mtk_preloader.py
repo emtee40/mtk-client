@@ -9,6 +9,7 @@ from struct import unpack, pack
 from binascii import hexlify
 from mtkclient.Library.utils import LogBase, logsetup
 from mtkclient.Library.error import ErrorHandler
+from mtkclient.Library.settings import writesetting
 
 def calc_xflash_checksum(data):
     checksum = 0
@@ -175,8 +176,7 @@ class Preloader(metaclass=LogBase):
             self.setreg_disablewatchdogtimer(self.config.hwcode)  # D4
         if self.display:
             self.info("HW code:\t\t\t" + hex(self.config.hwcode))
-            with open(os.path.join("logs", "hwcode.txt"), "w") as wf:
-                wf.write(hex(self.config.hwcode))
+            writesetting("hwcode",hex(self.config.hwcode))
         self.config.target_config = self.get_target_config(self.display)
         self.info("Get Target info")
         self.get_blver()
@@ -195,16 +195,14 @@ class Preloader(metaclass=LogBase):
             self.info("\tSW Ver:\t\t\t" + hex(self.config.swver))
         meid = self.get_meid()
         if len(meid) >= 16:
-            with open(os.path.join("logs", "meid.txt"), "wb") as wf:
-                wf.write(hexlify(meid))
+            writesetting("meid", hexlify(meid).decode('utf-8'))
         if meid != b"":
             if self.display:
                 self.info("ME_ID:\t\t\t" + hexlify(meid).decode('utf-8').upper())
             if readsocid or self.config.chipconfig.socid_addr:
                 socid = self.get_socid()
                 if len(socid) >= 16:
-                    with open(os.path.join("logs", "socid.txt"), "wb") as wf:
-                        wf.write(hexlify(socid))
+                    writesetting("socid", hexlify(socid).decode('utf-8'))
                 if self.display:
                     if socid != b"":
                         self.info("SOC_ID:\t\t\t" + hexlify(socid).decode('utf-8').upper())

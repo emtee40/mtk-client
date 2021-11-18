@@ -4,6 +4,7 @@ from mtkclient.config.payloads import pathconfig
 from mtkclient.Library.error import ErrorHandler
 from mtkclient.Library.hwcrypto import crypto_setup, hwcrypto
 from mtkclient.Library.utils import LogBase, progress, logsetup, find_binary
+from mtkclient.Library.settings import writesetting, loadsetting
 from binascii import hexlify
 import hashlib
 
@@ -508,12 +509,14 @@ class xflashext(metaclass=LogBase):
     def generate_keys(self):
         hwc = self.cryptosetup()
         meid = b""
-        if os.path.exists(os.path.join("logs", "meid.txt")):
-            meid = bytes.fromhex(open(os.path.join("logs", "meid.txt"), "r").read())
-            self.info("MEID        : " + hexlify(meid).decode('utf-8'))
-        if os.path.exists(os.path.join("logs", "socid.txt")):
-            socid = bytes.fromhex(open(os.path.join("logs", "socid.txt"), "r").read())
-            self.info("SOCID        : " + hexlify(socid).decode('utf-8'))
+        meidv = loadsetting("meid")
+        socidv = loadsetting("socid")
+        if meidv is not None:
+            meid = bytes.fromhex(meidv)
+            self.info("MEID        : " + meidv)
+        if socidv is not None:
+            socid = bytes.fromhex(socidv)
+            self.info("SOCID        : " + socidv)
         if self.config.chipconfig.dxcc_base is not None:
             self.info("Generating dxcc rpmbkey...")
             rpmbkey = hwc.aes_hwcrypt(btype="dxcc", mode="rpmb")
@@ -521,7 +524,7 @@ class xflashext(metaclass=LogBase):
             fdekey = hwc.aes_hwcrypt(btype="dxcc", mode="fde")
             self.info("Generating dxcc rpmbkey2...")
             rpmb2key = hwc.aes_hwcrypt(btype="dxcc", mode="rpmb2")
-            self.info("Generating dxcc itrustee key...")
+            self.info("Generating dxcc km key...")
             ikey = hwc.aes_hwcrypt(btype="dxcc", mode="itrustee")
             #self.info("Generating dxcc platkey + provkey key...")
             #platkey, provkey = hwc.aes_hwcrypt(btype="dxcc", mode="prov")
@@ -529,20 +532,20 @@ class xflashext(metaclass=LogBase):
             #self.info("Platkey     : " + hexlify(platkey).decode('utf-8'))
             if rpmbkey is not None:
                 self.info("RPMB        : " + hexlify(rpmbkey).decode('utf-8'))
-                open(os.path.join("logs", "rpmbkey.txt"), "wb").write(hexlify(rpmbkey))
+                writesetting("rpmbkey",hexlify(rpmbkey).decode('utf-8'))
             if rpmb2key is not None:
                 self.info("RPMB2       : " + hexlify(rpmb2key).decode('utf-8'))
-                open(os.path.join("logs", "rpmb2key.txt"), "wb").write(hexlify(rpmb2key))
+                writesetting("rpmb2key",hexlify(rpmb2key).decode('utf-8'))
             if fdekey is not None:
                 self.info("FDE         : " + hexlify(fdekey).decode('utf-8'))
-                open(os.path.join("logs", "fdekey.txt"), "wb").write(hexlify(fdekey))
+                writesetting("fdekey",hexlify(fdekey).decode('utf-8'))
             if ikey is not None:
                 self.info("iTrustee    : " + hexlify(ikey).decode('utf-8'))
-                open(os.path.join("logs", "itrustee_fbe.txt"), "wb").write(hexlify(ikey))
+                writesetting("kmkey", hexlify(ikey).decode('utf-8'))
             if self.config.chipconfig.prov_addr:
                 provkey = self.custom_read(self.config.chipconfig.prov_addr, 16)
                 self.info("PROV        : " + hexlify(provkey).decode('utf-8'))
-                open(os.path.join("logs", "provkey.txt"), "wb").write(hexlify(provkey))
+                writesetting("provkey", hexlify(provkey).decode('utf-8'))
             """
             hrid = self.xflash.get_hrid()
             if hrid is not None:
@@ -558,7 +561,7 @@ class xflashext(metaclass=LogBase):
                 self.setotp(hwc)
                 rpmbkey = hwc.aes_hwcrypt(mode="rpmb", data=meid, btype="sej")
                 self.info("RPMB        : " + hexlify(rpmbkey).decode('utf-8'))
-                open(os.path.join("logs", "rpmbkey.txt"), "wb").write(hexlify(rpmbkey))
+                writesetting("rpmbkey", hexlify(rpmbkey).decode('utf-8'))
             else:
                 self.info("SEJ Mode: No meid found. Are you in brom mode ?")
         return True

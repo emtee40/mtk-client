@@ -12,6 +12,7 @@ from mtkclient.Library.error import ErrorHandler
 from mtkclient.Library.daconfig import DaStorage, EMMC_PartitionType
 from mtkclient.Library.partition import Partition
 from mtkclient.config.payloads import pathconfig
+from mtkclient.Library.settings import writesetting
 
 
 class norinfo:
