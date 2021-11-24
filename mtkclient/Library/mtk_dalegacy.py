@@ -171,8 +171,9 @@ class emmcinfo:
         res += f"m_emmc_gp_size[2] = {hex(self.m_emmc_gp_size[2])}\n"
         res += f"m_emmc_gp_size[3] = {hex(self.m_emmc_gp_size[3])}\n"
         res += f"m_emmc_ua_size = {hex(self.m_emmc_ua_size)}\n"
-        val = pack("<QQ", self.m_emmc_cid[0], self.m_emmc_cid[1])
-        res += f"m_emmc_cid = {hexlify(val).decode('utf-8')}\n"
+        cid = pack("<QQ", self.m_emmc_cid[0], self.m_emmc_cid[1])
+        res += f"m_emmc_cid = {hexlify(cid).decode('utf-8')}\n"
+        writesetting("cid", hexlify(cid).decode('utf-8'))
         res += f"m_emmc_fwver = {hexlify(self.m_emmc_fwver).decode('utf-8')}\n"
         return res
 
@@ -193,8 +194,9 @@ class sdcinfo:
     def __repr__(self):
         print(f"m_sdmmc_info = {hex(self.m_sdmmc_info)}")
         print(f"m_sdmmc_ua_size = {hex(self.m_sdmmc_ua_size)}")
-        val = pack("<QQ", self.m_sdmmc_cid[0], self.m_sdmmc_cid[1])
-        print(f"m_sdmmc_cid = {hexlify(val).decode('utf-8')}")
+        cid = pack("<QQ", self.m_sdmmc_cid[0], self.m_sdmmc_cid[1])
+        writesetting("cid", hexlify(cid).decode('utf-8'))
+        print(f"m_sdmmc_cid = {hexlify(cid).decode('utf-8')}")
 
 
 class configinfo:

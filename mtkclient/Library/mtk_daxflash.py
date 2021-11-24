@@ -543,6 +543,7 @@ class DAXFlash(metaclass=LogBase):
                 except:
                     pass
                 self.info(f"EMMC CID:        {hexlify(emmc.cid).decode('utf-8')}")
+                writesetting("cid", hexlify(emmc.cid).decode('utf-8'))
                 self.info(f"EMMC Boot1 Size: {hex(emmc.boot1_size)}")
                 self.info(f"EMMC Boot2 Size: {hex(emmc.boot2_size)}")
                 self.info(f"EMMC GP1 Size:   {hex(emmc.gp1_size)}")
@@ -646,6 +647,7 @@ class DAXFlash(metaclass=LogBase):
                     except:
                         pass
                     self.info(f"UFS CID:      {hexlify(ufs.cid).decode('utf-8')}")
+                    writesetting("cid", hexlify(ufs.cid).decode('utf-8'))
                     self.info(f"UFS LU0 Size: {hex(ufs.lu0_size)}")
                     self.info(f"UFS LU1 Size: {hex(ufs.lu1_size)}")
                     self.info(f"UFS LU2 Size: {hex(ufs.lu2_size)}")
