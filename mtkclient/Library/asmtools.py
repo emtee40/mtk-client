@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-#(c) B.Kerler 2018-2021 MIT License
+#(c) B.Kerler 2018-2021 GPLv3 License
 from capstone import *
 from keystone import *
 import argparse

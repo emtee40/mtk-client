@@ -16,10 +16,10 @@ setup(
     },
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
+        "License :: OSI Approved :: GPLv3 License",
         "Operating System :: OS Independent",
     ],
-    license='MIT License',
+    license='GPLv3 License',
     install_requires=[
     'colorama',
     'usb',
