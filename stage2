@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # MTK Stage2 Client (c) B.Kerler 2018-2021.
-# Licensed under MIT License
+# Licensed under GPLv3 License
 
 import os
 import sys
