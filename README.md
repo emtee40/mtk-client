@@ -27,7 +27,7 @@ User: user, Password:user (based on Ubuntu 22.04 LTS)
 #### Install python >=3.8, git and other deps
 
 ```
-sudo apt install python3 git libusb1.0
+sudo apt install python3 git libusb-1.0-0 python3-pip
 ```
 
 #### Grab files 
