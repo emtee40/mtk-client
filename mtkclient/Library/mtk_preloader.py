@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # (c) B.Kerler 2018-2021 GPLv3 License
 import os
-import shutil
 import logging
 from enum import Enum
 from struct import unpack, pack
@@ -455,8 +454,17 @@ class Preloader(metaclass=LogBase):
             self.error(f"Send auth error:{self.eh.status(status)}")
         return False
 
+    def get_brom_log(self):
+        if self.echo(self.Cmd.BROM_DEBUGLOG.value): # 0xDD
+            length = self.rdword()
+            logdata = self.rbyte(length)
+            return logdata
+        else:
+            self.error(f"Brom log cmd not supported.")
+        return b""
+
     def get_brom_log_new(self):
-        if self.echo(self.Cmd.GET_BROM_LOG_NEW):
+        if self.echo(self.Cmd.GET_BROM_LOG_NEW.value): # 0xDF
             length = self.rdword()
             logdata = self.rbyte(length)
             status = self.rword()

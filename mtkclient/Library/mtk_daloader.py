@@ -95,6 +95,22 @@ class DAloader(metaclass=LogBase):
         else:
             self.da = DALegacy(self.mtk, self.daconfig, self.loglevel)
 
+    def setmetamode(self, porttype: str):
+        self.xflash = False
+        if self.mtk.config.chipconfig.damode == 1:
+            self.xflash = True
+        if self.xflash:
+            self.da = DAXFlash(self.mtk, self.daconfig, self.loglevel)
+            if porttype not in ["off","usb","uart"]:
+                self.error("Only \"off\",\"usb\" or \"uart\" are allowed.")
+            if self.da.set_meta(porttype):
+                self.info(f"Successfully set meta mode to {porttype}")
+                return True
+            else:
+                self.error("Setting meta mode in xflash failed.")
+        self.error("Device is not in xflash mode, cannot run meta cmd.")
+        return False
+
     def detect_partition(self, arguments, partitionname, parttype=None):
         fpartitions = []
         data, guid_gpt = self.da.partition.get_gpt(int(arguments.gpt_num_part_entries),

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # MTK Flash Client (c) B.Kerler 2018-2021.
-# Licensed under MIT License
+# Licensed under GPLv3 License
 import shutil
 import os
 import json
@@ -14,6 +14,7 @@ from mtkclient.config.usb_ids import default_ids
 from mtkclient.config.payloads import pathconfig
 from mtkclient.Library.pltools import PLTools
 from mtkclient.Library.mtk_preloader import Preloader
+from mtkclient.Library.meta import META
 from mtkclient.Library.mtk_daloader import DAloader
 from mtkclient.Library.Port import Port
 from mtkclient.Library.utils import LogBase, logsetup, getint
@@ -21,6 +22,7 @@ from mtkclient.config.brom_config import Mtk_Config
 from mtkclient.Library.utils import print_progress
 from mtkclient.Library.error import ErrorHandler
 
+metamodes="[FASTBOOT, FACTFACT, METAMETA, FACTORYM, ADVEMETA]"
 
 def split_by_n(seq, unit_count):
     """A generator to divide a sequence into chunks of n units."""
@@ -633,6 +635,34 @@ class Main(metaclass=LogBase):
                 mtk.preloader.get_target_config()
             mtk.port.close()
             self.close()
+        elif cmd == "logs":
+            if mtk.preloader.init():
+                self.info("Getting target logs...")
+                try:
+                    logs=mtk.preloader.get_brom_log_new()
+                except:
+                    logs = mtk.preloader.get_brom_log()
+                if logs!=b"":
+                    if args.filename is None:
+                        filename="log.txt"
+                    else:
+                        filename=args.filename
+                    with open(filename,"wb") as wf:
+                        wf.write(logs)
+                        self.info(f"Successfully wrote logs to \"{filename}\"")
+                else:
+                    self.info("No logs found.")
+            mtk.port.close()
+            self.close()
+        elif cmd == "meta":
+            meta=META(mtk,loglevel)
+            if args.metamode is None:
+                self.error("You need to give a metamode as argument ex: "+metamodes)
+            else:
+                if meta.init(metamode=args.metamode,display=True):
+                    self.info(f"Successfully set meta mode : {args.metamode}")
+            mtk.port.close()
+            self.close()
         else:
             # DA / FLash commands start here
 
@@ -1136,7 +1166,7 @@ class Main(metaclass=LogBase):
             elif cmd == "xflash":
                 subcmd = args.subcmd
                 if subcmd is None:
-                    print("Available xflash cmds are: [peek, poke, generatekeys, seccfg, rpmb]")
+                    print("Available xflash cmds are: [peek, poke, generatekeys, seccfg, rpmb, meta]")
                     return
                 if subcmd == "peek":
                     addr = getint(self.args.address)
@@ -1174,10 +1204,16 @@ class Main(metaclass=LogBase):
                         mtk.daloader.read_rpmb(args.filename)
                     elif rpmb_subcmd == "w":
                         mtk.daloader.write_rpmb(args.filename)
+                elif subcmd == "meta":
+                    metamode = args.metamode
+                    if metamode is None:
+                        print("metamode is needed [usb,uart,off]!")
+                    else:
+                        mtk.daloader.setmetamode(metamode)
                 self.close()
 
 
-info = "MTK Flash/Exploit Client V1.52 (c) B.Kerler 2018-2021"
+info = "MTK Flash/Exploit Client V1.53 (c) B.Kerler 2018-2021"
 
 cmds = {
     "printgpt": "Print GPT Table information",
@@ -1201,6 +1237,8 @@ cmds = {
     "crash": "Try to crash the preloader",
     "brute": "Bruteforce the kamakiri var1",
     "gettargetconfig": "Get target config (sbc, daa, etc.)",
+    "logs": "Get target logs",
+    "meta": "Set meta mode",
     "peek": "Read memory in patched preloader mode",
     "stage": "Run stage2 payload via boot rom mode (kamakiri)",
     "plstage": "Run stage2 payload via preloader mode (send_da)",
@@ -1241,8 +1279,8 @@ if __name__ == '__main__':
     parser_e = subparsers.add_parser("e", help="Erase partition")
     parser_es = subparsers.add_parser("es", help="Erase partition with sector count")
     parser_footer = subparsers.add_parser("footer", help="Read crypto footer from flash")
-
     parser_reset = subparsers.add_parser("reset", help="Send mtk reset command")
+
     parser_dumpbrom = subparsers.add_parser("dumpbrom", help="Try to dump the bootrom")
     parser_dumppreloader = subparsers.add_parser("dumppreloader", help="Try to dump the preloader")
     parser_payload = subparsers.add_parser("payload",
@@ -1254,6 +1292,8 @@ if __name__ == '__main__':
     parser_peek = subparsers.add_parser("peek", help="Read memory in patched preloader mode")
     parser_stage = subparsers.add_parser("stage", help="Run stage2 payload via boot rom mode (kamakiri)")
     parser_plstage = subparsers.add_parser("plstage", help="Run stage2 payload via preloader mode (send_da)")
+    parser_logs = subparsers.add_parser("logs", help="Read logs")
+    parser_meta = subparsers.add_parser("meta", help="Enter meta mode")
 
     parser_xflash = subparsers.add_parser("xflash", help="Run xflash special commands")
     da_cmds = parser_xflash.add_subparsers(dest='subcmd', help='Commands: peek poke keys unlock')
@@ -1262,6 +1302,9 @@ if __name__ == '__main__':
     da_keys = da_cmds.add_parser("generatekeys", help="Generate keys")
     da_unlock = da_cmds.add_parser("seccfg", help="Unlock device / Configure seccfg")
     da_rpmb = da_cmds.add_parser("rpmb", help="RPMB Tools")
+    da_meta = da_cmds.add_parser("meta", help="MetaMode Tools")
+
+    da_meta.add_argument("metamode", type=str, help="metamode to use [off,usb,uart]")
 
     da_rpmb_cmds = da_rpmb.add_subparsers(dest='rpmb_subcmd', help='Commands: r w')
     da_rpmb_r = da_rpmb_cmds.add_parser("r", help="Read rpmb")
@@ -1751,6 +1794,15 @@ if __name__ == '__main__':
     parser_brute.add_argument('--crash', help='Enforce crash if device is in pl mode to enter brom mode')
     parser_brute.add_argument('--socid', help='Read Soc ID')
 
+    parser_logs.add_argument('--vid', type=str, help='Set usb vendor id used for MTK Preloader')
+    parser_logs.add_argument('--pid', type=str, help='Set usb product id used for MTK Preloader')
+    parser_logs.add_argument('--debugmode', action='store_true', default=False, help='Enable verbose mode')
+    parser_logs.add_argument('--filename', help='Optional filename to write dumped data')
+
+    parser_meta.add_argument('--vid', type=str, help='Set usb vendor id used for MTK Preloader')
+    parser_meta.add_argument('--pid', type=str, help='Set usb product id used for MTK Preloader')
+    parser_meta.add_argument('--debugmode', action='store_true', default=False, help='Enable verbose mode')
+    parser_meta.add_argument('metamode', type=str, default=None, help='metamode to use '+metamodes)
     parser_gettargetconfig.add_argument('--vid', type=str, help='Set usb vendor id used for MTK Preloader')
     parser_gettargetconfig.add_argument('--pid', type=str, help='Set usb product id used for MTK Preloader')
     parser_gettargetconfig.add_argument('--debugmode', action='store_true', default=False, help='Enable verbose mode')

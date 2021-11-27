@@ -276,6 +276,35 @@ class DAXFlash(metaclass=LogBase):
         param = pack("<I", reset_key)
         return self.send_devctrl(self.Cmd.SET_RESET_KEY, param)
 
+    def set_meta(self, porttype="off"):
+        class mtk_boot_mode_flag:
+            boot_mode=b"\x00" # 0:normal, 1:meta
+            com_type=b"\x00"  # 0:unknown, 1:uart, 2:usb
+            com_id=b"\x00"    # 0:single interface device (meta,adb)
+                              # 1:composite device (meta, adb disable)
+                              # 2:no meta, adb enable
+                              # 3:no meta, adb disable
+
+            def __init__(self, mode="off"):
+                if mode=="off":
+                    self.boot_mode = b"\x00"
+                    self.com_type = b"\x00"
+                    self.com_id = b"\x00"
+                elif mode=="uart":
+                    self.boot_mode = b"\x01"
+                    self.com_type = b"\x01"
+                    self.com_id = b"\x00"
+                elif mode=="usb":
+                    self.boot_mode = b"\x01"
+                    self.com_type = b"\x02"
+                    self.com_id = b"\x00"
+
+            def get(self):
+                return self.boot_mode+self.com_type+self.com_id
+
+        metamode=mtk_boot_mode_flag(porttype).get()
+        return self.send_devctrl(self.Cmd.SET_META_BOOT_MODE, metamode)
+
     def set_checksum_level(self, checksum_level=0x0):
         param = pack("<I", checksum_level)
         # none[0x0]. USB[0x1]. storage[0x2], both[0x3]
