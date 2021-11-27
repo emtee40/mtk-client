@@ -164,6 +164,15 @@ python mtk reset
 10. Disconnect usb cable and enjoy your rooted phone :)
 
 
+### Boot to meta mode via payload
+
+Example:
+
+```
+python mtk payload --metamode FASTBOOT
+```
+
+
 ### Unlock bootloader
 
 1. Erase metadata and userdata (and md_udc if existing):

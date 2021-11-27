@@ -262,6 +262,15 @@ class Preloader(metaclass=LogBase):
         self.usbread(1)
         self.usbread(2)
 
+    def jump_bl(self):
+        if self.echo(self.Cmd.JUMP_BL.value):
+            status = self.rword()
+            if status <= 0xFF:
+                status2 = self.rword()
+                if status <= 0xFF:
+                    return True
+        return False
+
     def jump_to_partition(self, partitionname):
         if isinstance(partitionname, str):
             partitionname = bytes(partitionname, 'utf-8')[:64]

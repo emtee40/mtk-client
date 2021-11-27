@@ -627,6 +627,13 @@ class Main(metaclass=LogBase):
                 if self.args.ptype is not None:
                     ptype = self.args.ptype
                 plt.runpayload(filename=payloadfile)
+                if args.metamode:
+                    mtk.port.run_handshake()
+                    mtk.preloader.jump_bl()
+                    mtk.port.close(reset=True)
+                    meta=META(mtk,loglevel)
+                    if meta.init(metamode=args.metamode, display=True):
+                        self.info(f"Successfully set meta mode : {args.metamode}")
             mtk.port.close(reset=True)
             self.close()
         elif cmd == "gettargetconfig":
@@ -1753,6 +1760,7 @@ if __name__ == '__main__':
     parser_dumppreloader.add_argument('--socid', help='Read Soc ID')
 
     parser_payload.add_argument('--payload', type=str, help='Payload filename (optional)')
+    parser_payload.add_argument('--metamode', type=str, default=None, help='metamode to use '+metamodes)
     parser_payload.add_argument('--loader', type=str, help='Use specific loader, disable autodetection')
     parser_payload.add_argument('--filename', help='Optional payload to load')
     parser_payload.add_argument('--vid', type=str, help='Set usb vendor id used for MTK Preloader')

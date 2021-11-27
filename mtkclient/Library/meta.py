@@ -67,6 +67,7 @@ class META(metaclass=LogBase):
                             resp = bytearray(EP_IN(maxinsize))
                             if resp==b"READY":
                                 return True
+                            self.warning(resp)
                 else:
                     if cdc.connected:
                         cdc.close()
