@@ -2,7 +2,6 @@ import os
 import logging
 from mtkclient.Library.utils import LogBase
 
-
 class damodes:
     DEFAULT = 0
     XFLASH = 1
@@ -1468,6 +1467,7 @@ class Mtk_Config(metaclass=LogBase):
         self.meid = None
         self.target_config = None
         self.chipconfig = chipconfig()
+        self.gpt_settings = None
         if loglevel == logging.DEBUG:
             logfilename = os.path.join("logs", "log.txt")
             fh = logging.FileHandler(logfilename)
