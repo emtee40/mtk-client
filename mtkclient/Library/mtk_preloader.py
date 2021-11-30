@@ -3,6 +3,7 @@
 # (c) B.Kerler 2018-2021 GPLv3 License
 import os
 import logging
+import shutil
 from enum import Enum
 from struct import unpack, pack
 from binascii import hexlify
@@ -126,7 +127,21 @@ class Preloader(metaclass=LogBase):
 
     def init(self, maxtries=None, display=True):
         if os.path.exists(".state"):
-            os.remove(".state")
+            try:
+                os.remove(".state")
+            except:
+                pass
+        settings=os.path.join("logs","hwparam.json")
+        if os.path.exists(settings):
+            try:
+                os.remove(settings)
+            except:
+                pass
+        if os.path.exists("logs"):
+            try:
+                shutil.rmtree("logs")
+            except:
+                pass
         readsocid=self.config.readsocid
         skipwdt = self.config.skipwdt
 

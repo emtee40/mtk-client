@@ -1087,9 +1087,9 @@ class Main(metaclass=LogBase):
                             self.error(f"Error: Couldn't detect partition: {partition}\nAvailable partitions:")
                             for rpartition in res[1]:
                                 self.info(rpartition.name)
-                if (countFP == len(partitions) and countFP > 1):
+                if countFP == len(partitions) and countFP > 1:
                     print(f"All partitions formatted.")
-                elif (countFP != len(partitions) and countFP > 1):
+                elif countFP != len(partitions) and countFP > 1:
                     print(f"Failed to format all partitions.")
                 self.close()
             elif cmd == "es":

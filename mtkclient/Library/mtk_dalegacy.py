@@ -5,6 +5,7 @@ import sys
 import logging
 import os
 import time
+import hashlib
 from struct import pack, unpack
 from binascii import hexlify
 from mtkclient.Library.utils import LogBase, progress, read_object, logsetup, structhelper
@@ -13,7 +14,7 @@ from mtkclient.Library.daconfig import DaStorage, EMMC_PartitionType
 from mtkclient.Library.partition import Partition
 from mtkclient.config.payloads import pathconfig
 from mtkclient.Library.settings import writesetting
-
+from mtkclient.Library.legacy_ext import legacyext
 
 class norinfo:
     m_nor_ret = None
@@ -673,6 +674,29 @@ class DALegacy(metaclass=LogBase):
         self.partition = Partition(self.mtk, self.readflash, self.read_pmt, loglevel)
         self.progress = progress(self.daconfig.pagesize)
         self.pathconfig = pathconfig()
+        self.patch = False
+        self.generatekeys = self.mtk.config.generatekeys
+        if self.generatekeys:
+            self.patch = True
+        self.lft = legacyext(self.mtk, self, loglevel)
+
+    def read_reg32(self, addr:int):
+        if self.usbwrite(self.Cmd.READ_REG32_CMD): # 0x7A
+            self.usbwrite(pack(">I", addr))
+            value = unpack(">I",self.usbread(4))[0]
+            ack = self.usbread(1)
+            if ack == self.Rsp.ACK:
+                return value
+        return None
+
+    def write_reg32(self, addr:int, data:int):
+        self.usbwrite(self.Cmd.WRITE_REG32_CMD)  # 0x7B
+        self.usbwrite(pack(">I",addr))
+        self.usbwrite(pack(">I",data))
+        ack = self.usbread(1)
+        if ack == self.Rsp.ACK:
+            return True
+        return False
 
     def read_pmt(self):  # A5
         class GptEntries:
@@ -941,18 +965,33 @@ class DALegacy(metaclass=LogBase):
             self.error("No valid da loader found... aborting.")
             return False
         loader = self.daconfig.loader
-        self.info("Uploading stage 1...")
+        self.info(f"Uploading legacy stage 1 from {os.path.basename(loader)}")
         with open(loader, 'rb') as bootldr:
             # stage 1
-            stage = 1
-            offset = self.daconfig.da.region[stage].m_buf
-            size = self.daconfig.da.region[stage].m_len
-            address = self.daconfig.da.region[stage].m_start_addr
-            sig_len = self.daconfig.da.region[stage].m_sig_len
-            bootldr.seek(offset)
-            dadata = bootldr.read(size)
-            if self.mtk.preloader.send_da(address, size, sig_len, dadata):
-                if self.mtk.preloader.jump_da(address):
+            da1offset = self.daconfig.da.region[1].m_buf
+            da1size = self.daconfig.da.region[1].m_len
+            da1address = self.daconfig.da.region[1].m_start_addr
+            da2address = self.daconfig.da.region[1].m_start_addr
+            da1sig_len = self.daconfig.da.region[1].m_sig_len
+            bootldr.seek(da1offset)
+            da1 = bootldr.read(da1size)
+            # ------------------------------------------------
+            da2offset = self.daconfig.da.region[2].m_buf
+            da2sig_len = self.daconfig.da.region[2].m_sig_len
+            bootldr.seek(da2offset)
+            da2 = bootldr.read(self.daconfig.da.region[2].m_len)
+
+            hashaddr, hashmode, hashlen = self.mtk.daloader.compute_hash_pos(da1, da2, da2sig_len)
+            if hashaddr is not None:
+                da2 = self.lft.patch_da2(da2)
+                da1 = self.mtk.daloader.fix_hash(da1, da2, hashaddr, hashmode, hashlen)
+                self.patch = True
+                self.daconfig.da2 = da2[:hashlen]
+            else:
+                self.daconfig.da2 = da2[:-da2sig_len]
+
+            if self.mtk.preloader.send_da(da1address, da1size, da1sig_len, da1):
+                if self.mtk.preloader.jump_da(da1address):
                     sync = self.usbread(1)
                     if sync != b"\xC0":
                         self.error("Error on DA sync")
@@ -995,7 +1034,7 @@ class DALegacy(metaclass=LogBase):
             self.set_stage2_config(self.config.hwcode)
             self.info("Uploading stage 2...")
             # stage 2
-            if self.brom_send(self.daconfig, bootldr, 2):
+            if self.brom_send(self.daconfig, da2, 2):
                 if self.read_flash_info():
                     if self.daconfig.flashtype == "nand":
                         self.daconfig.flashsize = self.nand.m_nand_flash_size
@@ -1035,12 +1074,10 @@ class DALegacy(metaclass=LogBase):
         self.finish(0x0)  # DISCONNECT_USB_AND_RELEASE_POWERKEY
         self.mtk.port.close(reset=True)
 
-    def brom_send(self, dasetup, da, stage, packetsize=0x1000):
+    def brom_send(self, dasetup, dadata, stage, packetsize=0x1000):
         offset = dasetup.da.region[stage].m_buf
         size = dasetup.da.region[stage].m_len
         address = dasetup.da.region[stage].m_start_addr
-        da.seek(offset)
-        dadata = da.read(size)
         self.usbwrite(pack(">I", address))
         self.usbwrite(pack(">I", size))
         self.usbwrite(pack(">I", packetsize))
@@ -1065,9 +1102,10 @@ class DALegacy(metaclass=LogBase):
 
     def check_usb_cmd(self):
         if self.usbwrite(self.Cmd.USB_CHECK_STATUS):  # 72
-            res = self.usbread(2)
-            if len(res) > 1:
-                if res[0] is self.Rsp.ACK[0]:
+            res = self.usbread(1)
+            if res == self.Rsp.ACK:
+                res = self.usbread(1)
+                if len(res) > 0:
                     return True
         return False
 

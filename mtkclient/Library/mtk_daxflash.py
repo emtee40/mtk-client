@@ -131,10 +131,6 @@ class DAXFlash(metaclass=LogBase):
         self.warning = self.__logger.warning
         self.mtk = mtk
         self.loglevel = loglevel
-        self.patch = False
-        self.generatekeys = self.mtk.config.generatekeys
-        if self.generatekeys:
-            self.patch = True
         self.daext = False
         self.sram = None
         self.dram = None
@@ -157,6 +153,10 @@ class DAXFlash(metaclass=LogBase):
         self.partition = Partition(self.mtk, self.readflash, self.read_pmt, loglevel)
         self.progress = progress(self.daconfig.pagesize)
         self.pathconfig = pathconfig()
+        self.patch = False
+        self.generatekeys = self.mtk.config.generatekeys
+        if self.generatekeys:
+            self.patch = True
         self.xft = xflashext(self.mtk, self, loglevel)
 
     def usleep(self, usec):
@@ -344,19 +344,6 @@ class DAXFlash(metaclass=LogBase):
             else:
                 self.error(f"Error on sending data: {self.eh.status(status)}")
                 return False
-
-    def compute_hash_pos(self, da1, da2):
-        hashdigest = hashlib.sha1(da2).digest()
-        hashdigest256 = hashlib.sha256(da2).digest()
-        idx = da1.find(hashdigest)
-        hashmode = 1
-        if idx == -1:
-            idx = da1.find(hashdigest256)
-            hashmode = 2
-        if idx != -1:
-            return idx, hashmode
-        self.error("Hash computation failed.")
-        return None, None
 
     def boot_to(self, at_address, da, display=True, timeout=0.5):  # =0x40000000
         if self.xsend(self.Cmd.BOOT_TO):
@@ -976,7 +963,7 @@ class DAXFlash(metaclass=LogBase):
             self.error("No valid da loader found... aborting.")
             return False
         loader = self.daconfig.loader
-        self.info(f"Uploading stage 1 from {os.path.basename(loader)}")
+        self.info(f"Uploading xflash stage 1 from {os.path.basename(loader)}")
         with open(loader, 'rb') as bootldr:
             # stage 1
             da1offset = self.daconfig.da.region[1].m_buf
@@ -992,12 +979,12 @@ class DAXFlash(metaclass=LogBase):
             bootldr.seek(da2offset)
             da2 = bootldr.read(self.daconfig.da.region[2].m_len)
 
-            hashaddr, hashmode = self.compute_hash_pos(da1, da2[:-da2sig_len])
+            hashaddr, hashmode, hashlen = self.mtk.daloader.compute_hash_pos(da1, da2, da2sig_len)
             if hashaddr is not None:
                 da2 = self.xft.patch_da2(da2)
-                da1 = self.xft.fix_hash(da1, da2, hashaddr, hashmode)
+                da1 = self.mtk.daloader.fix_hash(da1, da2, hashaddr, hashmode, hashlen)
                 self.patch = True
-                self.daconfig.da2 = da2
+                self.daconfig.da2 = da2[:hashlen]
             else:
                 self.daconfig.da2 = da2[:-da2sig_len]
 
