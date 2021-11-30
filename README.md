@@ -11,6 +11,7 @@ release the buttons.
 - kamakiri [xyzz]
 - linecode exploit [chimera]
 - Chaosmaster
+- cygnusx (GUI)
 - All contributors
 
 ## Installation

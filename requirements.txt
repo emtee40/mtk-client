@@ -3,4 +3,3 @@ pyusb
 pycryptodome
 colorama
 usb
-
