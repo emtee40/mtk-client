@@ -98,7 +98,7 @@ class usb_class(metaclass=LogBase):
             fh = logging.FileHandler(logfilename, encoding='utf-8')
             self.__logger.addHandler(fh)
 
-        if sys.platform.startswith('freebsd') or sys.platform.startswith('linux'):
+        if sys.platform.startswith('freebsd') or sys.platform.startswith('linux') or sys.platform.startswith('darwin'):
             self.backend = usb.backend.libusb1.get_backend(find_library=lambda x: "libusb-1.0.so")
         elif sys.platform.startswith('win32'):
             if calcsize("P") * 8 == 64:
