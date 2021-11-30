@@ -3,3 +3,4 @@ pyusb
 pycryptodome
 colorama
 usb
+PyQT5
