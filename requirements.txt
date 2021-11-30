@@ -4,3 +4,4 @@ pycryptodome
 colorama
 usb
 PyQT5
+mock
