@@ -14,6 +14,15 @@ try:
 except:
     from utils import LogBase, structhelper
 
+class gpt_settings:
+    gpt_num_part_entries = 0
+    gpt_part_entry_size = 0
+    gpt_part_entry_start_lba = 0
+
+    def __init__(self, gpt_num_part_entries: str, gpt_part_entry_size: str, gpt_part_entry_start_lba: str):
+        self.gpt_num_part_entries = int(gpt_num_part_entries)
+        self.gpt_part_entry_size = int(gpt_part_entry_size)
+        self.gpt_part_entry_start_lba = int(gpt_part_entry_start_lba)
 
 class gpt(metaclass=LogBase):
     class gpt_header:

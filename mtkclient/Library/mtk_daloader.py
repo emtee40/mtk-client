@@ -14,6 +14,7 @@ from mtkclient.config.brom_config import damodes
 from mtkclient.Library.xflash_ext import xflashext
 from mtkclient.Library.legacy_ext import legacyext
 
+
 class DAloader(metaclass=LogBase):
     def __init__(self, mtk, loglevel=logging.INFO):
         self.__logger = logsetup(self, self.__logger, loglevel)
@@ -149,11 +150,9 @@ class DAloader(metaclass=LogBase):
         self.error("Device is not in xflash mode, cannot run meta cmd.")
         return False
 
-    def detect_partition(self, arguments, partitionname, parttype=None):
+    def detect_partition(self, partitionname, parttype=None):
         fpartitions = []
-        data, guid_gpt = self.da.partition.get_gpt(int(arguments.gpt_num_part_entries),
-                                                   int(arguments.gpt_part_entry_size),
-                                                   int(arguments.gpt_part_entry_start_lba), parttype)
+        data, guid_gpt = self.da.partition.get_gpt(self.mtk.config.gpt_settings, parttype)
         if guid_gpt is None:
             return [False, fpartitions]
         else:
@@ -163,21 +162,17 @@ class DAloader(metaclass=LogBase):
                     return [True, partition]
         return [False, fpartitions]
 
-    def get_partition_data(self, arguments, parttype=None):
+    def get_partition_data(self, parttype=None):
         fpartitions = []
-        data, guid_gpt = self.da.partition.get_gpt(int(arguments.gpt_num_part_entries),
-                                                   int(arguments.gpt_part_entry_size),
-                                                   int(arguments.gpt_part_entry_start_lba), parttype)
+        data, guid_gpt = self.da.partition.get_gpt(self.mtk.config.gpt_settings, parttype)
         if guid_gpt is None:
             return [False, fpartitions]
         else:
             return guid_gpt.partentries
 
-    def get_gpt(self, arguments, parttype=None):
+    def get_gpt(self, parttype=None):
         fpartitions = []
-        data, guid_gpt = self.da.partition.get_gpt(int(arguments.gpt_num_part_entries),
-                                                   int(arguments.gpt_part_entry_size),
-                                                   int(arguments.gpt_part_entry_start_lba), parttype)
+        data, guid_gpt = self.da.partition.get_gpt(self.mtk.config.gpt_settings, parttype)
         if guid_gpt is None:
             return [False, fpartitions]
         return [data, guid_gpt]

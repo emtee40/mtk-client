@@ -384,7 +384,7 @@ class xflashext(metaclass=LogBase):
             return False
         hwc = self.cryptosetup()
         sc_org = seccfg(hwc)
-        data, guid_gpt = self.xflash.partition.get_gpt(0, 0, 0, "user")
+        data, guid_gpt = self.xflash.partition.get_gpt(self.mtk.config.gpt_settings, "user")
         seccfg_data = None
         partition = None
         for rpartition in guid_gpt.partentries:

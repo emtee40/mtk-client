@@ -21,8 +21,11 @@ from mtkclient.Library.utils import LogBase, logsetup, getint
 from mtkclient.config.brom_config import Mtk_Config
 from mtkclient.Library.utils import print_progress
 from mtkclient.Library.error import ErrorHandler
+from mtkclient.Library.mtk_da_cmd import DA_handler
+from mtkclient.Library.gpt import gpt_settings
 
-metamodes="[FASTBOOT, FACTFACT, METAMETA, FACTORYM, ADVEMETA]"
+metamodes = "[FASTBOOT, FACTFACT, METAMETA, FACTORYM, ADVEMETA]"
+
 
 def split_by_n(seq, unit_count):
     """A generator to divide a sequence into chunks of n units."""
@@ -113,6 +116,30 @@ class ArgHandler(metaclass=LogBase):
                 config.enforcecrash = args.crash
         except AttributeError:
             pass
+
+        gpt_num_part_entries = 0
+        try:
+            if args.gpt_num_part_entries is not None:
+                gpt_num_part_entries = args.gpt_num_part_entries
+        except:
+            pass
+
+        gpt_part_entry_size = 0
+        try:
+            if args.gpt_part_entry_size is not None:
+                gpt_part_entry_size = args.gpt_part_entry_size
+        except:
+            pass
+
+        gpt_part_entry_start_lba = 0
+        try:
+            if args.gpt_part_entry_start_lba is not None:
+                gpt_part_entry_start_lba = args.gpt_part_entry_start_lba
+        except:
+            pass
+
+        config.gpt_settings = gpt_settings(gpt_num_part_entries,gpt_part_entry_size,
+                                         gpt_part_entry_start_lba)
 
 
 class Mtk(metaclass=LogBase):
@@ -261,32 +288,163 @@ class Main(metaclass=LogBase):
         if not os.path.exists("logs"):
             os.mkdir("logs")
 
-    def dump_preloader_ram(self, mtk):
-        try:
-            data = b"".join([pack("<I", val) for val in mtk.preloader.read32(0x200000, 0x10000 // 4)])
-            idx = data.find(b"\x4D\x4D\x4D\x01\x38\x00\x00\x00")
-            if idx != -1:
-                data = data[idx:]
-                length = unpack("<I", data[0x20:0x24])[0]
-                time.sleep(0.05)
-                data = b"".join([pack("<I", val) for val in mtk.preloader.read32(0x200000 + idx, length + 4 // 4)])
-                preloader = data[:length]
-                idx = data.find(b"MTK_BLOADER_INFO")
-                if idx != -1:
-                    filename = data[idx + 0x1B:idx + 0x1B + 0x30].rstrip(b"\x00").decode('utf-8')
-                    if preloader is not None:
-                        pfilename = os.path.join(mtk.pathconfig.get_loader_path(), "Preloader", filename)
-                        if not os.path.exists(pfilename):
-                            with open(pfilename, "wb") as wf:
-                                wf.write(preloader)
-                                print(f"Successfully extracted preloader for this device to: {pfilename}")
-                return preloader
-        except Exception as err:
-            self.error(str(err))
-            return None
-
     def close(self):
         sys.exit(0)
+
+    def cmd_stage(self, mtk, filename, stage2addr, stage2file, verifystage2):
+        if self.args.filename is None:
+            pc = pathconfig()
+            stage1file = os.path.join(pc.get_payloads_path(), "generic_stage1_payload.bin")
+        else:
+            stage1file = filename
+        if not os.path.exists(stage1file):
+            self.error(f"Error: {stage1file} doesn't exist !")
+            return False
+        if stage2file is not None:
+            if not os.path.exists(stage2file):
+                self.error(f"Error: {stage2file} doesn't exist !")
+                return False
+        else:
+            stage2file = os.path.join(mtk.pathconfig.get_payloads_path(), "stage2.bin")
+        if mtk.preloader.init():
+            mtk = mtk.crasher()
+            if mtk.port.cdc.pid == 0x0003:
+                plt = PLTools(mtk, self.__logger.level)
+                self.info("Uploading stage 1")
+                if plt.runpayload(filename=stage1file):
+                    self.info("Successfully uploaded stage 1, sending stage 2")
+                    with open(stage2file, "rb") as rr:
+                        stage2data = rr.read()
+                        while len(stage2data) % 0x200:
+                            stage2data += b"\x00"
+                    if stage2addr is None:
+                        stage2addr = mtk.config.chipconfig.da_payload_addr
+                        if stage2addr is None:
+                            stage2addr = 0x201000
+
+                    # ###### Send stage2
+                    # magic
+                    mtk.port.usbwrite(pack(">I", 0xf00dd00d))
+                    # cmd write
+                    mtk.port.usbwrite(pack(">I", 0x4000))
+                    # address
+                    mtk.port.usbwrite(pack(">I", stage2addr))
+                    # length
+                    mtk.port.usbwrite(pack(">I", len(stage2data)))
+                    bytestowrite = len(stage2data)
+                    pos = 0
+                    while bytestowrite > 0:
+                        size = min(bytestowrite, 1)
+                        if mtk.port.usbwrite(stage2data[pos:pos + size]):
+                            bytestowrite -= size
+                            pos += size
+                    # mtk.port.usbwrite(b"")
+                    time.sleep(0.1)
+                    flag = mtk.port.rdword()
+                    if flag != 0xD0D0D0D0:
+                        self.error(f"Error on sending stage2, size {hex(len(stage2data))}.")
+                    self.info(f"Done sending stage2, size {hex(len(stage2data))}.")
+
+                    if verifystage2:
+                        self.info("Verifying stage2 data")
+                        rdata = b""
+                        mtk.port.usbwrite(pack(">I", 0xf00dd00d))
+                        mtk.port.usbwrite(pack(">I", 0x4002))
+                        mtk.port.usbwrite(pack(">I", stage2addr))
+                        mtk.port.usbwrite(pack(">I", len(stage2data)))
+                        bytestoread = len(stage2data)
+                        while bytestoread > 0:
+                            size = min(bytestoread, 1)
+                            rdata += mtk.port.usbread(size)
+                            bytestoread -= size
+                        flag = mtk.port.rdword()
+                        if flag != 0xD0D0D0D0:
+                            self.error("Error on reading stage2 data")
+                        if rdata != stage2data:
+                            self.error("Stage2 data doesn't match")
+                            with open("rdata", "wb") as wf:
+                                wf.write(rdata)
+                        else:
+                            self.info("Stage2 verification passed.")
+
+                    # ####### Kick Watchdog
+                    # magic
+                    # mtk.port.usbwrite(pack("<I", 0xf00dd00d))
+                    # cmd kick_watchdog
+                    # mtk.port.usbwrite(pack("<I", 0x3001))
+
+                    # ######### Jump stage1
+                    # magic
+                    mtk.port.usbwrite(pack(">I", 0xf00dd00d))
+                    # cmd jump
+                    mtk.port.usbwrite(pack(">I", 0x4001))
+                    # address
+                    mtk.port.usbwrite(pack(">I", stage2addr))
+                    self.info("Done jumping stage2 at %08X" % stage2addr)
+                    ack = unpack(">I", mtk.port.usbread(4))[0]
+                    if ack == 0xB1B2B3B4:
+                        self.info("Successfully loaded stage2")
+
+    def cmd_peek(self, mtk, addr, length, preloader, filename):
+        if preloader is not None:
+            if os.path.exists(preloader):
+                daaddr, dadata = mtk.parse_preloader(preloader)
+        if mtk.preloader.init():
+            if mtk.config.target_config["daa"]:
+                mtk = mtk.bypass_security()
+        if mtk is not None:
+            if preloader is not None:
+                if os.path.exists(preloader):
+                    daaddr, dadata = mtk.parse_preloader(preloader)
+                    if mtk.preloader.send_da(daaddr, len(dadata), 0x100, dadata):
+                        self.info(f"Sent preloader to {hex(daaddr)}, length {hex(len(dadata))}")
+                        if mtk.preloader.jump_da(daaddr):
+                            self.info(f"Jumped to pl {hex(daaddr)}.")
+                            time.sleep(2)
+                            mtk = Mtk(loglevel=self.__logger.level)
+                            res = mtk.preloader.init()
+                            if not res:
+                                self.error("Error on loading preloader")
+                                return
+                            else:
+                                self.info("Successfully connected to pl.")
+                                # mtk.preloader.get_hw_sw_ver()
+                                # status=mtk.preloader.jump_to_partition(b"") # Do not remove !
+                else:
+                    self.error("Error on jumping to pl")
+                    return
+            self.info("Starting to read ...")
+            dwords = length // 4
+            if length % 4:
+                dwords += 1
+            if filename != "":
+                wf = open(filename, "wb")
+            sdata = b""
+            print_progress(0, 100, prefix='Progress:',
+                           suffix='Starting, addr 0x%08X' % addr, bar_length=50)
+            length = dwords * 4
+            old = 0
+            pos = 0
+            while dwords:
+                size = min(512 // 4, dwords)
+                data = b"".join(int.to_bytes(val, 4, 'little') for val in mtk.preloader.read32(addr + pos, size))
+                sdata += data
+                if filename != "":
+                    wf.write(data)
+                pos += len(data)
+                prog = pos / length * 100
+                if round(prog, 1) > old:
+                    print_progress(prog, 100, prefix='Progress:',
+                                   suffix='Complete, addr 0x%08X' % (addr + pos), bar_length=50)
+                    old = round(prog, 1)
+                dwords = (length - pos) // 4
+            print_progress(100, 100, prefix='Progress:',
+                           suffix='Finished', bar_length=50)
+            if filename == "":
+                print(hexlify(sdata).decode('utf-8'))
+            else:
+                wf.close()
+                self.info(f"Data from {hex(addr)} with size of {hex(length)} was written to " + filename)
 
     def run(self):
         try:
@@ -365,7 +523,6 @@ class Main(metaclass=LogBase):
             mtk.port.close()
             self.close()
         elif cmd == "plstage":
-            dadata = None
             if mtk.config.chipconfig.pl_payload_addr is not None:
                 plstageaddr = mtk.config.chipconfig.pl_payload_addr
             else:
@@ -404,7 +561,7 @@ class Main(metaclass=LogBase):
                     if mtk.preloader.jump_da(daaddr):
                         self.info(f"PL Jumped to daaddr {hex(daaddr)}.")
                         time.sleep(2)
-                        sys.exit(1)
+                        """
                         mtk = Mtk(config=mtk.config, loglevel=self.__logger.level)
                         res = mtk.preloader.init()
                         if not res:
@@ -428,6 +585,8 @@ class Main(metaclass=LogBase):
                             else:
                                 self.info("Jumping to partition ....")
                             return
+                        """
+                        sys.exit(0)
             if mtk.preloader.send_da(plstageaddr, len(pldata), 0x100, pldata):
                 self.info(f"Sent stage2 to {hex(plstageaddr)}, length {hex(len(pldata))}")
                 mtk.preloader.get_hw_sw_ver()
@@ -447,194 +606,24 @@ class Main(metaclass=LogBase):
         elif cmd == "peek":
             addr = getint(self.args.address)
             length = getint(self.args.length)
-            if self.args.preloader is not None:
-                preloader = self.args.preloader
-                if os.path.exists(preloader):
-                    daaddr, dadata = mtk.parse_preloader(preloader)
-            if self.args.filename is None:
-                filename = ""
-            else:
-                filename = self.args.filename
-            if mtk.preloader.init():
-                if mtk.config.target_config["daa"]:
-                    mtk = mtk.bypass_security()
-            if mtk is not None:
-                if self.args.preloader is not None:
-                    if mtk.preloader.send_da(daaddr, len(dadata), 0x100, dadata):
-                        self.info(f"Sent preloader to {hex(daaddr)}, length {hex(len(dadata))}")
-                        if mtk.preloader.jump_da(daaddr):
-                            self.info(f"Jumped to pl {hex(daaddr)}.")
-                            time.sleep(2)
-                            mtk = Mtk(loglevel=self.__logger.level)
-                            res = mtk.preloader.init()
-                            if not res:
-                                self.error("Error on loading preloader")
-                                return
-                            else:
-                                self.info("Successfully connected to pl.")
-                                # mtk.preloader.get_hw_sw_ver()
-                                # status=mtk.preloader.jump_to_partition(b"") # Do not remove !
-                    else:
-                        self.error("Error on jumping to pl")
-                        return
-                self.info("Starting to read ...")
-                dwords = length // 4
-                if length % 4:
-                    dwords += 1
-                if filename != "":
-                    wf = open(filename, "wb")
-                sdata = b""
-                print_progress(0, 100, prefix='Progress:',
-                               suffix='Starting, addr 0x%08X' % addr, bar_length=50)
-                length = dwords * 4
-                old = 0
-                pos = 0
-                while dwords:
-                    size = min(512 // 4, dwords)
-                    data = b"".join(int.to_bytes(val, 4, 'little') for val in mtk.preloader.read32(addr + pos, size))
-                    sdata += data
-                    if filename != "":
-                        wf.write(data)
-                    pos += len(data)
-                    prog = pos / length * 100
-                    if round(prog, 1) > old:
-                        print_progress(prog, 100, prefix='Progress:',
-                                       suffix='Complete, addr 0x%08X' % (addr + pos), bar_length=50)
-                        old = round(prog, 1)
-                    dwords = (length - pos) // 4
-                print_progress(100, 100, prefix='Progress:',
-                               suffix='Finished', bar_length=50)
-                if filename == "":
-                    print(hexlify(sdata).decode('utf-8'))
-                else:
-                    wf.close()
-                    self.info(f"Data from {hex(addr)} with size of {hex(length)} was written to " + filename)
+            preloader = self.args.preloader
+            filename = self.args.filename
+            self.cmd_peek(mtk=mtk, addr=addr, length=length, preloader=preloader, filename=filename)
             self.close()
         elif cmd == "stage":
-            if self.args.filename is None:
-                pc = pathconfig()
-                stage1file = os.path.join(pc.get_payloads_path(), "generic_stage1_payload.bin")
-            else:
-                stage1file = self.args.filename
-            if not os.path.exists(stage1file):
-                self.error(f"Error: {stage1file} doesn't exist !")
-                return False
-            if self.args.stage2addr is None:
-                stage2addr = None
-            else:
+            filename = self.args.filename
+            stage2addr = self.args.stage2addr
+            if self.args.stage2addr is not None:
                 stage2addr = getint(self.args.stage2addr)
-            if self.args.stage2 is None:
-                stage2file = os.path.join(mtk.pathconfig.get_payloads_path(), "stage2.bin")
-            else:
-                stage2file = self.args.stage2
-                if not os.path.exists(stage2file):
-                    self.error(f"Error: {stage2file} doesn't exist !")
-                    return False
+            stage2file = self.args.stage2
             verifystage2 = self.args.verifystage2
-            if mtk.preloader.init():
-                mtk = mtk.crasher()
-                if mtk.port.cdc.pid == 0x0003:
-                    plt = PLTools(mtk, self.__logger.level)
-                    self.info("Uploading stage 1")
-                    if plt.runpayload(filename=stage1file):
-                        self.info("Successfully uploaded stage 1, sending stage 2")
-                        with open(stage2file, "rb") as rr:
-                            stage2data = rr.read()
-                            while len(stage2data) % 0x200:
-                                stage2data += b"\x00"
-                        if stage2addr is None:
-                            stage2addr = mtk.config.chipconfig.da_payload_addr
-                            if stage2addr is None:
-                                stage2addr = 0x201000
 
-                        # ###### Send stage2
-                        # magic
-                        mtk.port.usbwrite(pack(">I", 0xf00dd00d))
-                        # cmd write
-                        mtk.port.usbwrite(pack(">I", 0x4000))
-                        # address
-                        mtk.port.usbwrite(pack(">I", stage2addr))
-                        # length
-                        mtk.port.usbwrite(pack(">I", len(stage2data)))
-                        bytestowrite = len(stage2data)
-                        pos = 0
-                        while bytestowrite > 0:
-                            size = min(bytestowrite, 1)
-                            if mtk.port.usbwrite(stage2data[pos:pos + size]):
-                                bytestowrite -= size
-                                pos += size
-                        # mtk.port.usbwrite(b"")
-                        time.sleep(0.1)
-                        flag = mtk.port.rdword()
-                        if flag != 0xD0D0D0D0:
-                            self.error(f"Error on sending stage2, size {hex(len(stage2data))}.")
-                        self.info(f"Done sending stage2, size {hex(len(stage2data))}.")
-
-                        if verifystage2:
-                            self.info("Verifying stage2 data")
-                            rdata = b""
-                            mtk.port.usbwrite(pack(">I", 0xf00dd00d))
-                            mtk.port.usbwrite(pack(">I", 0x4002))
-                            mtk.port.usbwrite(pack(">I", stage2addr))
-                            mtk.port.usbwrite(pack(">I", len(stage2data)))
-                            bytestoread = len(stage2data)
-                            while bytestoread > 0:
-                                size = min(bytestoread, 1)
-                                rdata += mtk.port.usbread(size)
-                                bytestoread -= size
-                            flag = mtk.port.rdword()
-                            if flag != 0xD0D0D0D0:
-                                self.error("Error on reading stage2 data")
-                            if rdata != stage2data:
-                                self.error("Stage2 data doesn't match")
-                                with open("rdata", "wb") as wf:
-                                    wf.write(rdata)
-                            else:
-                                self.info("Stage2 verification passed.")
-
-                        # ####### Kick Watchdog
-                        # magic
-                        # mtk.port.usbwrite(pack("<I", 0xf00dd00d))
-                        # cmd kick_watchdog
-                        # mtk.port.usbwrite(pack("<I", 0x3001))
-
-                        # ######### Jump stage1
-                        # magic
-                        mtk.port.usbwrite(pack(">I", 0xf00dd00d))
-                        # cmd jump
-                        mtk.port.usbwrite(pack(">I", 0x4001))
-                        # address
-                        mtk.port.usbwrite(pack(">I", stage2addr))
-                        self.info("Done jumping stage2 at %08X" % stage2addr)
-                        ack = unpack(">I", mtk.port.usbread(4))[0]
-                        if ack == 0xB1B2B3B4:
-                            self.info("Successfully loaded stage2")
-                self.close()
-            else:
-                mtk.port.close()
-                return False
+            self.cmd_stage(mtk=mtk, filename=filename, stage2addr=stage2addr, stage2file=stage2file,
+                           verifystage2=verifystage2)
+            self.close()
         elif cmd == "payload":
-            if mtk.preloader.init():
-                mtk = mtk.crasher()
-                plt = PLTools(mtk, self.__logger.level)
-                payloadfile = self.args.payload
-                if payloadfile is None:
-                    if mtk.config.chipconfig.loader is None:
-                        payloadfile = os.path.join(mtk.pathconfig.get_payloads_path(), "generic_patcher_payload.bin")
-                    else:
-                        payloadfile = os.path.join(mtk.pathconfig.get_payloads_path(), mtk.config.chipconfig.loader)
-                ptype = ""
-                if self.args.ptype is not None:
-                    ptype = self.args.ptype
-                plt.runpayload(filename=payloadfile)
-                if args.metamode:
-                    mtk.port.run_handshake()
-                    mtk.preloader.jump_bl()
-                    mtk.port.close(reset=True)
-                    meta=META(mtk,loglevel)
-                    if meta.init(metamode=args.metamode, display=True):
-                        self.info(f"Successfully set meta mode : {args.metamode}")
-            mtk.port.close(reset=True)
+            payloadfile = self.args.payload
+            self.cmd_payload(mtk=mtk, payloadfile=payloadfile)
             self.close()
         elif cmd == "gettargetconfig":
             if mtk.preloader.init():
@@ -643,581 +632,59 @@ class Main(metaclass=LogBase):
             mtk.port.close()
             self.close()
         elif cmd == "logs":
-            if mtk.preloader.init():
-                self.info("Getting target logs...")
-                try:
-                    logs=mtk.preloader.get_brom_log_new()
-                except:
-                    logs = mtk.preloader.get_brom_log()
-                if logs!=b"":
-                    if args.filename is None:
-                        filename="log.txt"
-                    else:
-                        filename=args.filename
-                    with open(filename,"wb") as wf:
-                        wf.write(logs)
-                        self.info(f"Successfully wrote logs to \"{filename}\"")
-                else:
-                    self.info("No logs found.")
+            if args.filename is None:
+                filename = "log.txt"
+            else:
+                filename = args.filename
+            self.cmd_log(mtk=mtk, filename=filename)
             mtk.port.close()
             self.close()
         elif cmd == "meta":
-            meta=META(mtk,loglevel)
+            meta = META(mtk, loglevel)
             if args.metamode is None:
-                self.error("You need to give a metamode as argument ex: "+metamodes)
+                self.error("You need to give a metamode as argument ex: " + metamodes)
             else:
-                if meta.init(metamode=args.metamode,display=True):
+                if meta.init(metamode=args.metamode, display=True):
                     self.info(f"Successfully set meta mode : {args.metamode}")
             mtk.port.close()
             self.close()
         else:
             # DA / FLash commands start here
+            da_handler = DA_handler(mtk, loglevel)
+            da_handler.handle_da_cmds(mtk, cmd, args)
 
-            mtk.port.cdc.connected = mtk.port.cdc.connect()
-            if mtk.port.cdc.connected and os.path.exists(".state"):
-                info = mtk.daloader.reinit()
+    def cmd_log(self, mtk, filename):
+        if mtk.preloader.init():
+            self.info("Getting target logs...")
+            try:
+                logs = mtk.preloader.get_brom_log_new()
+            except:
+                logs = mtk.preloader.get_brom_log()
+            if logs != b"":
+                with open(filename, "wb") as wf:
+                    wf.write(logs)
+                    self.info(f"Successfully wrote logs to \"{filename}\"")
             else:
-                try:
-                    preloader = self.args.preloader
-                except:
-                    preloader = None
-                if mtk.preloader.init():
-                    if mtk.config.target_config["daa"]:
-                        mtk = mtk.bypass_security()
-                        self.info("Device is protected.")
-                        if mtk is not None:
-                            if mtk.config.is_brom:
-                                self.info("Device is in BROM mode. Trying to dump preloader.")
-                                if preloader is None:
-                                    preloader = self.dump_preloader_ram(mtk)
-                    else:
-                        self.info("Device is unprotected.")
-                        if mtk.config.is_brom:
-                            mtk = mtk.bypass_security()  # Needed for dumping preloader
-                            if preloader is None:
-                                self.warning(
-                                    "Device is in BROM mode. No preloader given, trying to dump preloader from ram.")
-                                preloader = self.dump_preloader_ram(mtk)
-                                if preloader is None:
-                                    self.error("Failed to dump preloader from ram.")
-                    if not mtk.daloader.upload_da(preloader=preloader):
-                        self.error("Error uploading da")
-                        return False
-                    else:
-                        mtk.daloader.writestate()
-                else:
-                    return False
+                self.info("No logs found.")
 
-            if cmd == "gpt":
-                directory = self.args.directory
-                if directory is None:
-                    directory = ""
-
-                sfilename = os.path.join(directory, f"gpt_main.bin")
-                data, guid_gpt = mtk.daloader.get_gpt(self.args)
-                if guid_gpt is None:
-                    self.error("Error reading gpt")
-                    self.close()
+    def cmd_payload(self, mtk, payloadfile):
+        if mtk.preloader.init():
+            mtk = mtk.crasher()
+            plt = PLTools(mtk, self.__logger.level)
+            if payloadfile is None:
+                if mtk.config.chipconfig.loader is None:
+                    payloadfile = os.path.join(mtk.pathconfig.get_payloads_path(), "generic_patcher_payload.bin")
                 else:
-                    with open(sfilename, "wb") as wf:
-                        wf.write(data)
-
-                    print(f"Dumped GPT from to {sfilename}")
-                    sfilename = os.path.join(directory, f"gpt_backup.bin")
-                    with open(sfilename, "wb") as wf:
-                        wf.write(data[mtk.daloader.daconfig.pagesize:])
-                    print(f"Dumped Backup GPT to {sfilename}")
-                self.close()
-            elif cmd == "printgpt":
-                data, guid_gpt = mtk.daloader.get_gpt(self.args)
-                if guid_gpt is None:
-                    self.error("Error reading gpt")
-                else:
-                    guid_gpt.print()
-                self.close()
-            elif cmd == "r":
-                partitionname = self.args.partitionname
-                parttype = self.args.parttype
-                filename = self.args.filename
-                filenames = filename.split(",")
-                partitions = partitionname.split(",")
-                if len(partitions) != len(filenames):
-                    self.error("You need to gives as many filenames as given partitions.")
-                    self.close()
-                if parttype == "user" or parttype is None:
-                    i = 0
-                    countDump = 0
-                    self.info("Requesting available partitions ....")
-                    gpttable = mtk.daloader.get_partition_data(self.args, parttype=parttype)
-                    for partition in partitions:
-                        partfilename = filenames[i]
-                        i += 1
-                        if partition == "gpt":
-                            mtk.daloader.readflash(addr=0,
-                                                   length=0x16000,
-                                                   filename=partfilename, parttype=parttype)
-                            continue
-                        else:
-                            rpartition = None
-                            for gptentry in gpttable:
-                                if gptentry.name.lower() == partition.lower():
-                                    rpartition = gptentry
-                                    break
-                            if rpartition is not None:
-                                self.info(f"Dumping partition \"{rpartition.name}\"")
-                                if mtk.daloader.readflash(addr=rpartition.sector * mtk.daloader.daconfig.pagesize,
-                                                          length=rpartition.sectors * mtk.daloader.daconfig.pagesize,
-                                                          filename=partfilename, parttype=parttype):
-                                    self.info(f"Dumped sector {str(rpartition.sector)} with sector count " +
-                                              f"{str(rpartition.sectors)} as {partfilename}.")
-                                    countDump += 1
-                                else:
-                                    self.info(f"Failed to dump sector {str(rpartition.sector)} with sector count " +
-                                              f"{str(rpartition.sectors)} as {partfilename}.")
-                                    countDump += 1
-                            else:
-                                self.error(f"Error: Couldn't detect partition: {partition}\nAvailable partitions:")
-                                for rpartition in gpttable:
-                                    self.info(rpartition.name)
-                    if countDump > 1 and countDump == len(filenames):
-                        self.info(f"All partitions were dumped")
-                    elif countDump > 1 and countDump != len(filenames):
-                        self.info(f"Failed to dump some partitions")
-                else:
-                    i = 0
-                    for partfilename in filenames:
-                        pos = 0
-                        if mtk.daloader.readflash(addr=pos, length=0xFFFFFFFF, filename=partfilename,
-                                                  parttype=parttype):
-                            print(f"Dumped partition {str(partitionname)} as {partfilename}.")
-                        else:
-                            print(f"Failed to dump partition {str(partitionname)} as {partfilename}.")
-                        i += 1
-                self.close()
-            elif cmd == "rl":
-                directory = self.args.directory
-                parttype = self.args.parttype
-                if self.args.skip:
-                    skip = self.args.skip.split(",")
-                else:
-                    skip = []
-                if not os.path.exists(directory):
-                    os.mkdir(directory)
-                data, guid_gpt = mtk.daloader.get_gpt(self.args, parttype=parttype)
-                if guid_gpt is None:
-                    self.error("Error reading gpt")
-                else:
-                    storedir = directory
-                    if not os.path.exists(storedir):
-                        os.mkdir(storedir)
-                    sfilename = os.path.join(storedir, f"gpt_main.bin")
-                    with open(sfilename, "wb") as wf:
-                        wf.write(data)
-
-                    sfilename = os.path.join(storedir, f"gpt_backup.bin")
-                    with open(sfilename, "wb") as wf:
-                        wf.write(data[mtk.daloader.daconfig.pagesize * 2:])
-
-                    countGPT = 0
-                    for partition in guid_gpt.partentries:
-                        partitionname = partition.name
-                        if partition.name in skip:
-                            continue
-                        filename = os.path.join(storedir, partitionname + ".bin")
-                        self.info(
-                            f"Dumping partition {str(partition.name)} with sector count {str(partition.sectors)} " +
-                            f"as {filename}.")
-
-                        if mtk.daloader.readflash(addr=partition.sector * mtk.daloader.daconfig.pagesize,
-                                                  length=partition.sectors * mtk.daloader.daconfig.pagesize,
-                                                  filename=filename,
-                                                  parttype=parttype):
-
-                            countGPT += 1
-                            self.info(f"Dumped partition {str(partition.name)} as {str(filename)}.")
-                        else:
-                            countGPT -= 1
-                            self.error(f"Failed to dump partition {str(partition.name)} as {str(filename)}.")
-
-                    partitionsForRead = len(guid_gpt.partentries) - len(skip)
-                    if countGPT == partitionsForRead:
-                        self.info(f"All Dumped partitions success.")
-                    else:
-                        self.error(f"Failed to dump all partitions")
-                self.close()
-            elif cmd == "rf":
-                filename = self.args.filename
-                parttype = self.args.parttype
-                if mtk.daloader.daconfig.flashtype == "ufs":
-                    if parttype == "lu0":
-                        length = mtk.daloader.daconfig.flashsize[0]
-                    elif parttype == "lu1":
-                        length = mtk.daloader.daconfig.flashsize[1]
-                    elif parttype == "lu2":
-                        length = mtk.daloader.daconfig.flashsize[2]
-                    else:
-                        length = mtk.daloader.daconfig.flashsize[0]
-                else:
-                    length = mtk.daloader.daconfig.flashsize
-                print(f"Dumping sector 0 with flash size {hex(length)} as {filename}.")
-                if mtk.daloader.readflash(addr=0, length=length, filename=filename, parttype=parttype):
-                    print(f"Dumped sector 0 with flash size {hex(length)} as {filename}.")
-                else:
-                    print(f"Failed to dump sector 0 with flash size {hex(length)} as {filename}.")
-                self.close()
-            elif cmd == "rs":
-                start = getint(self.args.startsector)
-                sectors = getint(self.args.sectors)
-                filename = self.args.filename
-                parttype = self.args.parttype
-                if mtk.daloader.readflash(addr=start * mtk.daloader.daconfig.pagesize,
-                                          length=sectors * mtk.daloader.daconfig.pagesize,
-                                          filename=filename, parttype=parttype):
-                    print(f"Dumped sector {str(start)} with sector count {str(sectors)} as {filename}.")
-                else:
-                    print(f"Failed to dump sector {str(start)} with sector count {str(sectors)} as {filename}.")
-                self.close()
-            elif cmd == "ro":
-                start = getint(self.args.offset)
-                length = getint(self.args.length)
-                filename = self.args.filename
-                parttype = self.args.parttype
-                if mtk.daloader.readflash(addr=start,
-                                          length=length,
-                                          filename=filename, parttype=parttype):
-                    print(f"Dumped offset {hex(start)} with length {hex(length)} as {filename}.")
-                else:
-                    print(f"Failed to dump offset {hex(start)} with length {hex(length)} as {filename}.")
-                self.close()
-            elif cmd == "footer":
-                filename = self.args.filename
-                data, guid_gpt = mtk.daloader.get_gpt(self.args)
-                if guid_gpt is None:
-                    self.error("Error reading gpt")
-                    self.close()
-                else:
-                    pnames = ["userdata2", "metadata", "userdata", "reserved1", "reserved2", "reserved3"]
-                    for partition in guid_gpt.partentries:
-                        if partition.name in pnames:
-                            print(f"Detected partition: {partition.name}")
-                            if partition.name in ["userdata2", "userdata"]:
-                                data = mtk.daloader.readflash(
-                                    addr=(partition.sector + partition.sectors) *
-                                         mtk.daloader.daconfig.pagesize - 0x4000,
-                                    length=0x4000, filename="", parttype="user", display=False)
-                            else:
-                                data = mtk.daloader.readflash(addr=partition.sector * mtk.daloader.daconfig.pagesize,
-                                                              length=0x4000, filename="", parttype="user",
-                                                              display=False)
-                            if data == b"":
-                                continue
-                            val = unpack("<I", data[:4])[0]
-                            if (val & 0xFFFFFFF0) == 0xD0B5B1C0:
-                                with open(filename, "wb") as wf:
-                                    wf.write(data)
-                                    print(f"Dumped footer from {partition.name} as {filename}.")
-                                    self.close()
-                                    return
-                self.error(f"Error: Couldn't detect footer partition.")
-                self.close()
-            elif cmd == "w":
-                partitionname = self.args.partitionname
-                filename = self.args.filename
-                parttype = self.args.parttype
-                filenames = filename.split(",")
-                partitions = partitionname.split(",")
-                if len(partitions) != len(filenames):
-                    self.error("You need to gives as many filenames as given partitions.")
-                    self.close()
-                    exit(0)
-                if parttype == "user" or parttype is None:
-                    i = 0
-                    for partition in partitions:
-                        partfilename = filenames[i]
-                        i += 1
-                        if partition == "gpt":
-                            mtk.daloader.writeflash(addr=0,
-                                                    length=os.stat(partfilename).st_size,
-                                                    filename=partfilename,
-                                                    parttype=parttype)
-                            continue
-                        res = mtk.daloader.detect_partition(self.args, partition, parttype)
-                        if res[0]:
-                            rpartition = res[1]
-                            if mtk.daloader.writeflash(addr=rpartition.sector * mtk.daloader.daconfig.pagesize,
-                                                       length=rpartition.sectors * mtk.daloader.daconfig.pagesize,
-                                                       filename=partfilename,
-                                                       parttype=parttype):
-                                print(
-                                    f"Wrote {partfilename} to sector {str(rpartition.sector)} with " +
-                                    f"sector count {str(rpartition.sectors)}.")
-                            else:
-                                print(
-                                    f"Failed to write {partfilename} to sector {str(rpartition.sector)} with " +
-                                    f"sector count {str(rpartition.sectors)}.")
-                        else:
-                            self.error(f"Error: Couldn't detect partition: {partition}\nAvailable partitions:")
-                            for rpartition in res[1]:
-                                self.info(rpartition.name)
-                else:
-                    pos = 0
-                    for partfilename in filenames:
-                        size = os.stat(partfilename).st_size
-                        if mtk.daloader.writeflash(addr=pos, length=size, filename=partfilename,
-                                                   parttype=parttype):
-                            print(f"Wrote {partfilename} to sector {str(pos // 0x200)} with " +
-                                  f"sector count {str(size)}.")
-                        else:
-                            print(f"Failed to write {partfilename} to sector {str(pos // 0x200)} with " +
-                                  f"sector count {str(size)}.")
-                        psize = size // 0x200 * 0x200
-                        if size % 0x200 != 0:
-                            psize += 0x200
-                        pos += psize
-                self.close()
-            elif cmd == "wl":
-                directory = self.args.directory
-                parttype = self.args.parttype
-                filenames = []
-                for dirName, subdirList, fileList in os.walk(directory):
-                    for fname in fileList:
-                        filenames.append(os.path.join(dirName, fname))
-
-                if parttype == "user" or parttype is None:
-                    i = 0
-                    for partfilename in filenames:
-                        partition = os.path.basename(partfilename)
-                        partition = os.path.splitext(partition)[0]
-                        i += 1
-                        if partition == "gpt":
-                            self.info(f"Writing partition {partition}")
-                            if mtk.daloader.writeflash(addr=0,
-                                                       length=os.stat(partfilename).st_size,
-                                                       filename=partfilename,
-                                                       parttype=parttype):
-                                print(f"Wrote {partition} to sector {str(0)}")
-                            else:
-                                print(f"Failed to write {partition} to sector {str(0)}")
-                            continue
-                        res = mtk.daloader.detect_partition(self.args, partition, parttype)
-                        if res[0]:
-                            rpartition = res[1]
-                            if mtk.daloader.writeflash(addr=rpartition.sector * mtk.daloader.daconfig.pagesize,
-                                                       length=rpartition.sectors * mtk.daloader.daconfig.pagesize,
-                                                       filename=partfilename,
-                                                       parttype=parttype):
-                                print(
-                                    f"Wrote {partfilename} to sector {str(rpartition.sector)} with " +
-                                    f"sector count {str(rpartition.sectors)}.")
-                            else:
-                                print(
-                                    f"Failed to write {partfilename} to sector {str(rpartition.sector)} with " +
-                                    f"sector count {str(rpartition.sectors)}.")
-                        else:
-                            self.error(f"Error: Couldn't detect partition: {partition}\n, skipping")
-                else:
-                    pos = 0
-                    for partfilename in filenames:
-                        size = os.stat(partfilename).st_size
-                        partition = os.path.basename(partfilename)
-                        partition = os.path.splitext(partition)[0]
-                        self.info(f"Writing filename {partfilename}")
-                        if mtk.daloader.writeflash(addr=pos, length=size, filename=partfilename,
-                                                   partitionname=partition,
-                                                   parttype=parttype):
-                            print(f"Wrote {partfilename} to sector {str(pos // 0x200)} with " +
-                                  f"sector count {str(size)}.")
-                        else:
-                            print(f"Failed to write {partfilename} to sector {str(pos // 0x200)} with " +
-                                  f"sector count {str(size)}.")
-                        psize = size // 0x200 * 0x200
-                        if size % 0x200 != 0:
-                            psize += 0x200
-                        pos += psize
-                self.close()
-            elif cmd == "wo":
-                start = getint(self.args.offset)
-                length = getint(self.args.length)
-                filename = self.args.filename
-                parttype = self.args.parttype
-                if filename is None:
-                    self.error("No filename given to write to flash")
-                    self.close()
-                    return
-                if not os.path.exists(filename):
-                    self.error(f"Filename {filename} to write doesn't exist")
-                    self.close()
-                    return
-                self.info(f"Writing offset {hex(start)} with length {hex(length)}")
-                if mtk.daloader.writeflash(addr=start,
-                                           length=length,
-                                           filename=filename,
-                                           parttype=parttype):
-                    print(f"Wrote {filename} to offset {hex(start)} with " + \
-                          f"length {hex(length)}.")
-                else:
-                    print(f"Failed to write {filename} to offset {hex(start)} with " + \
-                          f"length {hex(length)}.")
-                self.close()
-            elif cmd == "e":
-                partitionname = self.args.partitionname
-                parttype = self.args.parttype
-                partitions = partitionname.split(",")
-                if parttype == "user" or parttype is None:
-                    countFP = 0
-                    i = 0
-                    for partition in partitions:
-                        i += 1
-                        res = mtk.daloader.detect_partition(self.args, partition, parttype)
-                        if res[0]:
-                            rpartition = res[1]
-                            if mtk.daloader.formatflash(addr=rpartition.sector * mtk.daloader.daconfig.pagesize,
-                                                        length=rpartition.sectors * mtk.daloader.daconfig.pagesize,
-                                                        partitionname=partition, parttype=parttype):
-                                print(
-                                    f"Formatted sector {str(rpartition.sector)} with " +
-                                    f"sector count {str(rpartition.sectors)}.")
-                                countFP += 1
-                            else:
-                                print(
-                                    f"Failed to format sector {str(rpartition.sector)} with " +
-                                    f"sector count {str(rpartition.sectors)}.")
-                                countFP -= 1
-                        else:
-                            self.error(f"Error: Couldn't detect partition: {partition}\nAvailable partitions:")
-                            for rpartition in res[1]:
-                                self.info(rpartition.name)
-                if countFP == len(partitions) and countFP > 1:
-                    print(f"All partitions formatted.")
-                elif countFP != len(partitions) and countFP > 1:
-                    print(f"Failed to format all partitions.")
-                self.close()
-            elif cmd == "es":
-                partitionname = self.args.partitionname
-                parttype = self.args.parttype
-                sectors = getint(self.args.sectors)
-                if self.args.sectors is None:
-                    self.error("Sector count is missing. Usage: es [partname] [sector count]")
-                    self.close()
-                partitions = partitionname.split(",")
-                if parttype == "user" or parttype is None:
-                    i = 0
-                    for partition in partitions:
-                        i += 1
-                        res = mtk.daloader.detect_partition(self.args, partition, parttype)
-                        if res[0]:
-                            rpartition = res[1]
-                            rsectors = min(sectors * mtk.daloader.daconfig.pagesize,
-                                           rpartition.sectors * mtk.daloader.daconfig.pagesize)
-                            if sectors > rsectors:
-                                self.error(f"Partition {partition} only has {rsectors}, you were using {sectors}. " +
-                                           f"Aborting")
-                                continue
-                            wipedata = b"\x00" * 0x200000
-                            error = False
-                            sector = rpartition.sector
-                            while sectors:
-                                sectorsize = sectors * mtk.daloader.daconfig.pagesize
-                                wsize = min(sectorsize, 0x200000)
-                                if mtk.daloader.writeflash(addr=sector * mtk.daloader.daconfig.pagesize,
-                                                           length=wsize,
-                                                           filename=None,
-                                                           wdata=wipedata[:wsize],
-                                                           parttype=parttype):
-                                    print(
-                                        f"Failed to format sector {str(sector)} with " +
-                                        f"sector count {str(sectors)}.")
-                                    error = True
-                                    break
-                                sectors -= (wsize // mtk.daloader.daconfig.pagesize)
-                                sector += (wsize // mtk.daloader.daconfig.pagesize)
-                            if not error:
-                                print(
-                                    f"Formatted sector {str(rpartition.sector)} with " +
-                                    f"sector count {str(sectors)}.")
-                        else:
-                            self.error(f"Error: Couldn't detect partition: {partition}\nAvailable partitions:")
-                            for rpartition in res[1]:
-                                self.info(rpartition.name)
-                else:
-                    pos = 0
-                    for partitionname in partitions:
-                        mtk.daloader.formatflash(addr=pos, length=0xF000000, partitionname=partitionname,
-                                                 parttype=parttype,
-                                                 display=True)
-                        print(f"Formatted sector {str(pos // 0x200)}")
-                self.close()
-            elif cmd == "wf":
-                filename = self.args.filename
-                parttype = self.args.parttype
-                filenames = filename.split(",")
-                pos = 0
-                for partfilename in filenames:
-                    size = os.stat(partfilename).st_size // 0x200 * 0x200
-                    if mtk.daloader.writeflash(addr=pos,
-                                               length=size,
-                                               filename=partfilename,
-                                               parttype=parttype):
-                        print(f"Wrote {partfilename} to sector {str(pos // 0x200)} with " +
-                              f"sector count {str(size // 0x200)}.")
-                    else:
-                        print(f"Failed to write {partfilename} to sector {str(pos // 0x200)} with " +
-                              f"sector count {str(size // 0x200)}.")
-                self.close()
-            elif cmd == "reset":
-                if os.path.exists(".state"):
-                    os.remove(".state")
-                mtk.daloader.close()
-                self.close()
-                print("Reset command was sent. Disconnect usb cable to power off.")
-            elif cmd == "da":
-                subcmd = args.subcmd
-                if subcmd is None:
-                    print("Available da cmds are: [peek, poke, generatekeys, seccfg, rpmb, meta]")
-                    return
-                if subcmd == "peek":
-                    addr = getint(self.args.address)
-                    length = getint(self.args.length)
-                    data = mtk.daloader.peek(addr=addr, length=length)
-                    if data != b"":
-                        if self.args.filename is not None:
-                            filename = self.args.filename
-                            open(filename, "wb").write(data)
-                            self.info(f"Successfully wrote data from {hex(addr)}, length {hex(length)} to {filename}")
-                        else:
-                            self.info(
-                                f"Data read from {hex(addr)}, length: {hex(length)}:\n{hexlify(data).decode('utf-8')}\n")
-                elif subcmd == "poke":
-                    addr = getint(self.args.address)
-                    if self.args.filename is not None:
-                        if os.path.exists(self.args.filename):
-                            data = open(self.args.filename, "rb").read()
-                    else:
-                        if "0x" in self.args.data:
-                            data = pack("<I", int(self.args.data, 16))
-                        else:
-                            data = bytes.fromhex(self.args.data)
-                    if mtk.daloader.poke(addr=addr, data=data):
-                        self.info(f"Successfully wrote data to {hex(addr)}, length {hex(len(data))}")
-                elif subcmd == "generatekeys":
-                    mtk.daloader.keys()
-                elif subcmd == "seccfg":
-                    mtk.daloader.seccfg(args.flag)
-                elif subcmd == "rpmb":
-                    rpmb_subcmd = args.rpmb_subcmd
-                    if rpmb_subcmd is None:
-                        print('Available da xflash rpmb cmds are: [r w]')
-                    if rpmb_subcmd == "r":
-                        mtk.daloader.read_rpmb(args.filename)
-                    elif rpmb_subcmd == "w":
-                        mtk.daloader.write_rpmb(args.filename)
-                elif subcmd == "meta":
-                    metamode = args.metamode
-                    if metamode is None:
-                        print("metamode is needed [usb,uart,off]!")
-                    else:
-                        mtk.daloader.setmetamode(metamode)
-                self.close()
+                    payloadfile = os.path.join(mtk.pathconfig.get_payloads_path(), mtk.config.chipconfig.loader)
+            plt.runpayload(filename=payloadfile)
+            if args.metamode:
+                mtk.port.run_handshake()
+                mtk.preloader.jump_bl()
+                mtk.port.close(reset=True)
+                meta = META(mtk, self.__logger.level)
+                if meta.init(metamode=args.metamode, display=True):
+                    self.info(f"Successfully set meta mode : {args.metamode}")
+        mtk.port.close(reset=True)
 
 
 info = "MTK Flash/Exploit Client V1.53 (c) B.Kerler 2018-2021"
@@ -1760,7 +1227,7 @@ if __name__ == '__main__':
     parser_dumppreloader.add_argument('--socid', help='Read Soc ID')
 
     parser_payload.add_argument('--payload', type=str, help='Payload filename (optional)')
-    parser_payload.add_argument('--metamode', type=str, default=None, help='metamode to use '+metamodes)
+    parser_payload.add_argument('--metamode', type=str, default=None, help='metamode to use ' + metamodes)
     parser_payload.add_argument('--loader', type=str, help='Use specific loader, disable autodetection')
     parser_payload.add_argument('--filename', help='Optional payload to load')
     parser_payload.add_argument('--vid', type=str, help='Set usb vendor id used for MTK Preloader')
@@ -1810,7 +1277,7 @@ if __name__ == '__main__':
     parser_meta.add_argument('--vid', type=str, help='Set usb vendor id used for MTK Preloader')
     parser_meta.add_argument('--pid', type=str, help='Set usb product id used for MTK Preloader')
     parser_meta.add_argument('--debugmode', action='store_true', default=False, help='Enable verbose mode')
-    parser_meta.add_argument('metamode', type=str, default=None, help='metamode to use '+metamodes)
+    parser_meta.add_argument('metamode', type=str, default=None, help='metamode to use ' + metamodes)
     parser_gettargetconfig.add_argument('--vid', type=str, help='Set usb vendor id used for MTK Preloader')
     parser_gettargetconfig.add_argument('--pid', type=str, help='Set usb product id used for MTK Preloader')
     parser_gettargetconfig.add_argument('--debugmode', action='store_true', default=False, help='Enable verbose mode')

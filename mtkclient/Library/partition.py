@@ -14,7 +14,7 @@ class Partition(metaclass=LogBase):
         self.readflash = readflash
         self.read_pmt = read_pmt
 
-    def get_gpt(self, gpt_num_part_entries, gpt_part_entry_size, gpt_part_entry_start_lba, parttype="user"):
+    def get_gpt(self, gpt_settings, parttype="user"):
         data = self.readflash(addr=0, length=2 * self.config.pagesize, filename="", parttype=parttype, display=False)
         if data[:9] == b"EMMC_BOOT" and self.read_pmt is not None:
             partdata, partentries = self.read_pmt()
@@ -31,9 +31,9 @@ class Partition(metaclass=LogBase):
         if data == b"":
             return None, None
         guid_gpt = gpt(
-            num_part_entries=gpt_num_part_entries,
-            part_entry_size=gpt_part_entry_size,
-            part_entry_start_lba=gpt_part_entry_start_lba,
+            num_part_entries=gpt_settings.gpt_num_part_entries,
+            part_entry_size=gpt_settings.gpt_part_entry_size,
+            part_entry_start_lba=gpt_settings.gpt_part_entry_start_lba,
         )
         header = guid_gpt.parseheader(data, self.config.pagesize)
         sectors = header.first_usable_lba
