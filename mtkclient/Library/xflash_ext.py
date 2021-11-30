@@ -435,9 +435,26 @@ class xflashext(metaclass=LogBase):
         if meidv is not None:
             meid = bytes.fromhex(meidv)
             self.info("MEID        : " + meidv)
+        else:
+            try:
+                if self.config.chipconfig.meid_addr is not None:
+                    meid = b"".join([pack("<I",val) for val in self.readmem(self.config.chipconfig.meid_addr,4)])
+                    writesetting("meid", hexlify(meid).decode('utf-8'))
+                    self.info("MEID        : " + hexlify(meid).decode('utf-8'))
+            except Exception as err:
+                pass
         if socidv is not None:
             socid = bytes.fromhex(socidv)
             self.info("SOCID        : " + socidv)
+        else:
+            try:
+                if self.config.chipconfig.socid_addr is not None:
+                    socid = b"".join([pack("<I",val) for val in self.readmem(self.config.chipconfig.socid_addr,8)])
+                    writesetting("socid", hexlify(socid).decode('utf-8'))
+                    self.info("SOCID        : " + hexlify(socid).decode('utf-8'))
+            except Exception as err:
+                pass
+
         if self.config.chipconfig.dxcc_base is not None:
             self.info("Generating dxcc rpmbkey...")
             rpmbkey = hwc.aes_hwcrypt(btype="dxcc", mode="rpmb")
