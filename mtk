@@ -1170,10 +1170,10 @@ class Main(metaclass=LogBase):
                 mtk.daloader.close()
                 self.close()
                 print("Reset command was sent. Disconnect usb cable to power off.")
-            elif cmd == "xflash":
+            elif cmd == "da":
                 subcmd = args.subcmd
                 if subcmd is None:
-                    print("Available xflash cmds are: [peek, poke, generatekeys, seccfg, rpmb, meta]")
+                    print("Available da cmds are: [peek, poke, generatekeys, seccfg, rpmb, meta]")
                     return
                 if subcmd == "peek":
                     addr = getint(self.args.address)
@@ -1206,7 +1206,7 @@ class Main(metaclass=LogBase):
                 elif subcmd == "rpmb":
                     rpmb_subcmd = args.rpmb_subcmd
                     if rpmb_subcmd is None:
-                        print('Available xflash rpmb cmds are: [r w]')
+                        print('Available da xflash rpmb cmds are: [r w]')
                     if rpmb_subcmd == "r":
                         mtk.daloader.read_rpmb(args.filename)
                     elif rpmb_subcmd == "w":
@@ -1249,7 +1249,7 @@ cmds = {
     "peek": "Read memory in patched preloader mode",
     "stage": "Run stage2 payload via boot rom mode (kamakiri)",
     "plstage": "Run stage2 payload via preloader mode (send_da)",
-    "xflash": "Run da xflash special commands"
+    "da": "Run da xflash/legacy special commands"
 }
 
 
@@ -1302,8 +1302,8 @@ if __name__ == '__main__':
     parser_logs = subparsers.add_parser("logs", help="Read logs")
     parser_meta = subparsers.add_parser("meta", help="Enter meta mode")
 
-    parser_xflash = subparsers.add_parser("xflash", help="Run xflash special commands")
-    da_cmds = parser_xflash.add_subparsers(dest='subcmd', help='Commands: peek poke keys unlock')
+    parser_da = subparsers.add_parser("da", help="Run da special commands")
+    da_cmds = parser_da.add_subparsers(dest='subcmd', help='Commands: peek poke keys unlock')
     da_peek = da_cmds.add_parser("peek", help="Read memory")
     da_poke = da_cmds.add_parser("poke", help="Write memory")
     da_keys = da_cmds.add_parser("generatekeys", help="Generate keys")
