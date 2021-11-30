@@ -34,6 +34,7 @@ class DAloader(metaclass=LogBase):
         self.xft = None
         self.lft = None
         self.da = None
+        self.xflash = None
 
     def writestate(self):
         config = {}

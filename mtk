@@ -267,10 +267,6 @@ class Mtk(metaclass=LogBase):
                                                        self.config.chipconfig.loader)
         if plt.runpayload(filename=self.config.payloadfile):
             mtk.port.run_handshake()
-            # mtk.port.close()
-            # mtk = Mtk(loader=args.loader, loglevel=self.__logger.level, vid=vid, pid=pid,
-            #          interface=interface, args=args)
-            # mtk.preloader.init(args=args, readsocid=readsocid)
             return mtk
         else:
             self.error("Error on running kamakiri payload")

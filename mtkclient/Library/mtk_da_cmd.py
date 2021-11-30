@@ -57,10 +57,12 @@ class DA_handler(metaclass=LogBase):
         mtk.port.cdc.connected = mtk.port.cdc.connect()
         if mtk.port.cdc.connected and os.path.exists(".state"):
             info = mtk.daloader.reinit()
+            return mtk
         else:
             if mtk.preloader.init():
                 if mtk.config.target_config["daa"]:
                     mtk = mtk.bypass_security()
+                    self.mtk = mtk
                     self.info("Device is protected.")
                     if mtk is not None:
                         if mtk.config.is_brom:
@@ -71,19 +73,22 @@ class DA_handler(metaclass=LogBase):
                     self.info("Device is unprotected.")
                     if mtk.config.is_brom:
                         mtk = mtk.bypass_security()  # Needed for dumping preloader
-                        if preloader is None:
-                            self.warning(
-                                "Device is in BROM mode. No preloader given, trying to dump preloader from ram.")
-                            preloader = self.dump_preloader_ram()
+                        if mtk is not None:
+                            self.mtk = mtk
                             if preloader is None:
-                                self.error("Failed to dump preloader from ram.")
+                                self.warning(
+                                    "Device is in BROM mode. No preloader given, trying to dump preloader from ram.")
+                                preloader = self.dump_preloader_ram()
+                                if preloader is None:
+                                    self.error("Failed to dump preloader from ram.")
                 if not mtk.daloader.upload_da(preloader=preloader):
                     self.error("Error uploading da")
-                    return False
+                    return None
                 else:
                     mtk.daloader.writestate()
+                    return mtk
             else:
-                return False
+                return mtk
 
     def da_gpt(self, directory:str):
         if directory is None:
@@ -494,7 +499,7 @@ class DA_handler(metaclass=LogBase):
             preloader = args.preloader
         except:
             preloader = None
-        self.configure_da(mtk, preloader)
+        mtk=self.configure_da(mtk, preloader)
 
         if cmd == "gpt":
             directory = args.directory
