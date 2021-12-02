@@ -143,14 +143,17 @@ class ArgHandler(metaclass=LogBase):
 
 
 class Mtk(metaclass=LogBase):
-    def __init__(self, config, loglevel=logging.INFO, preinit=True):
+    def __init__(self, config, loglevel=logging.INFO, preinit=True, guiLogger=None):
         self.config = config
         self.loader = config.loader
         self.vid = config.vid
+        self.guiLogger = guiLogger;
         self.pid = config.pid
         self.interface = config.interface
         self.pathconfig = pathconfig()
         self.__logger = logsetup(self, self.__logger, loglevel)
+        #if customLogger is not None:
+        #    self.__logger = logsetup(self, customLogger, loglevel)
         self.eh = ErrorHandler()
         if preinit:
             self.init()
@@ -292,7 +295,7 @@ class Main(metaclass=LogBase):
         sys.exit(0)
 
     def cmd_stage(self, mtk, filename, stage2addr, stage2file, verifystage2):
-        if self.args.filename is None:
+        if filename is None:
             pc = pathconfig()
             stage1file = os.path.join(pc.get_payloads_path(), "generic_stage1_payload.bin")
         else:

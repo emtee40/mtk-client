@@ -110,6 +110,8 @@ class Preloader(metaclass=LogBase):
     def __init__(self, mtk, loglevel=logging.INFO):
         self.mtk = mtk
         self.__logger = logsetup(self, self.__logger, loglevel)
+        if mtk.guiLogger is not None:
+            self.__logger = mtk.guiLogger
         self.info = self.__logger.info
         self.debug = self.__logger.debug
         self.error = self.__logger.error

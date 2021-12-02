@@ -23,12 +23,13 @@ User: user, Password:user (based on Ubuntu 22.04 LTS)
 
 ## Install
 
-### Linux - (Ubuntu recommended, no patched kernel needed except for kamakiri)
+### Linux / Mac OS - (Ubuntu recommended, no patched kernel needed except for kamakiri)
 
 #### Install python >=3.8, git and other deps
 
 ```
 sudo apt install python3 git libusb-1.0-0 python3-pip
+
 ```
 
 #### Grab files 
