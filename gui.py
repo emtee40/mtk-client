@@ -3,10 +3,44 @@ import time
 import mtk
 import mock
 import logging
+import traceback
 
 from PyQt5.QtCore import *
 from PyQt5.QtGui import QTextOption, QPixmap
 from PyQt5.QtWidgets import *
+
+class guiLogger:
+    global guiState;
+    def info(text):
+        sendToLog(text)
+        #grab useful stuff from this log
+        #if ("\tCPU:" in text):
+        #    phoneInfo['chipset'] = text.replace("\t","").replace("CPU:","").replace("()","")
+        #elif ("BROM mode detected" in text):
+        #    phoneInfo['bootMode'] = "In Bootrom"
+        #if (guiState == "welcome") and (phoneInfo['chipset'] is not ""):
+        #    phoneInfoTextbox.setText("Phone detected:\n" + phoneInfo['chipset']+"\n"+phoneInfo['bootMode']);
+    def debug(text):
+        sendToLog(text)
+    def error(text):
+        sendToLog(text)
+    def setLevel(logLevel):
+        return True;
+
+variables = mock.Mock()
+variables.cmd = "stage"
+variables.debugmode = True
+config = mtk.Mtk_Config(loglevel=logging.INFO)
+MtkTool = mtk.Main(variables)
+mtkClass = mtk.Mtk(config=config, loglevel=logging.INFO, guiLogger=guiLogger)
+
+def trap_exc_during_debug(*args):
+    # when app raises uncaught exception, print info
+    print(args)
+    print(traceback.format_exc())
+
+# install exception hook: without this, uncaught exception would cause application to exit
+sys.excepthook = trap_exc_during_debug
 
 guiState = "welcome"
 phoneInfo = {"chipset": "", "bootMode": ""};
@@ -20,40 +54,28 @@ class asyncThread(QThread):
     def run(self):
         self.function(self);
 
-class guiLogger:
-    global guiState;
-    def info(text):
-        sendToLog(text)
-        #grab useful stuff from this log
-        if ("\tCPU:" in text):
-            phoneInfo['chipset'] = text.replace("\t","").replace("CPU:","").replace("()","")
-        elif ("BROM mode detected" in text):
-            phoneInfo['bootMode'] = "In Bootrom"
-        if (guiState == "welcome"):
-            phoneInfoTextbox.setText("Phone detected:\n" + phoneInfo['chipset']+"\n"+phoneInfo['bootMode']);
-    def debug(text):
-        sendToLog(text)
-    def error(text):
-        sendToLog(text)
-    def setLevel(logLevel):
-        return True;
 def getDevInfo(self):
-    global logMessages
-    logMessages = []
+    global MtkTool;
+    global mtkClass;
     self.sendToLog.emit("test");
-    variables = mock.Mock()
-    variables.cmd = "stage"
-    variables.debugmode = True
-    config = mtk.Mtk_Config(loglevel=logging.INFO)
-    MtkTool = mtk.Main(variables)
-    mtkClass = mtk.Mtk(config=config, loglevel=logging.INFO, guiLogger=guiLogger)
+
     if mtkClass.preloader.init():
         #device should now be connected
+        print(mtkClass.config.cpu);
+        phoneInfo['chipset'] = mtkClass.config.cpu;
+        if (mtkClass.config.is_brom):
+            phoneInfo['bootMode'] = "Bootrom mode"
+        else:
+            phoneInfo['bootMode'] = "Preloader mode"
+        phoneInfoTextbox.setText("Phone detected:\n" + phoneInfo['chipset'] + "\n" + phoneInfo['bootMode']);
         status.setText("Device connected :)")
         pixmap = QPixmap("gui/images/phone_connected.png").scaled(128, 128, Qt.KeepAspectRatio, Qt.SmoothTransformation);
         pixmap.setDevicePixelRatio(2.0);
         pic.setPixmap(pixmap)
-        pass;
+    try:
+        print(mtkClass.daloader.get_partition_data(parttype="user"))
+    except Exception:
+        print(traceback.format_exc())
     #MtkTool.cmd_stage(mtkClass, None, None, None, False);
 
 def sendToLog(info):
@@ -63,23 +85,43 @@ def sendToLog(info):
 def openReadflashWindow(q):
         status.setText("OH YEAH"+str(q.text()));
         readFlashWindowVal = ReadFlashWindow()
-        readFlashWindowVal.show()
         #w.close();
 
-class ReadFlashWindow(QMainWindow):
+class ReadFlashWindow(QWidget):
+    #Partition
     @pyqtSlot()
+    def getGPTInfo(self):
+        self.sendToLog.emit("test");
+        variables = mock.Mock()
+        variables.cmd = "stage"
+        variables.debugmode = True
+        config = mtk.Mtk_Config(loglevel=logging.INFO)
+        MtkTool = mtk.Main(variables)
+        mtkClass = mtk.Mtk(config=config, loglevel=logging.INFO, guiLogger=guiLogger)
+        if mtkClass.preloader.init():
+            # device should now be connected
+            status.setText("Device connected :)")
+            pixmap = QPixmap("gui/images/phone_connected.png").scaled(128, 128, Qt.KeepAspectRatio, Qt.SmoothTransformation);
+            pixmap.setDevicePixelRatio(2.0);
+            pic.setPixmap(pixmap)
+            pass;
+        # MtkTool.cmd_stage(mtkClass, None, None, None, False);
     def __init__(self, *args, **kwargs):
         super(ReadFlashWindow, self).__init__(*args, **kwargs)
         self.setFixedSize(400, 400);
-        self.setWindowTitle("TEST")
-        widget = QWidget()
+        #widget = QWidget()
+        self.setWindowTitle("Read Flash")
+        self.show();
 
-        self.setCentralWidget(widget)
+        w.setCentralWidget(self)
+        print("Jeuj");
 
 if __name__ == '__main__':
     #Init the app window
     app = QApplication(sys.argv)
-    w = QMainWindow()
+    win = QMainWindow()
+    w = QWidget()
+
     w.setFixedSize(600,400);
     w.setWindowTitle("MTKTools - Version 2.0 beta")
 
@@ -190,3 +232,6 @@ if __name__ == '__main__':
 
     #Run loop the app
     app.exec();
+    #Prevent thread from not being closed and call error end codes
+    thread.terminate()
+    thread.wait()

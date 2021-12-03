@@ -369,7 +369,6 @@ def logsetup(self, logger, loglevel):
     self.debug = logger.debug
     self.error = logger.error
     self.warning = logger.warning
-    fh = logging.StreamHandler()
     if loglevel == logging.DEBUG:
         logfilename = os.path.join("logs", "log.txt")
         fh = logging.FileHandler(logfilename, encoding='utf-8')
