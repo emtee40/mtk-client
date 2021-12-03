@@ -52,7 +52,7 @@ def find_binary(data, strf, pos=0):
                             break
                         rt += len(t[i])
                     if error == 0:
-                        return offset
+                        return offset + pos
             else:
                 return None
         else:
