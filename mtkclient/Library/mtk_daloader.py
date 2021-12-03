@@ -235,3 +235,9 @@ class DAloader(metaclass=LogBase):
             return self.xft.write_rpmb(filename)
         self.error("Device is not in xflash mode, cannot run write rpmb cmd.")
         return False
+
+    def erase_rpmb(self):
+        if self.xflash:
+            return self.xft.erase_rpmb()
+        self.error("Device is not in xflash mode, cannot run erase rpmb cmd.")
+        return False

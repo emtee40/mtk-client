@@ -1,3 +1,4 @@
+import hmac
 import os
 from struct import unpack, pack
 from mtkclient.config.payloads import pathconfig
@@ -13,14 +14,28 @@ import hashlib
 class XCmd:
     CUSTOM_ACK = 0x0F0000
     CUSTOM_READ = 0x0F0001
-    CUSTOM_WRITE = 0x0F0002
-    CUSTOM_WRITEREGISTER = 0x0F0003
-    CUSTOM_INIT_RPMB = 0x0F0004
-    CUSTOM_READ_RPMB = 0x0F0005
-    CUSTOM_WRITE_RPMB = 0x0F0006
-    CUSTOM_INIT_UFS_RPMB = 0x0F0007
-    CUSTOM_READ_UFS_RPMB = 0x0F0008
-    CUSTOM_WRITE_UFS_RPMB = 0x0F0009
+    CUSTOM_READREGISTER = 0x0F0002
+    CUSTOM_WRITE = 0x0F0003
+    CUSTOM_WRITEREGISTER = 0x0F0004
+    CUSTOM_INIT_RPMB = 0x0F0005
+    CUSTOM_READ_RPMB = 0x0F0006
+    CUSTOM_WRITE_RPMB = 0x0F0007
+    CUSTOM_INIT_UFS_RPMB = 0x0F0008
+    CUSTOM_READ_UFS_RPMB = 0x0F0009
+    CUSTOM_WRITE_UFS_RPMB = 0x0F000A
+
+
+rpmb_error = [
+    "",
+    "General failure",
+    "Authentication failure",
+    "Counter failure",
+    "Address failure",
+    "Write failure",
+    "Read failure",
+    "Authentication key not yet programmed"
+]
+
 
 class xflashext(metaclass=LogBase):
     def __init__(self, mtk, xflash, loglevel):
@@ -81,17 +96,18 @@ class xflashext(metaclass=LogBase):
             ptr_g_ufs_hba_ptr = daextdata.find(b"\x77\x77\x77\x77")
 
             g_ufs_hba = None
-            ptr_g_ufs_hba = find_binary(self.da2,b"\x20\x46\x0B\xB0\xBD\xE8\xF0\x83\x00\xBF")
+            ptr_g_ufs_hba = find_binary(self.da2, b"\x20\x46\x0B\xB0\xBD\xE8\xF0\x83\x00\xBF")
             if ptr_g_ufs_hba is None:
                 ptr_g_ufs_hba = find_binary(self.da2, b"\x21\x46\x02\xF0\x02\xFB\x1B\xE6\x00\xBF")
                 if ptr_g_ufs_hba is not None:
-                    g_ufs_hba = int.from_bytes(self.da2[ptr_g_ufs_hba + 10+0x8:ptr_g_ufs_hba + 10+0x8 + 4], 'little')
+                    g_ufs_hba = int.from_bytes(self.da2[ptr_g_ufs_hba + 10 + 0x8:ptr_g_ufs_hba + 10 + 0x8 + 4],
+                                               'little')
             else:
                 g_ufs_hba = int.from_bytes(self.da2[ptr_g_ufs_hba + 10:ptr_g_ufs_hba + 10 + 4], 'little')
-            #open("da2_"+hex(self.da2address)+".bin","wb").write(self.da2)
+            # open("da2_"+hex(self.da2address)+".bin","wb").write(self.da2)
             if ptr_g_ufs_hba is not None:
-                ufshcd_get_free_tag = find_binary(self.da2,b"\xB5.\xB1\x90\xF8")
-                ufshcd_queuecommand = find_binary(self.da2,b"\x2D\xE9\xF8\x43\x01\x27")
+                ufshcd_get_free_tag = find_binary(self.da2, b"\xB5.\xB1\x90\xF8")
+                ufshcd_queuecommand = find_binary(self.da2, b"\x2D\xE9\xF8\x43\x01\x27")
             else:
                 g_ufs_hba = None
                 ufshcd_get_free_tag = None
@@ -131,20 +147,19 @@ class xflashext(metaclass=LogBase):
                 # Patch the addr
                 daextdata[register_ptr:register_ptr + 4] = pack("<I", register_cmd)
                 daextdata[mmc_get_card_ptr:mmc_get_card_ptr + 4] = pack("<I", mmc_get_card)
-                daextdata[mmc_set_part_config_ptr:mmc_set_part_config_ptr+4] = pack("<I",mmc_set_part_config)
-                daextdata[mmc_rpmb_send_command_ptr:mmc_rpmb_send_command_ptr+4] = pack("<I",mmc_rpmb_send_command)
+                daextdata[mmc_set_part_config_ptr:mmc_set_part_config_ptr + 4] = pack("<I", mmc_set_part_config)
+                daextdata[mmc_rpmb_send_command_ptr:mmc_rpmb_send_command_ptr + 4] = pack("<I", mmc_rpmb_send_command)
                 daextdata[ufshcd_get_free_tag_ptr:ufshcd_get_free_tag_ptr + 4] = pack("<I", ufshcd_get_free_tag)
                 daextdata[ufshcd_queuecommand_ptr:ufshcd_queuecommand_ptr + 4] = pack("<I", ufshcd_queuecommand)
                 daextdata[ptr_g_ufs_hba_ptr:ptr_g_ufs_hba_ptr + 4] = pack("<I", g_ufs_hba)
 
                 # print(hexlify(daextdata).decode('utf-8'))
-                #open("daext.bin","wb").write(daextdata)
+                # open("daext.bin","wb").write(daextdata)
                 return daextdata
         return None
 
-
     def patch_da2(self, da2):
-        #open("da2.bin","wb").write(da2)
+        # open("da2.bin","wb").write(da2)
         da2patched = bytearray(da2)
         # Patch security
         is_security_enabled = find_binary(da2, b"\x01\x23\x03\x60\x00\x20\x70\x47")
@@ -161,27 +176,27 @@ class xflashext(metaclass=LogBase):
             if authaddr:
                 da2patched[authaddr:authaddr + 8] = b"\x4F\xF0\x00\x09\x4F\xF0\x00\x09"
             else:
-                authaddr = find_binary(da2,b"\x4F\xF0\x04\x09\x32\x46\x01\x98\x03\x99\xCC\xF2\x07\x09")
+                authaddr = find_binary(da2, b"\x4F\xF0\x04\x09\x32\x46\x01\x98\x03\x99\xCC\xF2\x07\x09")
                 if authaddr:
                     da2patched[authaddr:authaddr + 14] = b"\x4F\xF0\x00\x09\x32\x46\x01\x98\x03\x99\x4F\xF0\x00\x09"
                 else:
                     self.warning("Hash check not patched.")
         # Patch write not allowed
-        #open("da2.bin","wb").write(da2patched)
+        # open("da2.bin","wb").write(da2patched)
         idx = 0
-        patched=False
+        patched = False
         while idx != -1:
             idx = da2patched.find(b"\x37\xB5\x00\x23\x04\x46\x02\xA8")
             if idx != -1:
                 da2patched[idx:idx + 8] = b"\x37\xB5\x00\x20\x03\xB0\x30\xBD"
-                patched=True
+                patched = True
             else:
                 idx = da2patched.find(b"\x0C\x23\xCC\xF2\x02\x03")
                 if idx != -1:
                     da2patched[idx:idx + 6] = b"\x00\x23\x00\x23\x00\x23"
                     idx2 = da2patched.find(b"\x2A\x23\xCC\xF2\x02\x03")
                     if idx2 != -1:
-                        da2patched[idx2:idx2+6]=b"\x00\x23\x00\x23\x00\x23"
+                        da2patched[idx2:idx2 + 6] = b"\x00\x23\x00\x23\x00\x23"
                     """
                     idx3 = da2patched.find(b"\x2A\x24\xE4\xF7\x89\xFB\xCC\xF2\x02\x04")
                     if idx3 != -1:
@@ -212,6 +227,15 @@ class xflashext(metaclass=LogBase):
                 return data
         return b""
 
+    def custom_readregister(self, addr):
+        if self.cmd(XCmd.CUSTOM_READREGISTER):
+            self.xsend(addr)
+            data = self.xread()
+            status = self.status()
+            if status == 0:
+                return data
+        return b""
+
     def custom_write(self, addr, data):
         if self.cmd(XCmd.CUSTOM_WRITE):
             self.xsend(addr)
@@ -234,13 +258,15 @@ class xflashext(metaclass=LogBase):
     def readmem(self, addr, dwords=1):
         res = []
         for pos in range(dwords):
-            val = self.custom_read(addr + pos * 4, 4)
+            val = self.custom_readregister(addr + pos * 4)
             if val == b"":
                 return False
             data = unpack("<I", val)[0]
             if dwords == 1:
+                self.debug(f"RX: {hex(addr+(pos*4))} -> " + hex(data))
                 return data
             res.append(data)
+        self.debug(f"RX: {hex(addr)} -> "+hexlify(b"".join(pack("<I",val) for val in res)).decode('utf-8'))
         return res
 
     def writeregister(self, addr, dwords):
@@ -248,6 +274,7 @@ class xflashext(metaclass=LogBase):
             dwords = [dwords]
         pos = 0
         for val in dwords:
+            self.debug(f"TX: {hex(addr+pos)} -> " + hex(val))
             if not self.custom_writeregister(addr + pos, val):
                 return False
             pos += 4
@@ -262,40 +289,54 @@ class xflashext(metaclass=LogBase):
         return True
 
     def custom_rpmb_read(self, sector, ufs=False):
-        cmd=XCmd.CUSTOM_READ_RPMB
+        cmd = XCmd.CUSTOM_READ_RPMB
         if ufs:
-            cmd=XCmd.CUSTOM_READ_UFS_RPMB
+            cmd = XCmd.CUSTOM_READ_UFS_RPMB
         if self.cmd(cmd):
             self.xsend(sector)
-            status = unpack("<H", self.xread())[0]
-            if status == 0x0:
+            resp = unpack("<H", self.xread())[0]
+            if resp == 0x0:
                 data = self.xread()
                 status = self.status()
                 if status == 0:
                     return data
+            else:
+                self.error(rpmb_error[resp])
+                status = self.status()
         return b''
 
     def custom_rpmb_write(self, sector, data: bytes, ufs=False):
         if len(data) != 0x100:
             self.error("Incorrect rpmb frame length. Aborting")
             return False
-        cmd=XCmd.CUSTOM_WRITE_RPMB
+        cmd = XCmd.CUSTOM_WRITE_RPMB
         if ufs:
-            cmd=XCmd.CUSTOM_WRITE_UFS_RPMB
+            cmd = XCmd.CUSTOM_WRITE_UFS_RPMB
         if self.cmd(cmd):
             self.xsend(sector)
             self.xsend(data[:0x100])
             resp = unpack("<H", self.xread())[0]
+            if resp != 0:
+                self.error(rpmb_error[resp])
+                status = self.status()
+                return False
             status = self.status()
             if status == 0:
                 return resp
         return False
 
-    def custom_rpmb_init(self, ufs=False):
-        cmd=XCmd.CUSTOM_INIT_RPMB
+    def custom_rpmb_init(self):
+        ufs = False
+        if self.xflash.emmc.rpmb_size != 0:
+            ufs = False
+        elif self.xflash.ufs.block_size != 0:
+            ufs = True
+        cmd = XCmd.CUSTOM_INIT_RPMB
         if ufs:
-            cmd=XCmd.CUSTOM_INIT_UFS_RPMB
+            cmd = XCmd.CUSTOM_INIT_UFS_RPMB
         if self.cmd(cmd):
+            derivedrpmb = self.xread()
+            self.info("Derived rpmb key:"+hexlify(derivedrpmb).decode('utf-8'))
             status = self.status()
             if status == 0:
                 return True
@@ -327,8 +368,8 @@ class xflashext(metaclass=LogBase):
                 with open(filename, "wb") as wf:
                     for sector in range(sectors):
                         if display:
-                            progressbar.show_progress("RPMB", sector, sectors, display)
-                        data = self.custom_rpmb_read(sector=sector,ufs=ufs)
+                            progressbar.show_progress("RPMB read", sector, sectors, display)
+                        data = self.custom_rpmb_read(sector=sector, ufs=ufs)
                         if data == b"":
                             self.error("Couldn't read rpmb.")
                             return False
@@ -349,20 +390,38 @@ class xflashext(metaclass=LogBase):
         sectors = 0
         if self.xflash.emmc.rpmb_size != 0:
             sectors = self.xflash.emmc.rpmb_size // 0x100
-            ufs = False
         elif self.xflash.ufs.block_size != 0:
             sectors = (512 * 256)
-            ufs = True
         if self.custom_rpmb_init():
             if sectors > 0:
                 with open(filename, "rb") as rf:
                     for sector in range(sectors):
                         if display:
-                            progressbar.show_progress("RPMB", sector, sectors, display)
+                            progressbar.show_progress("RPMB written", sector, sectors, display)
                         if not self.custom_rpmb_write(sector=sector, data=rf.read(0x100), ufs=ufs):
                             self.error(f"Couldn't write rpmb at sector {sector}.")
                             return False
                 self.info(f"Done reading writing {filename} to rpmb")
+                return True
+        return False
+
+    def erase_rpmb(self, display=True):
+        progressbar = progress(1)
+        ufs = False
+        sectors = 0
+        if self.xflash.emmc.rpmb_size != 0:
+            sectors = self.xflash.emmc.rpmb_size // 0x100
+        elif self.xflash.ufs.block_size != 0:
+            sectors = (512 * 256)
+        if self.custom_rpmb_init():
+            if sectors > 0:
+                for sector in range(sectors):
+                    if display:
+                        progressbar.show_progress("RPMB erased", sector, sectors, display)
+                    if not self.custom_rpmb_write(sector=sector, data=b"\x00" * 0x100, ufs=ufs):
+                        self.error(f"Couldn't erase rpmb at sector {sector}.")
+                        return False
+                self.info(f"Done erasing rpmb")
                 return True
         return False
 
@@ -410,7 +469,7 @@ class xflashext(metaclass=LogBase):
         V3 = True
         sc_new.create(sc_org=sc_org, hwtype=hwtype, V3=V3)
         if sc_org.hash != sc_new.hash:
-            V3=False
+            V3 = False
             sc_new.create(sc_org=sc_org, hwtype=hwtype, V3=V3)
         if sc_org.hash != sc_new.hash:
             hwtype = "sw"
@@ -438,7 +497,7 @@ class xflashext(metaclass=LogBase):
         else:
             try:
                 if self.config.chipconfig.meid_addr is not None:
-                    meid = b"".join([pack("<I",val) for val in self.readmem(self.config.chipconfig.meid_addr,4)])
+                    meid = b"".join([pack("<I", val) for val in self.readmem(self.config.chipconfig.meid_addr, 4)])
                     writesetting("meid", hexlify(meid).decode('utf-8'))
                     self.info("MEID        : " + hexlify(meid).decode('utf-8'))
             except Exception as err:
@@ -449,7 +508,7 @@ class xflashext(metaclass=LogBase):
         else:
             try:
                 if self.config.chipconfig.socid_addr is not None:
-                    socid = b"".join([pack("<I",val) for val in self.readmem(self.config.chipconfig.socid_addr,8)])
+                    socid = b"".join([pack("<I", val) for val in self.readmem(self.config.chipconfig.socid_addr, 8)])
                     writesetting("socid", hexlify(socid).decode('utf-8'))
                     self.info("SOCID        : " + hexlify(socid).decode('utf-8'))
             except Exception as err:
@@ -464,19 +523,19 @@ class xflashext(metaclass=LogBase):
             rpmb2key = hwc.aes_hwcrypt(btype="dxcc", mode="rpmb2")
             self.info("Generating dxcc km key...")
             ikey = hwc.aes_hwcrypt(btype="dxcc", mode="itrustee")
-            #self.info("Generating dxcc platkey + provkey key...")
-            #platkey, provkey = hwc.aes_hwcrypt(btype="dxcc", mode="prov")
-            #self.info("Provkey     : " + hexlify(provkey).decode('utf-8'))
-            #self.info("Platkey     : " + hexlify(platkey).decode('utf-8'))
+            # self.info("Generating dxcc platkey + provkey key...")
+            # platkey, provkey = hwc.aes_hwcrypt(btype="dxcc", mode="prov")
+            # self.info("Provkey     : " + hexlify(provkey).decode('utf-8'))
+            # self.info("Platkey     : " + hexlify(platkey).decode('utf-8'))
             if rpmbkey is not None:
                 self.info("RPMB        : " + hexlify(rpmbkey).decode('utf-8'))
-                writesetting("rpmbkey",hexlify(rpmbkey).decode('utf-8'))
+                writesetting("rpmbkey", hexlify(rpmbkey).decode('utf-8'))
             if rpmb2key is not None:
                 self.info("RPMB2       : " + hexlify(rpmb2key).decode('utf-8'))
-                writesetting("rpmb2key",hexlify(rpmb2key).decode('utf-8'))
+                writesetting("rpmb2key", hexlify(rpmb2key).decode('utf-8'))
             if fdekey is not None:
                 self.info("FDE         : " + hexlify(fdekey).decode('utf-8'))
-                writesetting("fdekey",hexlify(fdekey).decode('utf-8'))
+                writesetting("fdekey", hexlify(fdekey).decode('utf-8'))
             if ikey is not None:
                 self.info("iTrustee    : " + hexlify(ikey).decode('utf-8'))
                 writesetting("kmkey", hexlify(ikey).decode('utf-8'))
@@ -493,7 +552,7 @@ class xflashext(metaclass=LogBase):
         elif self.config.chipconfig.sej_base is not None:
             if meid == b"":
                 if self.config.chipconfig.meid_addr:
-                    meid = self.custom_read(self.config.chipconfig.meid_addr,16)
+                    meid = self.custom_read(self.config.chipconfig.meid_addr, 16)
             if meid != b"":
                 self.info("Generating sej rpmbkey...")
                 self.setotp(hwc)

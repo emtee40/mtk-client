@@ -1255,7 +1255,7 @@ class dxcc(metaclass=LogBase):
         pdesc = hw_desc_set_din_const(pdesc, 0, AES_IV_COUNTER_SIZE_IN_BYTES)  # desc[1]=0x8000041
         pdesc = hw_desc_set_flow_mode(pdesc, FlowMode.S_DIN_to_AES)  # desc[4]=0x801C20
         pdesc = hw_desc_set_setup_mode(pdesc, SetupOp.SETUP_LOAD_STATE0)  # desc[4]=0x1801C20
-        pdesc[1] |= 0x8000000
+        #pdesc[1] |= 0x8000000 #
         self.sasi_sb_adddescsequence(pdesc)
 
         # Load key

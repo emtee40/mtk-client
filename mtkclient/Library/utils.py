@@ -81,7 +81,10 @@ class progress:
             return 0, 0, ""
 
     def show_progress(self, prefix, pos, total, display=True):
-        prog = round(float(pos) / float(total) * float(100), 1)
+        if pos != 0:
+            prog = round(float(pos) / float(total) * float(100), 1)
+        else:
+            prog = 0
         if prog == 0:
             self.prog = 0
             self.start = time.time()

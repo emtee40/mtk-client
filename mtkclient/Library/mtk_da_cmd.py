@@ -646,6 +646,8 @@ class DA_handler(metaclass=LogBase):
                     mtk.daloader.read_rpmb(args.filename)
                 elif rpmb_subcmd == "w":
                     mtk.daloader.write_rpmb(args.filename)
+                elif rpmb_subcmd == "e":
+                    mtk.daloader.erase_rpmb()
             elif subcmd == "meta":
                 metamode = args.metamode
                 if metamode is None:

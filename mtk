@@ -397,7 +397,8 @@ class Main(metaclass=LogBase):
                         if mtk.preloader.jump_da(daaddr):
                             self.info(f"Jumped to pl {hex(daaddr)}.")
                             time.sleep(2)
-                            mtk = Mtk(loglevel=self.__logger.level)
+                            config = Mtk_Config(loglevel=self.__logger.level)
+                            mtk = Mtk(loglevel=self.__logger.level, config=config)
                             res = mtk.preloader.init()
                             if not res:
                                 self.error("Error on loading preloader")
@@ -413,7 +414,7 @@ class Main(metaclass=LogBase):
             dwords = length // 4
             if length % 4:
                 dwords += 1
-            if filename != "":
+            if filename != None:
                 wf = open(filename, "wb")
             sdata = b""
             print_progress(0, 100, prefix='Progress:',
@@ -781,7 +782,9 @@ if __name__ == '__main__':
     da_rpmb_r.add_argument('--filename', type=str, help="Filename to write data into")
 
     da_rpmb_w = da_rpmb_cmds.add_parser("w", help="Write rpmb")
-    da_rpmb_w.add_argument('--filename', type=str, help="Filename to write from")
+    da_rpmb_w.add_argument('filename', type=str, help="Filename to write from")
+
+    da_rpmb_e = da_rpmb_cmds.add_parser("e", help="Erase rpmb")
 
     da_peek.add_argument('address', type=str, help="Address to read from (hex value)")
     da_peek.add_argument('length', type=str, help="Length to read")
@@ -1298,6 +1301,7 @@ if __name__ == '__main__':
                                   '("amonet","kamakiri","kamakiri2", kamakiri2/da used by default)')
     parser_peek.add_argument('--crash', help='Enforce crash if device is in pl mode to enter brom mode')
     parser_peek.add_argument('--socid', help='Read Soc ID')
+    parser_peek.add_argument('--preloader', help='Set the preloader filename for dram config')
 
     parser_stage.add_argument('--payload', type=str, help='Payload filename (optional)')
     parser_stage.add_argument('--stage2', help='Set stage2 filename')
