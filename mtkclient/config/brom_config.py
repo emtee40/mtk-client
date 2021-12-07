@@ -1175,7 +1175,7 @@ hwconfig = {
         brom_payload_addr=0x100A00,
         da_payload_addr=0x201000,
         pl_payload_addr=0x40001000,  #
-        gcpu_base=0x10210000,
+        gcpu_base=0x1020D000,
         sej_base=0x1000A000,
         # no dxcc
         cqdma_base=0x10212C00,
@@ -1442,6 +1442,7 @@ class Mtk_Config(metaclass=LogBase):
         self.enforcecrash = False
         self.debugmode = False
         self.preloader = None
+        self.preloader_filename = None
         self.payloadfile = None
         self.loader = None
         self.ptype = "kamakiri2"

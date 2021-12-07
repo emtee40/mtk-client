@@ -1041,7 +1041,7 @@ class dxcc(metaclass=LogBase):
     DX_HOST_SEP_HOST_GPR4 = 0xAA0
 
     def SB_HalClearInterruptBit(self):
-        self.write32(self.dxcc_base + self.DX_HOST_ICR, [4])
+        self.write32(self.dxcc_base + self.DX_HOST_ICR, 4)
 
     def SB_CryptoWait(self):
         while True:

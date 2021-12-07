@@ -80,7 +80,15 @@ class xflashext(metaclass=LogBase):
                 mmc_get_card = find_binary(self.da2, b"\xA3\xEB\x00\x13\x18\x1A\x02\xEB\x00\x10")
                 if mmc_get_card is not None:
                     mmc_get_card -= 10
-            mmc_set_part_config = find_binary(self.da2, b"\xC3\x69\x0A\x46\x10\xB5")
+            pos = 0
+            while True:
+                mmc_set_part_config = find_binary(self.da2, b"\xC3\x69\x0A\x46\x10\xB5", pos)
+                if mmc_set_part_config is None:
+                    break
+                else:
+                    pos = mmc_set_part_config + 1
+                    if self.da2[mmc_set_part_config + 20:mmc_set_part_config + 22] == b"\xb3\x21":
+                        break
             if mmc_set_part_config is None:
                 mmc_set_part_config = find_binary(self.da2, b"\xC3\x69\x13\xF0\x01\x03")
             mmc_rpmb_send_command = find_binary(self.da2, b"\xF8\xB5\x06\x46\x9D\xF8\x18\x50")
@@ -515,6 +523,7 @@ class xflashext(metaclass=LogBase):
                 pass
 
         if self.config.chipconfig.dxcc_base is not None:
+            #hwc.aes_hwcrypt(btype="gcpu", mode="mtee")
             self.info("Generating dxcc rpmbkey...")
             rpmbkey = hwc.aes_hwcrypt(btype="dxcc", mode="rpmb")
             self.info("Generating dxcc fdekey...")
