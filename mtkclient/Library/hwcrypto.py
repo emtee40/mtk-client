@@ -64,8 +64,9 @@ class hwcrypto(metaclass=LogBase):
             elif mode == "cbc":
                 if self.gcpu.aes_setup_cbc(addr=addr, data=data, iv=iv, encrypt=encrypt):
                     return self.gcpu.aes_read_cbc(addr=addr, encrypt=encrypt)
+            """
             elif mode == "mtee":
-                path = "/home/bjk/Projects/mtkeys/toDo/hederer2/LenovoTab7/tee_tee.bin"
+                path = "tee_tee.bin"
                 with open(path,"rb") as rf:
                     rf.seek(0x240)
                     data=rf.read(0x25D3C0)
@@ -74,6 +75,7 @@ class hwcrypto(metaclass=LogBase):
                     self.gcpu.init()
                     self.gcpu.acquire()
                     self.gcpu.mtk_gcpu_decrypt_mtee_img(data,seed)
+            """
         elif btype == "dxcc":
             if mode == "fde":
                 return self.dxcc.generate_rpmb(1)
