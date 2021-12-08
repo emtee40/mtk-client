@@ -1160,7 +1160,7 @@ class dxcc(metaclass=LogBase):
         pdesc[5] = 0
         self.sasi_sb_adddescsequence(pdesc)
         dstaddr = self.da_payload_addr - 0x300
-        self.SB_HalWaitDescCompletion()
+        self.SB_HalWaitDescCompletion(dstaddr)
         # data=self.read32(0x200D90)
         self.tzcc_clk(0)
         return platkey, provkey
@@ -1205,13 +1205,13 @@ class dxcc(metaclass=LogBase):
             dmaMode = dmaMode
         self.writemem(inputSramAddr, DataIn[:bufferlen])
         if self.SBROM_AesCmacDriver(aesKeyType, pInternalKey, inputSramAddr, dmaMode, bufferlen, sramAddr):
-            return sramAddr
+            return pInternalKey
         return 0
 
     def SB_HalInit(self):
         return self.SB_HalClearInterruptBit()
 
-    def SB_HalWaitDescCompletion(self, destptr=0):
+    def SB_HalWaitDescCompletion(self, destptr):
         data = []
         self.SB_HalClearInterruptBit()
         val = self.sasi_paldmamap(0)
@@ -1236,7 +1236,7 @@ class dxcc(metaclass=LogBase):
         else:
             return 0xF6000001
 
-    def SBROM_AesCmacDriver(self, aesKeyType, pInternalKey, pDataIn, dmaMode, blockSize, pDataOut):
+    def SBROM_AesCmacDriver(self, aesKeyType, pInternalKey, pDataIn, dmaMode, blockSize, pCMacResult):
         ivSramAddr = 0
         if aesKeyType == HwCryptoKey.ROOT_KEY:
             if self.read32(self.dxcc_base + self.DX_HOST_SEP_HOST_GPR4) & 2 != 0:
@@ -1289,14 +1289,14 @@ class dxcc(metaclass=LogBase):
             xdesc = hw_desc_set_setup_mode(xdesc, SetupOp.SETUP_WRITE_STATE0)  # desc[4]=0x8001C00
             xdesc = hw_desc_set_flow_mode(xdesc, FlowMode.S_AES_to_DOUT)  # desc[4]=0x8001C26
             if dmaMode == DmaMode.DMA_SRAM:
-                xdesc = hw_desc_set_dout_sram(xdesc, pDataOut, AES_BLOCK_SIZE_IN_BYTES)
+                xdesc = hw_desc_set_dout_sram(xdesc, pInternalKey, AES_BLOCK_SIZE_IN_BYTES)
             else:
-                xdesc = hw_desc_set_dout_dlli(xdesc, pDataOut, AES_BLOCK_SIZE_IN_BYTES, SB_AXI_ID,
+                xdesc = hw_desc_set_dout_dlli(xdesc, pInternalKey, AES_BLOCK_SIZE_IN_BYTES, SB_AXI_ID,
                                               0)  # desc[2]=0x200E08, desc[3]=0x42
             # xdesc = hw_desc_set_din_sram(xdesc, 0, 0)
             xdesc = hw_desc_set_din_nodma(xdesc, 0, 0)
             self.sasi_sb_adddescsequence(xdesc)
-        return self.SB_HalWaitDescCompletion() == 0
+        return self.SB_HalWaitDescCompletion(pCMacResult) == 0
 
     def mtee_decrypt(self, data):
         key = bytes.fromhex("B936C14D95A99585073E5607784A51F7444B60D6BFD6110F76D004CCB7E1950E")
@@ -1352,7 +1352,7 @@ class dxcc(metaclass=LogBase):
             self.sasi_sb_adddescsequence(tdesc)
 
     def sbrom_cryptoupdate(self, inputptr, outputptr, blockSize, islastblock, cryptodrivermode, waitforcrypto):
-        if waitforcrypto != 2 or self.SB_HalWaitDescCompletion() == 0:
+        if waitforcrypto != 2 or self.SB_HalWaitDescCompletion(self.dxcc_base) == 0:
             if islastblock == 1 and (cryptodrivermode & 0xFFFFFFFD) == 0:
                 # 0=0
                 # 1=0
@@ -1373,7 +1373,7 @@ class dxcc(metaclass=LogBase):
                 udesc = hw_desc_set_flow_mode(udesc, FlowMode.DIN_HASH)
             self.sasi_sb_adddescsequence(udesc)
             if (waitforcrypto == 2 and not islastblock) or waitforcrypto == 3:
-                self.SB_HalWaitDescCompletion()
+                self.SB_HalWaitDescCompletion(self.dxcc_base)
             elif waitforcrypto == 0:
                 return 0
             else:
@@ -1394,7 +1394,7 @@ class dxcc(metaclass=LogBase):
         # 4 = 0x80C082B
         # 5 = outputptr>>32<<16
         self.sasi_sb_adddescsequence(fdesc)
-        return self.SB_HalWaitDescCompletion()
+        return self.SB_HalWaitDescCompletion(self.dxcc_base)
 
 
 if __name__ == "__main__":
