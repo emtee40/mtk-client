@@ -4,7 +4,7 @@ from mtkclient.config.payloads import pathconfig
 from mtkclient.Library.error import ErrorHandler
 from mtkclient.Library.hwcrypto import crypto_setup, hwcrypto
 from mtkclient.Library.utils import LogBase, progress, logsetup, find_binary
-from mtkclient.Library.settings import writesetting, loadsetting
+from mtkclient.Library.settings import hwparam
 from mtkclient.Library.seccfg import seccfg
 from binascii import hexlify
 import hashlib
@@ -24,6 +24,7 @@ class legacyext(metaclass=LogBase):
         self.error = self.__logger.error
         self.warning = self.__logger.warning
         self.mtk = mtk
+        self.hwparam = hwparam(mtk.config.meid)
         self.loglevel = loglevel
         self.__logger = self.__logger
         self.eh = ErrorHandler()
@@ -172,8 +173,8 @@ class legacyext(metaclass=LogBase):
     def generate_keys(self):
         hwc = self.cryptosetup()
         meid = b""
-        meidv = loadsetting("meid")
-        socidv = loadsetting("socid")
+        meidv = self.hwparam.loadsetting("meid")
+        socidv = self.hwparam.loadsetting("socid")
         if meidv is not None:
             meid = bytes.fromhex(meidv)
             self.info("MEID        : " + meidv)
@@ -181,7 +182,7 @@ class legacyext(metaclass=LogBase):
             try:
                 if self.config.chipconfig.meid_addr is not None:
                     meid = b"".join([pack("<I", val) for val in self.readmem(self.config.chipconfig.meid_addr, 4)])
-                    writesetting("meid", hexlify(meid).decode('utf-8'))
+                    self.hwparam.writesetting("meid", hexlify(meid).decode('utf-8'))
                     self.info("MEID        : " + hexlify(meid).decode('utf-8'))
             except Exception as err:
                 pass
@@ -192,7 +193,7 @@ class legacyext(metaclass=LogBase):
             try:
                 if self.config.chipconfig.socid_addr is not None:
                     socid = b"".join([pack("<I",val) for val in self.readmem(self.config.chipconfig.socid_addr,8)])
-                    writesetting("socid", hexlify(socid).decode('utf-8'))
+                    self.hwparam.writesetting("socid", hexlify(socid).decode('utf-8'))
                     self.info("SOCID        : " + hexlify(socid).decode('utf-8'))
             except Exception as err:
                 pass
@@ -211,20 +212,20 @@ class legacyext(metaclass=LogBase):
             #self.info("Platkey     : " + hexlify(platkey).decode('utf-8'))
             if rpmbkey is not None:
                 self.info("RPMB        : " + hexlify(rpmbkey).decode('utf-8'))
-                writesetting("rpmbkey",hexlify(rpmbkey).decode('utf-8'))
+                self.hwparam.writesetting("rpmbkey",hexlify(rpmbkey).decode('utf-8'))
             if rpmb2key is not None:
                 self.info("RPMB2       : " + hexlify(rpmb2key).decode('utf-8'))
-                writesetting("rpmb2key",hexlify(rpmb2key).decode('utf-8'))
+                self.hwparam.writesetting("rpmb2key",hexlify(rpmb2key).decode('utf-8'))
             if fdekey is not None:
                 self.info("FDE         : " + hexlify(fdekey).decode('utf-8'))
-                writesetting("fdekey",hexlify(fdekey).decode('utf-8'))
+                self.hwparam.writesetting("fdekey",hexlify(fdekey).decode('utf-8'))
             if ikey is not None:
                 self.info("iTrustee    : " + hexlify(ikey).decode('utf-8'))
-                writesetting("kmkey", hexlify(ikey).decode('utf-8'))
+                self.hwparam.writesetting("kmkey", hexlify(ikey).decode('utf-8'))
             if self.config.chipconfig.prov_addr:
                 provkey = self.custom_read(self.config.chipconfig.prov_addr, 16)
                 self.info("PROV        : " + hexlify(provkey).decode('utf-8'))
-                writesetting("provkey", hexlify(provkey).decode('utf-8'))
+                self.hwparam.writesetting("provkey", hexlify(provkey).decode('utf-8'))
             """
             hrid = self.xflash.get_hrid()
             if hrid is not None:
@@ -240,7 +241,7 @@ class legacyext(metaclass=LogBase):
                 self.setotp(hwc)
                 rpmbkey = hwc.aes_hwcrypt(mode="rpmb", data=meid, btype="sej")
                 self.info("RPMB        : " + hexlify(rpmbkey).decode('utf-8'))
-                writesetting("rpmbkey", hexlify(rpmbkey).decode('utf-8'))
+                self.hwparam.writesetting("rpmbkey", hexlify(rpmbkey).decode('utf-8'))
             else:
                 self.info("SEJ Mode: No meid found. Are you in brom mode ?")
         return True

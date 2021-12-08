@@ -13,7 +13,7 @@ from mtkclient.Library.mtk_daxflash import DAXFlash
 from mtkclient.config.brom_config import damodes
 from mtkclient.Library.xflash_ext import xflashext
 from mtkclient.Library.legacy_ext import legacyext
-
+from mtkclient.Library.settings import hwparam
 
 class DAloader(metaclass=LogBase):
     def __init__(self, mtk, loglevel=logging.INFO):
@@ -31,6 +31,7 @@ class DAloader(metaclass=LogBase):
         self.rword = self.mtk.port.rword
         self.daconfig = DAconfig(mtk=self.mtk, loader=self.mtk.config.loader,
                                  preloader=self.mtk.config.preloader, loglevel=loglevel)
+        self.hwparam = hwparam(mtk.config.meid)
         self.xft = None
         self.lft = None
         self.da = None
@@ -105,8 +106,8 @@ class DAloader(metaclass=LogBase):
                 self.daconfig.flashsize = config["flashsize"]
                 self.da.nor = norinfo()
                 self.da.nand = nandinfo64()
-                self.da.emmc = emmcinfo()
-                self.da.sdc = sdcinfo()
+                self.da.emmc = emmcinfo(self.hwparam)
+                self.da.sdc = sdcinfo(self.hwparam)
                 self.lft=legacyext(self.mtk, self.da, self.loglevel)
                 self.da.emmc.m_emmc_ua_size = config["m_emmc_ua_size"]
                 self.da.emmc.m_emmc_boot1_size = config["m_emmc_boot1_size"]
