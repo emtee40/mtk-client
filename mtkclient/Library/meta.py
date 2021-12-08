@@ -10,7 +10,6 @@ from struct import unpack, pack
 from binascii import hexlify
 from mtkclient.Library.utils import LogBase, logsetup
 from mtkclient.Library.error import ErrorHandler
-from mtkclient.Library.settings import writesetting
 
 class META(metaclass=LogBase):
     class Mode(Enum):
