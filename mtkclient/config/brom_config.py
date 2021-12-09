@@ -1314,34 +1314,36 @@ hwconfig = {
         name="MT8195"
         # loader
     ),
-    0x8512: chipconfig(  # var1
-        # watchdog
-        # uart
-        # brom_payload_addr
+    0x8512: chipconfig(
+        var1=0xA,
+        watchdog=0x10007000,
+        uart=0x11002000,
+        brom_payload_addr=0x100A00,
         da_payload_addr=0x111000,
-        # gcpu_base
-        # sej_base
-        # cqdma_base
-        # ap_dma_mem
-        # blacklist
-        # blacklist_count
-        # send_ptr
-        # ctrl_buffer
-        # cmd_handler
-        # brom_register_access
-        # meid_addr
-        # socid_addr
+        pl_payload_addr=0x40200000,
+        gcpu_base=0x1020F000,
+        sej_base=0x1000A000,
+        cqdma_base=0x10214000,
+        ap_dma_mem=0x11000000 + 0x1A0,
+        blacklist=[(0x001041E4, 0x0), (0x0010AA84, 0x0)],
+        blacklist_count=0xA,
+        send_ptr=(0x104258, 0xcc44),
+        ctrl_buffer=0x00104570,
+        cmd_handler=0x0000D7AB,
+        brom_register_access=(0xd034, 0xd194),
+        meid_addr=0x104638,
+        socid_addr=0x104648,
         dacode=0x8512,
         damode=damodes.XFLASH,
         # description
-        name="MT8512"
-        # loader
+        name="MT8512",
+        loader="mt8512_payload.bin"
     ),
     0x8518: chipconfig(  # var1
         # watchdog
         # uart
         # brom_payload_addr
-        da_payload_addr=0x201000,
+        # da_payload_addr
         # gcpu_base
         # sej_base
         # cqdma_base
@@ -1356,7 +1358,9 @@ hwconfig = {
         # socid_addr
         dacode=0x8518,
         damode=damodes.XFLASH,
-        name="MT8518"),
+        name="MT8518"
+        # loader
+    ),
     0x8590: chipconfig(
         var1=0xA,  # confirmed, router
         watchdog=0x10007000,

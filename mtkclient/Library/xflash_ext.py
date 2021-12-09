@@ -455,6 +455,9 @@ class xflashext(metaclass=LogBase):
         data, guid_gpt = self.xflash.partition.get_gpt(self.mtk.config.gpt_settings, "user")
         seccfg_data = None
         partition = None
+        if guid_gpt is None:
+            self.error("Error getting the partition table.")
+            return False
         for rpartition in guid_gpt.partentries:
             if rpartition.name == "seccfg":
                 partition = rpartition

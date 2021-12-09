@@ -47,7 +47,7 @@ class seccfg:
                 self.sboot_runtime = 0
             elif lockflag == "lock":
                 self.lock_state = 1
-                self.critical_lock_state = 1
+                self.critical_lock_state = 0
                 self.seccfg_ver = 4
                 self.seccfg_size = 0x3C
                 self.sboot_runtime = 0
