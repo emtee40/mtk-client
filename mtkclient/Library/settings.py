@@ -18,6 +18,10 @@ class hwparam:
             if "meid" in self.paramsetting:
                 if meid!=self.paramsetting["meid"]:
                     self.paramsetting = {}
+        else:
+            self.paramsetting = {};
+            self.paramsetting["meid"] = meid;
+            open(self.paramfile, "w").write(json.dumps(self.paramsetting))
 
     def loadsetting(self,key:str):
         if self.paramsetting is not None:
