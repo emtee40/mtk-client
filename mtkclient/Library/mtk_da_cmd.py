@@ -64,7 +64,7 @@ class DA_handler(metaclass=LogBase):
                                 print(f"Successfully extracted preloader for this device to: {pfilename}")
                 return preloader
         except Exception as err:
-            self.exception(str(err))
+            self.error(str(err))
             return None
 
     def configure_da(self, mtk, preloader):
