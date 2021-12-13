@@ -19,8 +19,10 @@ variables.debugmode = True
 
 loglevel = logging.INFO
 config = mtk.Mtk_Config(loglevel=loglevel)
+config.gpt_settings = mtk.gpt_settings(0,0,0)  #This actually sets the right GPT settings..
 MtkTool = mtk.Main(variables)
 mtkClass = mtk.Mtk(config=config, loglevel=loglevel)
+print(mtkClass.config.gpt_settings);
 if mtkClass.preloader.init():
     print("connected!")
 
@@ -30,6 +32,7 @@ res = da_handler.configure_da(mtkClass, preloader=None)
 # res = DA was loaded correctly
 if res:
     # Start commands here
+    print(mtkClass.mtk.config.gpt_settings);
     data, guid_gpt = mtkClass.daloader.get_gpt()
     if guid_gpt is None:
         print("Error reading gpt")
