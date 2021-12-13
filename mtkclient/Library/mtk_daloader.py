@@ -172,7 +172,7 @@ class DAloader(metaclass=LogBase):
 
     def get_gpt(self, parttype=None):
         fpartitions = []
-        print(self.mtk.config);
+        print(self.mtk.config)
         data, guid_gpt = self.da.partition.get_gpt(self.mtk.config.gpt_settings, parttype)
         if guid_gpt is None:
             return [False, fpartitions]

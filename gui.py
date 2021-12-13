@@ -27,6 +27,7 @@ class guiLogger:
     def setLevel(logLevel):
         return True;
 
+#Initiate MTK classes
 variables = mock.Mock()
 variables.cmd = "stage"
 variables.debugmode = True
@@ -60,8 +61,7 @@ def getDevInfo(self):
     self.sendToLog.emit("test");
 
     if mtkClass.preloader.init():
-        #device should now be connected
-        print(mtkClass.config.cpu);
+        #device should now be connected, get the info
         phoneInfo['chipset'] = mtkClass.config.cpu;
         if (mtkClass.config.is_brom):
             phoneInfo['bootMode'] = "Bootrom mode"
@@ -91,21 +91,10 @@ class ReadFlashWindow(QWidget):
     #Partition
     @pyqtSlot()
     def getGPTInfo(self):
+        global MtkTool;
+        global mtkClass;
         self.sendToLog.emit("test");
-        variables = mock.Mock()
-        variables.cmd = "stage"
-        variables.debugmode = True
-        config = mtk.Mtk_Config(loglevel=logging.INFO)
-        MtkTool = mtk.Main(variables)
-        mtkClass = mtk.Mtk(config=config, loglevel=logging.INFO, guiLogger=guiLogger)
-        if mtkClass.preloader.init():
-            # device should now be connected
-            status.setText("Device connected :)")
-            pixmap = QPixmap("gui/images/phone_connected.png").scaled(128, 128, Qt.KeepAspectRatio, Qt.SmoothTransformation);
-            pixmap.setDevicePixelRatio(2.0);
-            pic.setPixmap(pixmap)
-            pass;
-        # MtkTool.cmd_stage(mtkClass, None, None, None, False);
+        MtkTool.cmd_stage(mtkClass, None, None, None, False);
     def __init__(self, *args, **kwargs):
         super(ReadFlashWindow, self).__init__(*args, **kwargs)
         self.setFixedSize(400, 400);
@@ -159,7 +148,7 @@ if __name__ == '__main__':
                                   "For brom mode, press and hold vol up, vol dwn, or all hw buttons " + \
                                   "and connect usb.\n" +
                                   "For preloader mode, don't press any hw button and connect usb.");
-    status.setGeometry(10, 30, 405, 256);
+    status.setGeometry(10, 30, 465, 256);
     status.setWordWrap(True);
     status.setStyleSheet("font-size: 12px; vertical-align: top;");
     status.show();
@@ -184,7 +173,7 @@ if __name__ == '__main__':
 
     #Line
     line = QFrame(w)
-    line.setGeometry(QRect(10, 120, 580, 20))
+    line.setGeometry(QRect(10, 105, 580, 20))
     line.setFrameShape(QFrame.HLine)
     line.setFrameShadow(QFrame.Sunken)
 
@@ -198,7 +187,7 @@ if __name__ == '__main__':
                    "Chaosmaster\n" +
                    "Cygnusx (Gui)\n" +
                    "and all contributers");
-    copyrightInfo.setGeometry(10, 140, 405, 256);
+    copyrightInfo.setGeometry(10, 125, 405, 256);
     copyrightInfo.setWordWrap(True);
     copyrightInfo.setStyleSheet("font-size: 12px; color: #333; vertical-align: top;");
     copyrightInfo.show();
