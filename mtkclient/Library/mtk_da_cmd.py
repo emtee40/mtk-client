@@ -36,8 +36,22 @@ class DA_handler(metaclass=LogBase):
             if idx != -1:
                 data = data[idx:]
                 length = unpack("<I", data[0x20:0x24])[0]
-                time.sleep(0.05)
-                data = b"".join([pack("<I", val) for val in self.mtk.preloader.read32(0x200000 + idx, length + 4 // 4)])
+                time.sleep(0.15)
+                data = bytearray();
+                startidx = idx;
+                while True:
+                    try:
+                        data.extend(b"".join([pack("<I", val) for val in self.mtk.preloader.read32(0x200000 + idx, 4)]))
+                        idx = idx + 16;
+                        sys.stdout.write("\r"+str(length-(idx-startidx)))
+                        sys.stdout.flush()
+                        if ((idx-startidx) > length):
+                            #done reading
+                            break;
+                    except Exception as err:
+                        self.exception(str(err))
+                        break;
+                data = bytes(data);
                 preloader = data[:length]
                 idx = data.find(b"MTK_BLOADER_INFO")
                 if idx != -1:
@@ -50,7 +64,7 @@ class DA_handler(metaclass=LogBase):
                                 print(f"Successfully extracted preloader for this device to: {pfilename}")
                 return preloader
         except Exception as err:
-            self.error(str(err))
+            self.exception(str(err))
             return None
 
     def configure_da(self, mtk, preloader):
@@ -58,7 +72,7 @@ class DA_handler(metaclass=LogBase):
         if mtk.port.cdc.connected and os.path.exists(".state"):
             info = mtk.daloader.reinit()
         else:
-            if mtk.preloader.init():
+            if (hasattr(mtk.port.config, "socid") and mtk.port.config.socid != b"") or mtk.preloader.init(): #at least for now making it possible to continue without re-init
                 if mtk.config.target_config["daa"]:
                     mtk = mtk.bypass_security()
                     self.info("Device is protected.")
