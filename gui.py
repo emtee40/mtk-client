@@ -173,11 +173,11 @@ if __name__ == '__main__':
     copyrightInfo = QLabel(w)
     copyrightInfo.setAlignment(Qt.AlignLeft | Qt.AlignTop)
     copyrightInfo.setText("Made by: Bjoern Kerler\n" + \
+                  "Gui by: Geert-Jan Kreileman\n" + \
                    "Credits: \n" + \
                    "kamakiri [xyzz]\n" +
                    "linecode exploit [chimera]\n" +
                    "Chaosmaster\n" +
-                   "Cygnusx (Gui)\n" +
                    "and all contributers");
     copyrightInfo.setGeometry(10, 125, 405, 256);
     copyrightInfo.setWordWrap(True);

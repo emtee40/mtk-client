@@ -8,10 +8,10 @@ vol up + power or vol down + power and connect the phone. Once detected by the t
 release the buttons.
 
 ## Credits
+- Geert-Jan Kreileman (GUI & fixes)
 - kamakiri [xyzz]
 - linecode exploit [chimera]
 - Chaosmaster
-- cygnusx (GUI)
 - All contributors
 
 ## Installation
