@@ -44,6 +44,7 @@ class ReadFlashWindow(QDialog):
         self.sendToLogSignal.emit("dump klaar!");
     def dumpPartition(self):
         self.startBtn.setEnabled(False);
+        self.dumpFolder = str(QFileDialog.getExistingDirectory(self, "Select output directory"))
         #self.startBtn.setText("In progress..")
         thread = asyncThread(self, 0, self.dumpPartitionAsync)
         thread.sendToLogSignal.connect(self.sendToLog);
@@ -74,7 +75,7 @@ class ReadFlashWindow(QDialog):
             if self.partitionCheckboxes[partition]['box'].isChecked():
                 variables = mock.Mock()
                 variables.partitionname = partition
-                variables.filename = partition+".bin"
+                variables.filename = os.path.join(self.dumpFolder, partition+".bin")
                 variables.parttype = None
                 self.dumpStatus["currentPartitionSize"] = self.partitionCheckboxes[partition]['size'];
                 self.dumpStatus["currentPartition"] = partition;
