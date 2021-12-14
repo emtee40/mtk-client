@@ -1,13 +1,15 @@
 import sys
 import time
 import mtk
+from mtkclient.Library.mtk_da_cmd import DA_handler
 import mock
 import logging
-import traceback
 
 from PyQt5.QtCore import *
 from PyQt5.QtGui import QTextOption, QPixmap
 from PyQt5.QtWidgets import *
+from gui.readFlashPartitions import *
+from gui.toolkit import *
 
 class guiLogger:
     global guiState;
@@ -32,13 +34,14 @@ variables = mock.Mock()
 variables.cmd = "stage"
 variables.debugmode = True
 config = mtk.Mtk_Config(loglevel=logging.INFO)
+config.gpt_settings = mtk.gpt_settings(0,0,0)  #This actually sets the right GPT settings..
+config.ptype = "kamakiri" #Temp for Mac testing
 MtkTool = mtk.Main(variables)
 mtkClass = mtk.Mtk(config=config, loglevel=logging.INFO, guiLogger=guiLogger)
+loglevel = logging.INFO
+da_handler = DA_handler(mtkClass, loglevel)
 
-def trap_exc_during_debug(*args):
-    # when app raises uncaught exception, print info
-    print(args)
-    print(traceback.format_exc())
+
 
 # install exception hook: without this, uncaught exception would cause application to exit
 sys.excepthook = trap_exc_during_debug
@@ -46,25 +49,32 @@ sys.excepthook = trap_exc_during_debug
 guiState = "welcome"
 phoneInfo = {"chipset": "", "bootMode": ""};
 
-class asyncThread(QThread):
-    sendToLog = pyqtSignal(str);
-    def __init__(self, parent, n, function):
-        super(asyncThread, self).__init__(parent)
-        self.n = n
-        self.function = function;
-    def run(self):
-        self.function(self);
-
 def getDevInfo(self):
     global MtkTool;
     global mtkClass;
-    self.sendToLog.emit("test");
-
-    if mtkClass.preloader.init():
+    if mtkClass.port.cdc.connect() == False:
+        mtkClass.preloader.init()
+        #print(mtkClass.port.cdc.detectusbdevices());
+        #mtkClass.port.cdc.connect();
+        #self.sendToLogSignal.emit(str(mtkClass.port.cdc.connected));
+        #time.sleep(0.5);
+    self.sendToLogSignal.emit("CONNECTING!");
+    phoneInfoTextbox.setText("Phone detected:\nReading info...");
+    status.setText("Device detected, please wait.\nThis can take a while...")
+    #mtkClass.port.cdc.close(True);
+    time.sleep(0.3)
+    #print(mtkClass.port.cdc.connect());
+    #if mtkClass.preloader.init(): #This will be run by other commands, so.
+    #mtkClass.port.cdc.connected = False;
+    res = da_handler.configure_da(mtkClass, preloader=None)
+    if res != False:
         #device should now be connected, get the info
         phoneInfo['chipset'] = mtkClass.config.cpu;
+        phoneInfo['chipset'] = mtkClass.config.chipconfig.name+" ("+mtkClass.config.chipconfig.description+")";
         if (mtkClass.config.is_brom):
             phoneInfo['bootMode'] = "Bootrom mode"
+        elif (mtkClass.config.chipconfig.damode):
+            phoneInfo['bootMode'] = "DA mode"
         else:
             phoneInfo['bootMode'] = "Preloader mode"
         phoneInfoTextbox.setText("Phone detected:\n" + phoneInfo['chipset'] + "\n" + phoneInfo['bootMode']);
@@ -83,27 +93,9 @@ def sendToLog(info):
         logBox.appendPlainText(time.strftime("[%H:%M:%S", t)+"]: "+info)
         logBox.verticalScrollBar().setValue(logBox.verticalScrollBar().maximum())
 def openReadflashWindow(q):
-        status.setText("OH YEAH"+str(q.text()));
-        readFlashWindowVal = ReadFlashWindow()
-        #w.close();
-
-class ReadFlashWindow(QWidget):
-    #Partition
-    @pyqtSlot()
-    def getGPTInfo(self):
-        global MtkTool;
-        global mtkClass;
-        self.sendToLog.emit("test");
-        MtkTool.cmd_stage(mtkClass, None, None, None, False);
-    def __init__(self, *args, **kwargs):
-        super(ReadFlashWindow, self).__init__(*args, **kwargs)
-        self.setFixedSize(400, 400);
-        #widget = QWidget()
-        self.setWindowTitle("Read Flash")
-        self.show();
-
-        w.setCentralWidget(self)
-        print("Jeuj");
+    #status.setText("OH YEAH"+str(q.text()));
+    readFlashWindowVal = ReadFlashWindow(w, mtkClass,da_handler,sendToLog)
+    #w.close();
 
 if __name__ == '__main__':
     #Init the app window
@@ -216,8 +208,10 @@ if __name__ == '__main__':
 
     #Get the device info
     thread = asyncThread(app, 0, getDevInfo)
-    thread.sendToLog.connect(sendToLog);
+    thread.sendToLogSignal.connect(sendToLog);
     thread.start();
+
+    #showDebugInfo();  # temp
 
     #Run loop the app
     app.exec();
