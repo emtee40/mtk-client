@@ -233,7 +233,7 @@ class Mtk(metaclass=LogBase):
     def crasher(self, display=True, mode=None):
         rmtk = self
         plt = PLTools(self, self.__logger.level)
-        if self.config.enforcecrash or self.config.meid is None:
+        if self.config.enforcecrash or self.config.meid is None or not self.config.is_brom:
             self.info("We're not in bootrom, trying to crash da...")
             if mode is None:
                 for crashmode in range(0, 3):
@@ -258,7 +258,8 @@ class Mtk(metaclass=LogBase):
         return rmtk
 
     def bypass_security(self):
-        mtk = self.crasher()
+        if not self.config.is_brom:
+            mtk = self.crasher()
         plt = PLTools(mtk, self.__logger.level)
         if self.config.payloadfile is None:
             if self.config.chipconfig.loader is None:
@@ -647,8 +648,14 @@ class Main(metaclass=LogBase):
             self.close()
         else:
             # DA / FLash commands start here
+            try:
+                preloader = args.preloader
+            except:
+                preloader = None
             da_handler = DA_handler(mtk, loglevel)
+            mtk = da_handler.configure_da(mtk, preloader)
             da_handler.handle_da_cmds(mtk, cmd, args)
+
 
     def cmd_log(self, mtk, filename):
         if mtk.preloader.init():

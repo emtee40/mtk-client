@@ -510,7 +510,10 @@ class Preloader(metaclass=LogBase):
             pass
 
         if status != 0:
-            raise RuntimeError(self.eh.status(status))
+            if isinstance(status, int):
+                raise RuntimeError(self.eh.status(status))
+            else:
+                raise RuntimeError("Kamakiri2 failed :(")
 
         if mode == 0:
             data = self.mtk.port.usbread(length)
@@ -550,6 +553,8 @@ class Preloader(metaclass=LogBase):
                         return self.mtk.config.meid
                     else:
                         self.error("Error on get_meid: " + self.eh.status(status))
+            else:
+                self.config.is_brom = False
         return b""
 
     def get_socid(self):
