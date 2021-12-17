@@ -70,6 +70,8 @@ class DA_handler(metaclass=LogBase):
             return None
 
     def configure_da(self, mtk, preloader):
+        if mtk.port.cdc.connected is None or not mtk.port.cdc.connected:
+            mtk.port.cdc.connected = mtk.port.cdc.connect()
         mtk.port.cdc.connected = mtk.port.cdc.connect()
         if mtk.port.cdc.connected and os.path.exists(".state"):
             info = mtk.daloader.reinit()
