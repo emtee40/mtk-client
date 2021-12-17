@@ -258,8 +258,7 @@ class Mtk(metaclass=LogBase):
         return rmtk
 
     def bypass_security(self):
-        if not self.config.is_brom:
-            mtk = self.crasher()
+        mtk = self.crasher()
         plt = PLTools(mtk, self.__logger.level)
         if self.config.payloadfile is None:
             if self.config.chipconfig.loader is None:
