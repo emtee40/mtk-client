@@ -31,7 +31,7 @@ class ReadFlashWindow(QDialog):
         self.fullProgressText.setText("Total: (" + str(round((doneBytes / 1024 / 1024))) + "Mb / " + str(round((totalBytes / 1024 / 1024))) + " Mb)");
     def updateDumpStateAsync(self, toolkit):
         while self.dumpStatus["done"] == False:
-            print(self.dumpStatus);
+            #print(self.dumpStatus);
             time.sleep(0.1);
             try:
                 self.dumpStatus["currentPartitionSizeDone"] = os.stat(self.dumpStatus["currentPartitionFile"]).st_size;

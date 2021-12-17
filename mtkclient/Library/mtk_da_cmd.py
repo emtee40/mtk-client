@@ -39,10 +39,11 @@ class DA_handler(metaclass=LogBase):
                 time.sleep(0.15)
                 data = bytearray();
                 startidx = idx;
+                multiplier = 32;
                 while True:
                     try:
-                        data.extend(b"".join([pack("<I", val) for val in self.mtk.preloader.read32(0x200000 + idx, 4)]))
-                        idx = idx + 16;
+                        data.extend(b"".join([pack("<I", val) for val in self.mtk.preloader.read32(0x200000 + idx, (4*multiplier))]))
+                        idx = idx + (16*multiplier);
                         sys.stdout.write("\r"+str(length-(idx-startidx)))
                         sys.stdout.flush()
                         if ((idx-startidx) > length):
@@ -68,7 +69,8 @@ class DA_handler(metaclass=LogBase):
             return None
 
     def configure_da(self, mtk, preloader):
-        mtk.port.cdc.connected = mtk.port.cdc.connect()
+        if mtk.port.cdc.connected is None or not mtk.port.cdc.connected:
+            mtk.port.cdc.connected = mtk.port.cdc.connect()
         if mtk.port.cdc.connected and os.path.exists(".state"):
             info = mtk.daloader.reinit()
         else:

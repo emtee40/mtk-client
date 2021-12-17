@@ -11,8 +11,8 @@ class asyncThread(QThread):
     def run(self):
         self.function(self);
 def trap_exc_during_debug(type_, value, traceback):
-    print(print_exception(type_, value, traceback))
-    sendToLog("Error: "+str(value));
+    print(print_exception(type_, value, traceback), flush=True)
+    #sendToLog("Error: "+str(value));
     # when app raises uncaught exception, print info
     #print("OH NO")
     #print(args)
