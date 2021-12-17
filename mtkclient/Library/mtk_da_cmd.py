@@ -57,11 +57,13 @@ class DA_handler(metaclass=LogBase):
                 if idx != -1:
                     filename = data[idx + 0x1B:idx + 0x1B + 0x30].rstrip(b"\x00").decode('utf-8')
                     if preloader is not None:
-                        pfilename = os.path.join(self.mtk.pathconfig.get_loader_path(), "Preloader", filename)
-                        if not os.path.exists(pfilename):
-                            with open(pfilename, "wb") as wf:
-                                wf.write(preloader)
-                                print(f"Successfully extracted preloader for this device to: {pfilename}")
+                        if not os.path.exists(filename):
+                            try:
+                                with open(filename, "wb") as wf:
+                                    wf.write(preloader)
+                                    print(f"Successfully extracted preloader for this device to: {pfilename}")
+                            except:
+                                pass
                 return preloader
         except Exception as err:
             self.error(str(err))
