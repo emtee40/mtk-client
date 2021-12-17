@@ -363,6 +363,7 @@ class usb_class(metaclass=LogBase):
                 pass
             usb.util.dispose_resources(self.device)
             del self.device
+            time.sleep(2)
             self.connected = False
 
     def write(self, command, pktsize=None):
