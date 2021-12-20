@@ -6,11 +6,12 @@ import mock
 import logging
 
 from PyQt5.QtCore import *
-from PyQt5.QtGui import QTextOption, QPixmap
+from PyQt5.QtGui import QTextOption, QPixmap, QTransform
 from PyQt5.QtWidgets import *
 from gui.readFlashPartitions import *
 from gui.toolkit import *
 import traceback
+import math
 
 # TO do Move all GUI modifications to signals!
 
@@ -116,6 +117,11 @@ def updateGui():
         pixmap = QPixmap("gui/images/phone_connected.png").scaled(128, 128, Qt.KeepAspectRatio, Qt.SmoothTransformation);
         pixmap.setDevicePixelRatio(2.0);
         pic.setPixmap(pixmap)
+        spinnerAnim.stop()
+        spinner_pic.setHidden(True);
+    else:
+        spinnerAnim.start()
+        spinner_pic.setHidden(False);
 def openReadflashWindow(q):
     #status.setText("OH YEAH"+str(q.text()));
     readFlashWindowVal = ReadFlashWindow(w, mtkClass,da_handler,sendToLog)
@@ -186,6 +192,36 @@ if __name__ == '__main__':
     pic.resize(int(pixmap.width()/2), int(pixmap.height()/2))
     pic.move(545, 10);
     pic.show()
+
+    # phone spinner
+    spinner_pic = QLabel(w)
+    pixmap = QPixmap("gui/images/phone_loading.png").scaled(64, 64, Qt.KeepAspectRatio, Qt.SmoothTransformation);
+    pixmap.setDevicePixelRatio(2.0);
+    #trans = QTransform();
+    #trans.rotate(90);
+    spinner_pic.setPixmap(pixmap)
+    spinner_pic.resize(int(pixmap.width() / 2), int(pixmap.height() / 2))
+    spinner_pic.move(551, 25);
+    spinner_pic.show()
+    def spinnerAnimRot(angle: QVariant):
+        #print(angle);
+        trans = QTransform();
+        #trans.translate(pixmap.width()+angle / 2, pixmap.height() / 2);
+
+        #trans.translate(spinner_pic.width()/2.0 , spinner_pic.height()/2.0);
+        trans.rotate(angle)
+        newPixmap = pixmap.transformed(QTransform().rotate(angle));
+        xoffset = (newPixmap.width() - pixmap.width()) / 2;
+        yoffset = (newPixmap.height() - pixmap.height()) / 2
+        rotated = newPixmap.copy(xoffset, yoffset, pixmap.width(), pixmap.height());
+        spinner_pic.setPixmap(rotated)
+    spinnerAnim = QVariantAnimation()
+    spinnerAnim.setDuration(3000)
+    spinnerAnim.setStartValue(QVariant(0))
+    spinnerAnim.setEndValue(QVariant(360))
+    spinnerAnim.setLoopCount(-1)
+    spinnerAnim.valueChanged.connect(spinnerAnimRot)
+    spinner_pic.setHidden(True);
 
     # phone info
     phoneInfoTextbox = QLabel(w)
