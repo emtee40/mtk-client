@@ -41,8 +41,8 @@ variables.cmd = "stage"
 variables.debugmode = True
 config = mtk.Mtk_Config(loglevel=logging.INFO)
 config.gpt_settings = mtk.gpt_settings(0,0,0)  #This actually sets the right GPT settings..
-if sys.platform.startswith('darwin'):
-    config.ptype = "kamakiri" #Temp for Mac testing
+#if sys.platform.startswith('darwin'):
+#    config.ptype = "kamakiri" #Temp for Mac testing
 MtkTool = mtk.Main(variables)
 mtkClass = mtk.Mtk(config=config, loglevel=logging.INFO, guiLogger=guiLogger)
 loglevel = logging.INFO

@@ -114,6 +114,7 @@ class Kamakiri(metaclass=LogBase):
             self.da_write(payloadaddr, len(payload), payload)
             self.da_write(ptr_send, 4, pack("<I", payloadaddr), False)
         except usb.core.USBError as e:
+            print("USB CORE ERROR");
             print(e)
         return True
 

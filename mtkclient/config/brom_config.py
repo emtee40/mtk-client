@@ -1,6 +1,7 @@
 import os
 import logging
 from mtkclient.Library.utils import LogBase
+import sys
 
 class damodes:
     DEFAULT = 0
@@ -1444,7 +1445,10 @@ class Mtk_Config(metaclass=LogBase):
         self.preloader = None
         self.payloadfile = None
         self.loader = None
-        self.ptype = "kamakiri2"
+        if sys.platform.startswith('darwin'):
+            self.ptype = "kamakiri"
+        else:
+            self.ptype = "kamakiri2"
         self.generatekeys = None
         self.bmtflag = None
         self.bmtblockcount = None
