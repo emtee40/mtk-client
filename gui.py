@@ -6,7 +6,7 @@ import mock
 import logging
 
 from PyQt5.QtCore import *
-from PyQt5.QtGui import QTextOption, QPixmap, QTransform
+from PyQt5.QtGui import QTextOption, QPixmap, QTransform, QIcon
 from PyQt5.QtWidgets import *
 from gui.readFlashPartitions import *
 from gui.toolkit import *
@@ -130,6 +130,7 @@ def openReadflashWindow(q):
 if __name__ == '__main__':
     #Init the app window
     app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon('gui/images/phone_connected.png'))
     win = QMainWindow()
     addTopMargin = 20;
     if sys.platform.startswith('darwin'): #MacOS has the toolbar in the top bar insted of in the app...
