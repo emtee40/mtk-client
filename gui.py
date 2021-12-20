@@ -41,7 +41,8 @@ variables.cmd = "stage"
 variables.debugmode = True
 config = mtk.Mtk_Config(loglevel=logging.INFO)
 config.gpt_settings = mtk.gpt_settings(0,0,0)  #This actually sets the right GPT settings..
-#config.ptype = "kamakiri" #Temp for Mac testing
+if sys.platform.startswith('darwin'):
+    config.ptype = "kamakiri" #Temp for Mac testing
 MtkTool = mtk.Main(variables)
 mtkClass = mtk.Mtk(config=config, loglevel=logging.INFO, guiLogger=guiLogger)
 loglevel = logging.INFO
@@ -112,9 +113,12 @@ if __name__ == '__main__':
     #Init the app window
     app = QApplication(sys.argv)
     win = QMainWindow()
-    win.setFixedSize(600, 420);
+    addTopMargin = 20;
+    if sys.platform.startswith('darwin'): #MacOS has the toolbar in the top bar insted of in the app...
+        addTopMargin = 0;
+    win.setFixedSize(600, 400+addTopMargin);
     w = QWidget(win)
-    w.move(0,20)
+    w.move(0,addTopMargin)
 
     w.setFixedSize(600,400);
     w.setWindowTitle("MTKTools - Version 2.0 beta")
@@ -203,12 +207,12 @@ if __name__ == '__main__':
     def showDebugInfo():
         logBox.show();
         if w.frameGeometry().height() < 500:
-            win.setFixedSize(600, 720);
+            win.setFixedSize(600, 700+addTopMargin);
             w.setFixedSize(600, 700);
             debugBtn.setText("Hide debug info")
         else:
             w.setFixedSize(600, 400);
-            win.setFixedSize(600, 420);
+            win.setFixedSize(600, 400+addTopMargin);
             debugBtn.setText("Show debug info")
     #debug
     debugBtn = QPushButton(w);
