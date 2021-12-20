@@ -44,8 +44,8 @@ class DA_handler(metaclass=LogBase):
                     try:
                         data.extend(b"".join([pack("<I", val) for val in self.mtk.preloader.read32(0x200000 + idx, (4*multiplier))]))
                         idx = idx + (16*multiplier);
-                        sys.stdout.write("\r"+str(length-(idx-startidx)))
-                        sys.stdout.flush()
+                        #sys.stdout.write("\r"+str(length-(idx-startidx)))
+                        #sys.stdout.flush()
                         if ((idx-startidx) > length):
                             #done reading
                             break;

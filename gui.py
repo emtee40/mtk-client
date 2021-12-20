@@ -51,15 +51,23 @@ da_handler = DA_handler(mtkClass, loglevel)
 guiState = "welcome"
 phoneInfo = {"chipset": "", "bootMode": "", "daInit": False};
 
-def getDevInfo(self):
-    global MtkTool;
-    global mtkClass;
-    global da_handler;
+def getDevInfo(self, parameters):
+    print(parameters);
+    mtkClass = parameters[0];
+    da_handler = parameters[1];
+    phoneInfo = parameters[2];
+    #global MtkTool;
+    #global mtkClass;
+    #global da_handler;
+    #global phoneInfo;
     if mtkClass.port.cdc.connect() == False:
-        mtkClass.preloader.init()
+        try:
+            mtkClass.preloader.init()
+        except:
+            print("OH NO 1");
         # device should now be connected, get the info
-        phoneInfo['chipset'] = mtkClass.config.cpu;
-        phoneInfo['chipset'] = mtkClass.config.chipconfig.name + " (" + mtkClass.config.chipconfig.description + ")";
+        phoneInfo['chipset'] = str(mtkClass.config.cpu);
+        phoneInfo['chipset'] = str(mtkClass.config.chipconfig.name) + " (" + str(mtkClass.config.chipconfig.description) + ")";
         if (mtkClass.config.is_brom):
             phoneInfo['bootMode'] = "Bootrom mode"
         elif (mtkClass.config.chipconfig.damode):
@@ -80,7 +88,10 @@ def getDevInfo(self):
     #if mtkClass.preloader.init(): #This will be run by other commands, so.
 
     #mtkClass.port.cdc.connected = False;
-    res = da_handler.configure_da(mtkClass, preloader=None)
+    try:
+        res = da_handler.configure_da(mtkClass, preloader=None)
+    except:
+        print("OH NO 2");
     if res != False:
         phoneInfo['daInit'] = True
         self.sendUpdateSignal.emit();
@@ -96,6 +107,7 @@ def sendToLog(info):
         logBox.verticalScrollBar().setValue(logBox.verticalScrollBar().maximum())
 
 def updateGui():
+    global phoneInfo;
     phoneInfoTextbox.setText("Phone detected:\n" + phoneInfo['chipset'] + "\n" + phoneInfo['bootMode']);
     status.setText("Device detected, please wait.\nThis can take a while...")
     if phoneInfo['daInit'] == True:
@@ -171,7 +183,7 @@ if __name__ == '__main__':
     pixmap = QPixmap("gui/images/phone_notfound.png").scaled(128,128, Qt.KeepAspectRatio, Qt.SmoothTransformation);
     pixmap.setDevicePixelRatio(2.0);
     pic.setPixmap(pixmap)
-    pic.resize(pixmap.width()/2, pixmap.height()/2)
+    pic.resize(int(pixmap.width()/2), int(pixmap.height()/2))
     pic.move(545, 10);
     pic.show()
 
@@ -229,7 +241,7 @@ if __name__ == '__main__':
     win.show();
 
     #Get the device info
-    thread = asyncThread(app, 0, getDevInfo)
+    thread = asyncThread(app, 0, getDevInfo, [mtkClass,da_handler, phoneInfo])
     thread.sendToLogSignal.connect(sendToLog);
     thread.sendUpdateSignal.connect(updateGui);
     thread.start();

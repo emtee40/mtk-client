@@ -4,12 +4,13 @@ from traceback import print_exception
 class asyncThread(QThread):
     sendToLogSignal = pyqtSignal(str);
     sendUpdateSignal = pyqtSignal();
-    def __init__(self, parent, n, function):
+    def __init__(self, parent, n, function,parameters):
         super(asyncThread, self).__init__(parent)
-        self.n = n
+        #self.n = n
+        self.parameters = parameters;
         self.function = function;
     def run(self):
-        self.function(self);
+        self.function(self, self.parameters);
 def trap_exc_during_debug(type_, value, traceback):
     print(print_exception(type_, value, traceback), flush=True)
     #sendToLog("Error: "+str(value));

@@ -29,7 +29,7 @@ class ReadFlashWindow(QDialog):
 
         self.fullProgress.setValue(fullPercentageDone)
         self.fullProgressText.setText("Total: (" + str(round((doneBytes / 1024 / 1024))) + "Mb / " + str(round((totalBytes / 1024 / 1024))) + " Mb)");
-    def updateDumpStateAsync(self, toolkit):
+    def updateDumpStateAsync(self, toolkit, parameters):
         while self.dumpStatus["done"] == False:
             #print(self.dumpStatus);
             time.sleep(0.1);
@@ -46,11 +46,11 @@ class ReadFlashWindow(QDialog):
         self.startBtn.setEnabled(False);
         self.dumpFolder = str(QFileDialog.getExistingDirectory(self, "Select output directory"))
         #self.startBtn.setText("In progress..")
-        thread = asyncThread(self, 0, self.dumpPartitionAsync)
+        thread = asyncThread(self, 0, self.dumpPartitionAsync, [])
         thread.sendToLogSignal.connect(self.sendToLog);
         thread.sendUpdateSignal.connect(self.updateDumpState);
         thread.start();
-    def dumpPartitionAsync(self, toolkit):
+    def dumpPartitionAsync(self, toolkit, parameters):
         #global MtkTool;
         #global mtkClass;
         self.sendToLogSignal = toolkit.sendToLogSignal;
@@ -60,7 +60,7 @@ class ReadFlashWindow(QDialog):
         #filename = args.filename
         #print(self.partitionCheckboxes);
         self.dumpStatus["done"] = False;
-        thread = asyncThread(self, 0, self.updateDumpStateAsync)
+        thread = asyncThread(self, 0, self.updateDumpStateAsync, [])
         thread.sendUpdateSignal.connect(self.updateDumpState);
         thread.start();
         #calculate total bytes
