@@ -5,6 +5,7 @@ from mtkclient.Library.mtk_da_cmd import DA_handler
 import mock
 import logging
 
+import ctypes
 from PyQt5.QtCore import *
 from PyQt5.QtGui import QTextOption, QPixmap, QTransform, QIcon
 from PyQt5.QtWidgets import *
@@ -140,10 +141,13 @@ if __name__ == '__main__':
     win = QMainWindow()
     icon = QIcon();
     icon.addFile('gui/images/logo_256.png', QSize(256,256))
+    icon.addFile('gui/images/logo_256.png', QSize(128, 128))
     icon.addFile('gui/images/logo_512.png', QSize(512, 512))
     app.setWindowIcon(icon)
     win.setWindowIcon(icon)
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('MTKTools.Gui')
     app.setAttribute(Qt.AA_UseHighDpiPixmaps)
+    dpiMultiplier = win.logicalDpiX()/96;
     addTopMargin = 20;
     if sys.platform.startswith('darwin'): #MacOS has the toolbar in the top bar insted of in the app...
         addTopMargin = 0;
@@ -152,7 +156,7 @@ if __name__ == '__main__':
     w.move(0,addTopMargin)
 
     w.setFixedSize(600,400);
-    w.setWindowTitle("MTKTools - Version 2.0 beta")
+    win.setWindowTitle("MTKClient - Version 2.0 beta")
     #lay = QVBoxLayout(self)
 
     #Menubar
@@ -252,10 +256,10 @@ if __name__ == '__main__':
 
     # logo
     pic = QLabel(w)
-    pixmap = QPixmap("gui/images/logo_512.png").scaled(256, 256, Qt.KeepAspectRatio, Qt.SmoothTransformation);
-    pixmap.setDevicePixelRatio(2.0);
+    pixmap = QPixmap("gui/images/logo_512.png").scaled(int(128*dpiMultiplier), int(128*dpiMultiplier), Qt.KeepAspectRatio, Qt.SmoothTransformation);
+    pixmap.setDevicePixelRatio(dpiMultiplier);
     pic.setPixmap(pixmap)
-    pic.resize(int(pixmap.width() / 2), int(pixmap.height() / 2))
+    pic.resize(int(pixmap.width() / dpiMultiplier), int(pixmap.height() / dpiMultiplier))
     pic.move(10, 130);
     pic.show()
 
@@ -303,8 +307,6 @@ if __name__ == '__main__':
     thread.sendToLogSignal.connect(sendToLog);
     thread.sendUpdateSignal.connect(updateGui);
     thread.start();
-
-    #showDebugInfo();  # temp
 
     #Run loop the app
     app.exec();
