@@ -95,10 +95,10 @@ def getDevInfo(self, parameters):
     #if mtkClass.preloader.init(): #This will be run by other commands, so.
 
     #mtkClass.port.cdc.connected = False;
-    try:
-        res = da_handler.configure_da(mtkClass, preloader=None)
-    except:
-        print("OH NO 2");
+    #try:
+    res = da_handler.configure_da(mtkClass, preloader=None)
+    #except:
+    #    print("OH NO 2");
     if res != False:
         phoneInfo['daInit'] = True
         self.sendUpdateSignal.emit();
@@ -261,13 +261,13 @@ if __name__ == '__main__':
     line.setFrameShadow(QFrame.Sunken)
 
     # logo
-    pic = QLabel(w)
-    pixmap = QPixmap("gui/images/logo_512.png").scaled(int(128*dpiMultiplier), int(128*dpiMultiplier), Qt.KeepAspectRatio, Qt.SmoothTransformation);
-    pixmap.setDevicePixelRatio(dpiMultiplier);
-    pic.setPixmap(pixmap)
-    pic.resize(int(pixmap.width() / dpiMultiplier), int(pixmap.height() / dpiMultiplier))
-    pic.move(10, 130);
-    pic.show()
+    logoPic = QLabel(w)
+    logoPixmap = QPixmap("gui/images/logo_512.png").scaled(int(128*dpiMultiplier), int(128*dpiMultiplier), Qt.KeepAspectRatio, Qt.SmoothTransformation);
+    logoPixmap.setDevicePixelRatio(dpiMultiplier);
+    logoPic.setPixmap(logoPixmap)
+    logoPic.resize(int(logoPixmap.width() / dpiMultiplier), int(logoPixmap.height() / dpiMultiplier))
+    logoPic.move(10, 130);
+    logoPic.show()
 
     #Copyright info
     copyrightInfo = QLabel(w)
