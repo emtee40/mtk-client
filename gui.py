@@ -140,14 +140,20 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     win = QMainWindow()
     icon = QIcon();
+    icon.addFile('gui/images/logo_32.png', QSize(32, 32))
+    icon.addFile('gui/images/logo_64.png', QSize(64, 64))
     icon.addFile('gui/images/logo_256.png', QSize(256,256))
-    icon.addFile('gui/images/logo_256.png', QSize(128, 128))
     icon.addFile('gui/images/logo_512.png', QSize(512, 512))
     app.setWindowIcon(icon)
     win.setWindowIcon(icon)
-    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('MTKTools.Gui')
+    if sys.platform.startswith('win'):
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('MTKTools.Gui')
     app.setAttribute(Qt.AA_UseHighDpiPixmaps)
-    dpiMultiplier = win.logicalDpiX()/96;
+    dpiMultiplier = win.logicalDpiX();
+    if dpiMultiplier == 72:
+        dpiMultiplier = 2;
+    else:
+        dpiMultiplier = 1;
     addTopMargin = 20;
     if sys.platform.startswith('darwin'): #MacOS has the toolbar in the top bar insted of in the app...
         addTopMargin = 0;
