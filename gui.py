@@ -10,6 +10,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import QTextOption, QPixmap, QTransform, QIcon
 from PyQt5.QtWidgets import *
 from gui.readFlashPartitions import *
+from gui.toolsMenu import *
 from gui.toolkit import *
 import traceback
 import math
@@ -144,6 +145,12 @@ def openReadflashWindow(q):
     readFlashWindowVal = ReadFlashWindow(w, mtkClass,da_handler,sendToLog)
     #w.close();
 
+def openToolsMenu(q):
+    #status.setText("OH YEAH"+str(q.text()));
+    if (q.text() == "Generate RPMB keys"):
+        readFlashWindowVal = generateKeysMenu(w, mtkClass,da_handler,sendToLog)
+    #w.close();
+
 if __name__ == '__main__':
     #Init the app window
     app = QApplication(sys.argv)
@@ -194,6 +201,11 @@ if __name__ == '__main__':
     eraseFlashMenu = menuBar.addMenu("&Erase Flash")
     eraseFlashMenu.addAction("Erase partition(s)")
     eraseFlashMenu.addAction("Erase bootsectors")
+
+    toolsFlashMenu = menuBar.addMenu("&Tools")
+    toolsFlashMenu.addAction("Read RPMB")
+    toolsFlashMenu.triggered[QAction].connect(openToolsMenu)
+    toolsFlashMenu.addAction("Generate RPMB keys")
     menuBar.show();
 
     #titles
