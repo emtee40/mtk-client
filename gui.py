@@ -174,7 +174,7 @@ if __name__ == '__main__':
 
     #titles
     title = QLabel(w)
-    title.setText("MTKTools v2.0");
+    title.setText("MTKClient v2.0");
     title.setGeometry(10,0,480,40);
     title.setStyleSheet("font-size: 17px;");
     title.show();
@@ -241,9 +241,18 @@ if __name__ == '__main__':
 
     #Line
     line = QFrame(w)
-    line.setGeometry(QRect(10, 105, 580, 20))
+    line.setGeometry(QRect(10, 108, 580, 20))
     line.setFrameShape(QFrame.HLine)
     line.setFrameShadow(QFrame.Sunken)
+
+    # logo
+    pic = QLabel(w)
+    pixmap = QPixmap("gui/images/logo_512.png").scaled(256, 256, Qt.KeepAspectRatio, Qt.SmoothTransformation);
+    pixmap.setDevicePixelRatio(2.0);
+    pic.setPixmap(pixmap)
+    pic.resize(int(pixmap.width() / 2), int(pixmap.height() / 2))
+    pic.move(10, 130);
+    pic.show()
 
     #Copyright info
     copyrightInfo = QLabel(w)
@@ -255,7 +264,7 @@ if __name__ == '__main__':
                    "linecode exploit [chimera]\n" +
                    "Chaosmaster\n" +
                    "and all contributers");
-    copyrightInfo.setGeometry(10, 125, 405, 256);
+    copyrightInfo.setGeometry(150, 135, 405, 256);
     copyrightInfo.setWordWrap(True);
     copyrightInfo.setStyleSheet("font-size: 12px; color: #333; vertical-align: top;");
     copyrightInfo.show();
