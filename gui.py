@@ -137,7 +137,8 @@ def openReadflashWindow(q):
 if __name__ == '__main__':
     #Init the app window
     app = QApplication(sys.argv)
-    app.setWindowIcon(QIcon('gui/images/logo_512.png'))
+    app.setWindowIcon(QIcon('gui/images/logo_256.png'))
+    app.setAttribute(Qt.AA_UseHighDpiPixmaps)
     win = QMainWindow()
     addTopMargin = 20;
     if sys.platform.startswith('darwin'): #MacOS has the toolbar in the top bar insted of in the app...
