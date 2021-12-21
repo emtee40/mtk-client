@@ -93,7 +93,9 @@ class ArgHandler(metaclass=LogBase):
             pass
         try:
             if args.preloader is not None:
-                config.preloader = args.preloader
+                if os.path.exists(args.preloader):
+                    config.preloader_filename = args.preloader
+                    config.preloader = open(config.preloader_filename,"rb").read()
         except AttributeError:
             pass
         try:
@@ -234,7 +236,7 @@ class Mtk(metaclass=LogBase):
     def crasher(self, display=True, mode=None):
         rmtk = self
         plt = PLTools(self, self.__logger.level)
-        if self.config.enforcecrash or self.config.meid is None:
+        if self.config.enforcecrash or self.config.meid is None or not self.config.is_brom:
             self.info("We're not in bootrom, trying to crash da...")
             if mode is None:
                 for crashmode in range(0, 3):
@@ -270,10 +272,6 @@ class Mtk(metaclass=LogBase):
                                                        self.config.chipconfig.loader)
         if plt.runpayload(filename=self.config.payloadfile):
             mtk.port.run_handshake()
-            # mtk.port.close()
-            # mtk = Mtk(loader=args.loader, loglevel=self.__logger.level, vid=vid, pid=pid,
-            #          interface=interface, args=args)
-            # mtk.preloader.init(args=args, readsocid=readsocid)
             return mtk
         else:
             self.error("Error on running kamakiri payload")
@@ -404,7 +402,8 @@ class Main(metaclass=LogBase):
                         if mtk.preloader.jump_da(daaddr):
                             self.info(f"Jumped to pl {hex(daaddr)}.")
                             time.sleep(2)
-                            mtk = Mtk(loglevel=self.__logger.level)
+                            config = Mtk_Config(loglevel=self.__logger.level)
+                            mtk = Mtk(loglevel=self.__logger.level, config=config)
                             res = mtk.preloader.init()
                             if not res:
                                 self.error("Error on loading preloader")
@@ -420,7 +419,7 @@ class Main(metaclass=LogBase):
             dwords = length // 4
             if length % 4:
                 dwords += 1
-            if filename != "":
+            if filename != None:
                 wf = open(filename, "wb")
             sdata = b""
             print_progress(0, 100, prefix='Progress:',
@@ -547,16 +546,14 @@ class Main(metaclass=LogBase):
                 self.info("Connected to device, loading")
             else:
                 self.error("Couldn't connect to device, aborting.")
-            if mtk.config.preloader is not None:
-                filename = mtk.config.preloader
             if mtk.config.is_brom and mtk.config.preloader is None:
                 self.warning("PL stage needs preloader, please use --preloader option. " +
                              "Trying to dump preloader from ram.")
                 plt = PLTools(mtk=mtk, loglevel=self.__logger.level)
                 dadata, filename = plt.run_dump_preloader(self.args.ptype)
                 mtk.config.preloader = mtk.patch_preloader_security(dadata)
-            if mtk.config.preloader is not None:
-                self.info("Using custom preloader : " + filename)
+            if mtk.config.preloader_filename is not None:
+                self.info("Using custom preloader : " + mtk.config.preloader_filename)
                 daaddr, dadata = mtk.parse_preloader(mtk.config.preloader)
                 mtk.config.preloader = mtk.patch_preloader_security(dadata)
                 if mtk.preloader.send_da(daaddr, len(dadata), 0x100, dadata):
@@ -653,8 +650,14 @@ class Main(metaclass=LogBase):
             self.close()
         else:
             # DA / FLash commands start here
+            try:
+                preloader = args.preloader
+            except:
+                preloader = None
             da_handler = DA_handler(mtk, loglevel)
+            mtk = da_handler.configure_da(mtk, preloader)
             da_handler.handle_da_cmds(mtk, cmd, args)
+
 
     def cmd_log(self, mtk, filename):
         if mtk.preloader.init():
@@ -775,11 +778,17 @@ if __name__ == '__main__':
     parser_da = subparsers.add_parser("da", help="Run da special commands")
     da_cmds = parser_da.add_subparsers(dest='subcmd', help='Commands: peek poke keys unlock')
     da_peek = da_cmds.add_parser("peek", help="Read memory")
+    da_peek.add_argument('--preloader', help='Set the preloader filename for dram config')
     da_poke = da_cmds.add_parser("poke", help="Write memory")
+    da_poke.add_argument('--preloader', help='Set the preloader filename for dram config')
     da_keys = da_cmds.add_parser("generatekeys", help="Generate keys")
+    da_keys.add_argument('--preloader', help='Set the preloader filename for dram config')
     da_unlock = da_cmds.add_parser("seccfg", help="Unlock device / Configure seccfg")
+    da_unlock.add_argument('--preloader', help='Set the preloader filename for dram config')
     da_rpmb = da_cmds.add_parser("rpmb", help="RPMB Tools")
+    da_rpmb.add_argument('--preloader', help='Set the preloader filename for dram config')
     da_meta = da_cmds.add_parser("meta", help="MetaMode Tools")
+    da_meta.add_argument('--preloader', help='Set the preloader filename for dram config')
 
     da_meta.add_argument("metamode", type=str, help="metamode to use [off,usb,uart]")
 
@@ -788,7 +797,9 @@ if __name__ == '__main__':
     da_rpmb_r.add_argument('--filename', type=str, help="Filename to write data into")
 
     da_rpmb_w = da_rpmb_cmds.add_parser("w", help="Write rpmb")
-    da_rpmb_w.add_argument('--filename', type=str, help="Filename to write from")
+    da_rpmb_w.add_argument('filename', type=str, help="Filename to write from")
+
+    da_rpmb_e = da_rpmb_cmds.add_parser("e", help="Erase rpmb")
 
     da_peek.add_argument('address', type=str, help="Address to read from (hex value)")
     da_peek.add_argument('length', type=str, help="Length to read")
@@ -1305,6 +1316,7 @@ if __name__ == '__main__':
                                   '("amonet","kamakiri","kamakiri2", kamakiri2/da used by default)')
     parser_peek.add_argument('--crash', help='Enforce crash if device is in pl mode to enter brom mode')
     parser_peek.add_argument('--socid', help='Read Soc ID')
+    parser_peek.add_argument('--preloader', help='Set the preloader filename for dram config')
 
     parser_stage.add_argument('--payload', type=str, help='Payload filename (optional)')
     parser_stage.add_argument('--stage2', help='Set stage2 filename')

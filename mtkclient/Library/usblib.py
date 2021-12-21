@@ -581,6 +581,7 @@ class scsi:
     def connect(self):
         self.usb = usb_class(loglevel=self.loglevel, portconfig=[self.vid, self.pid, self.interface], devclass=8)
         if self.usb.connect():
+            self.usb.connected = True
             return True
         return False
 

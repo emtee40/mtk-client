@@ -187,9 +187,13 @@ class DAconfig(metaclass=LogBase):
                 with open(preloader, "rb") as rf:
                     data = rf.read()
             else:
-                assert "Preloader :" + preloader + " doesn't exist. Aborting."
+                self.error("Preloader : " + preloader + " doesn't exist. Aborting.")
                 exit(1)
-        self.emiver, self.emi = self.m_extract_emi(data)
+        try:
+            self.emiver, self.emi = self.m_extract_emi(data)
+        except:
+            self.emiver = 0
+            self.emi = None
 
     def parse_da_loader(self, loader):
         try:

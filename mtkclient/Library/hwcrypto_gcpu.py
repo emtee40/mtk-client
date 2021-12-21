@@ -172,7 +172,7 @@ def to_dwords(data) -> list:
     if len(data) % 4 != 0:
         data += b"\x00" * (4 - len(data) % 4)
     for i in range(0, len(data), 4):
-        res.append(unpack("<I", data[i:i + 4]))
+        res.append(unpack("<I", data[i:i + 4])[0])
     return res
 
 
@@ -226,9 +226,9 @@ class GCpu(metaclass=LogBase):
     def uninit(self):
         self.reg.GCPU_REG_CTL = (self.reg.GCPU_REG_CTL & 0xfffffff0) | 0xf
 
-    def mem_read(self, addr: int, count: int):
+    def mem_read(self, addr: int, length: int):
         self.reg.GCPU_REG_MEM_ADDR = addr
-        return [pack("<I", self.reg.GCPU_REG_MEM_DATA) for _ in range(count)]
+        return b"".join([pack("<I", self.reg.GCPU_REG_MEM_DATA+i*4) for i in range(length//4)])
 
     def mem_write(self, addr: int, data):
         if isinstance(data, bytes) or isinstance(data, bytearray):
@@ -261,15 +261,18 @@ class GCpu(metaclass=LogBase):
             yield register, self.read_reg(register)
 
     def memptr_set(self, offset, data):
-        if isinstance(data, bytes) or isinstance(data, bytearray):
-            data = to_dwords(data)
-        for i in range(0, 16, 4):
-            self.write32(self.gcpu_base + regval["GCPU_REG_MEM_CMD"] + i + (offset * 4), data[i])
+        if self.gcpu_base is not None:
+            if isinstance(data, bytes) or isinstance(data, bytearray):
+                data = to_dwords(data)
+            pos = 0
+            for dw in data:
+                self.write32(self.gcpu_base + regval["GCPU_REG_MEM_CMD"] + pos + (offset * 4), dw)
+                pos += 4
 
     def memptr_get(self, offset, length):
         data = bytearray()
         for i in range(0, length, 4):
-            data.extend(self.read32(pack("<I", self.gcpu_base + regval["GCPU_REG_MEM_CMD"] + i + (offset * 4))))
+            data.extend(pack("<I", self.read32(self.gcpu_base + regval["GCPU_REG_MEM_CMD"] + i + (offset * 4))))
         return data
 
     def print_regs(self):
@@ -312,7 +315,7 @@ class GCpu(metaclass=LogBase):
     def set_mode_cmd(self, encrypt=False, mode="cbc", encryptedkey=True):
         cmd = AESPK_EK_DCBC
         if encrypt:
-            if mode == "ebc":
+            if mode == "ecb":
                 if encryptedkey:
                     cmd = AESPK_EK_E  # 0x77
                 else:
@@ -323,7 +326,7 @@ class GCpu(metaclass=LogBase):
                 else:
                     cmd = AESPK_ECBC  # 0x7D
         else:
-            if mode == "ebc":
+            if mode == "ecb":
                 if encryptedkey:
                     cmd = AESPK_EK_D  # 0x76
                 else:
@@ -345,8 +348,9 @@ class GCpu(metaclass=LogBase):
 
     # "6c38d88958fd0cf51efd9debe8c265a5" for sloane, tiger (doesn't really matter)
     def aes_setup_cbc(self, addr, data, iv=None, encrypt=False):
-        keyslot = 18
-        ivslot = 26
+        keyslot = 0x12
+        seedslot = 0x16
+        ivslot = 0x1A
         if iv is None:
             iv = "4dd12bdf0ec7d26c482490b3482a1b1f"
         if len(data) != 16:
@@ -360,7 +364,7 @@ class GCpu(metaclass=LogBase):
             words.append(word ^ pat)
         # GCPU_SECURESLOT_PTR = self.gcpu.GCPU_REG_MEM_CMD + Slot_Addr
         self.write32(self.gcpu_base + regval["GCPU_REG_MEM_CMD"] + keyslot * 4, [0, 0, 0, 0])  # Aes Key
-        self.write32(self.gcpu_base + regval["GCPU_REG_MEM_CMD"] + 22 * 4, [0, 0, 0, 0])
+        self.write32(self.gcpu_base + regval["GCPU_REG_MEM_CMD"] + seedslot * 4, [0, 0, 0, 0])
         self.write32(self.gcpu_base + regval["GCPU_REG_MEM_CMD"] + ivslot * 4, [0, 0, 0, 0, 0, 0, 0, 0])  # IV Clr
         self.write32(self.gcpu_base + regval["GCPU_REG_MEM_CMD"] + ivslot * 4, words)  # IV Set
 
@@ -370,14 +374,48 @@ class GCpu(metaclass=LogBase):
         # src to VALID address which has all zeroes (otherwise, update pattern)
         return self.aes_cbc(encrypt=encrypt, src=src, dst=addr, length=16, keyslot=keyslot, ivslot=ivslot)
 
-    def aes_read_ebc(self, data, encrypt=False, src=0x12, dst=0x1a, keyslot=0x30):
+    def readmem(self,addr,length):
+        if length//4==0:
+            return pack("<I",self.read32(addr,length//4))
+        return b"".join([pack("<I",val) for val in self.read32(addr,length//4)])
+
+    def mtk_gcpu_decrypt_mtee_img(self, data, seed):
+        src = 0x68000000
+        dst = 0x68000000
+        data=data[:0x200]
+        self.write32(src,to_dwords(data))
+        aeskey1=bytes.fromhex("A5DA42C3B4F6C5BAE162C568ADBD2605")
+        aeskey2=bytes.fromhex("5572247C05586BAA37818D2868949ADB")
+        # aeskey3=bytes.fromhex("9C4DEE58E7C7AFD090D8951035F84BEB")
+        self.memptr_set(0x12, aeskey1)
+        self.memptr_set(0x16, seed[:0x10])
+        self.reg.GCPU_REG_MEM_P1 = 0x12
+        self.reg.GCPU_REG_MEM_P0 = 1
+        self.reg.GCPU_REG_MEM_P2 = 0x16
+        self.reg.GCPU_REG_MEM_P3 = 0x1A
+        self.cmd(AESPK_D) # 0x78
+        out=bytearray()
+        for i in range(4):
+            val=unpack("<I",seed[0x10+(i*4):0x10+(i*4)+4])[0]
+            out.extend(pack("<I",unpack("<I",aeskey2[i*4:(i*4)+4])[0]^val))
+        self.memptr_set(0x12, out)
+        self.reg.GCPU_REG_MEM_P0 = src
+        self.reg.GCPU_REG_MEM_P1 = dst
+        self.reg.GCPU_REG_MEM_P2 = len(data)>>4
+        self.reg.GCPU_REG_MEM_P3 = 0x1A
+        self.reg.GCPU_REG_MEM_P4 = 0x1A
+        self.cmd(AESPK_EK_DCBC)  # 0x7E
+        rdata=self.readmem(dst,len(data))
+        return rdata
+
+    def aes_read_ecb(self, data, encrypt=False, src=0x12, dst=0x1a, keyslot=0x30):
         if self.load_hw_key(0x30):
             self.memptr_set(src, data)
             if encrypt:
-                if not self.aes_encrypt_ebc(keyslot, src, dst):
+                if not self.aes_encrypt_ecb(keyslot, src, dst):
                     return self.memptr_get(dst, 16)
             else:
-                if not self.aes_decrypt_ebc(keyslot, src, dst):
+                if not self.aes_decrypt_ecb(keyslot, src, dst):
                     return self.memptr_get(dst, 16)
 
     def aes_cbc(self, encrypt, src, dst, length=16, keyslot=18, ivslot=26):
@@ -394,20 +432,20 @@ class GCpu(metaclass=LogBase):
         if self.set_mode_cmd(encrypt=encrypt, mode="cbc", encryptedkey=True) != 0:  # aes decrypt
             raise RuntimeError("failed to call the function!")
 
-    def aes_decrypt_ebc(self, key_offset, data_offset, out_offset):
+    def aes_decrypt_ecb(self, key_offset, data_offset, out_offset):
         self.reg.GCPU_REG_MEM_P0 = 1
         self.reg.GCPU_REG_MEM_P1 = key_offset
         self.reg.GCPU_REG_MEM_P2 = data_offset
         self.reg.GCPU_REG_MEM_P3 = out_offset
-        if self.set_mode_cmd(encrypt=False, mode="ebc", encryptedkey=False) != 0:
+        if self.set_mode_cmd(encrypt=False, mode="ecb", encryptedkey=False) != 0:
             raise Exception("failed to call the function!")
 
-    def aes_encrypt_ebc(self, key_offset, data_offset, out_offset):
-        self.reg.GCPU_REG_MEM_P0 = 1
+    def aes_encrypt_ecb(self, key_offset, data_offset, out_offset):
+        self.reg.GCPU_REG_MEM_P0 = 0
         self.reg.GCPU_REG_MEM_P1 = key_offset
         self.reg.GCPU_REG_MEM_P2 = data_offset
         self.reg.GCPU_REG_MEM_P3 = out_offset
-        if self.set_mode_cmd(encrypt=True, mode="ebc", encryptedkey=False) != 0:
+        if self.set_mode_cmd(encrypt=False, mode="ecb", encryptedkey=False) != 0:
             raise Exception("failed to call the function!")
 
     def load_hw_key(self, offset):
@@ -439,7 +477,7 @@ class GCpu(metaclass=LogBase):
         self.init()
         if not self.load_hw_key(0x30):
             self.memptr_set(0x12, seed)
-            if not self.aes_decrypt_ebc(0x30, 0x12, 0x1a):
+            if not self.aes_decrypt_ecb(0x30, 0x12, 0x1a):
                 dev_key = self.memptr_get(0x1a, 16)
                 self.info("scrambled key: " + hexlify(dev_key[:0x10]).decode('utf-8'))
             else:

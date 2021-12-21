@@ -9,7 +9,7 @@ from struct import unpack, pack
 from binascii import hexlify
 from mtkclient.Library.utils import LogBase, logsetup
 from mtkclient.Library.error import ErrorHandler
-from mtkclient.Library.settings import writesetting
+from mtkclient.Library.settings import hwparam
 
 def calc_xflash_checksum(data):
     checksum = 0
@@ -126,22 +126,12 @@ class Preloader(metaclass=LogBase):
         self.usbwrite = self.mtk.port.usbwrite
         self.echo = self.mtk.port.echo
         self.sendcmd = self.mtk.port.mtk_cmd
+        self.hwparam = None
 
     def init(self, maxtries=None, display=True):
         if os.path.exists(".state"):
             try:
                 os.remove(".state")
-            except:
-                pass
-        settings=os.path.join("logs","hwparam.json")
-        if os.path.exists(settings):
-            try:
-                os.remove(settings)
-            except:
-                pass
-        if os.path.exists("logs"):
-            try:
-                shutil.rmtree("logs")
             except:
                 pass
         readsocid=self.config.readsocid
@@ -192,7 +182,6 @@ class Preloader(metaclass=LogBase):
             self.setreg_disablewatchdogtimer(self.config.hwcode)  # D4
         if self.display:
             self.info("HW code:\t\t\t" + hex(self.config.hwcode))
-            writesetting("hwcode",hex(self.config.hwcode))
         self.config.target_config = self.get_target_config(self.display)
         self.info("Get Target info")
         self.get_blver()
@@ -209,16 +198,19 @@ class Preloader(metaclass=LogBase):
             self.info("\tHW subcode:\t\t" + hex(self.config.hwsubcode))
             self.info("\tHW Ver:\t\t\t" + hex(self.config.hwver))
             self.info("\tSW Ver:\t\t\t" + hex(self.config.swver))
-        meid = self.get_meid()
-        if len(meid) >= 16:
-            writesetting("meid", hexlify(meid).decode('utf-8'))
-        if meid != b"":
+        self.config.meid = self.get_meid()
+        if len(self.config.meid) >= 16:
+            self.hwparam = hwparam(hexlify(self.config.meid).decode('utf-8'))
+            self.hwparam.writesetting("meid",hexlify(self.config.meid).decode('utf-8'))
+            self.hwparam.writesetting("hwcode",hex(self.config.hwcode))
+        if self.config.meid != b"":
             if self.display:
-                self.info("ME_ID:\t\t\t" + hexlify(meid).decode('utf-8').upper())
+                self.info("ME_ID:\t\t\t" + hexlify(self.config.meid).decode('utf-8').upper())
             if readsocid or self.config.chipconfig.socid_addr:
                 socid = self.get_socid()
                 if len(socid) >= 16:
-                    writesetting("socid", hexlify(socid).decode('utf-8'))
+                    if self.hwparam is not None:
+                        self.hwparam.writesetting("socid", hexlify(socid).decode('utf-8'))
                 if self.display:
                     if socid != b"":
                         self.info("SOC_ID:\t\t\t" + hexlify(socid).decode('utf-8').upper())
@@ -520,7 +512,10 @@ class Preloader(metaclass=LogBase):
             pass
 
         if status != 0:
-            raise RuntimeError(self.eh.status(status))
+            if isinstance(status, int):
+                raise RuntimeError(self.eh.status(status))
+            else:
+                raise RuntimeError("Kamakiri2 failed :(")
 
         if mode == 0:
             data = self.mtk.port.usbread(length)
@@ -560,6 +555,8 @@ class Preloader(metaclass=LogBase):
                         return self.mtk.config.meid
                     else:
                         self.error("Error on get_meid: " + self.eh.status(status))
+            else:
+                self.config.is_brom = False
         return b""
 
     def get_socid(self):

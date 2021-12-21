@@ -50,7 +50,7 @@ class DA_handler(metaclass=LogBase):
                             #done reading
                             break;
                     except Exception as err:
-                        self.exception(str(err))
+                        self.error(str(err))
                         break;
                 data = bytes(data);
                 preloader = data[:length]
@@ -58,11 +58,13 @@ class DA_handler(metaclass=LogBase):
                 if idx != -1:
                     filename = data[idx + 0x1B:idx + 0x1B + 0x30].rstrip(b"\x00").decode('utf-8')
                     if preloader is not None:
-                        pfilename = os.path.join(self.mtk.pathconfig.get_loader_path(), "Preloader", filename)
-                        if not os.path.exists(pfilename):
-                            with open(pfilename, "wb") as wf:
-                                wf.write(preloader)
-                                print(f"Successfully extracted preloader for this device to: {pfilename}")
+                        if not os.path.exists(filename):
+                            try:
+                                with open(filename, "wb") as wf:
+                                    wf.write(preloader)
+                                    print(f"Successfully extracted preloader for this device to: {pfilename}")
+                            except:
+                                pass
                 return preloader
         except Exception as err:
             self.error(str(err))
@@ -70,36 +72,40 @@ class DA_handler(metaclass=LogBase):
 
     def configure_da(self, mtk, preloader):
         if mtk.port.cdc.connected is None or not mtk.port.cdc.connected:
-            mtk.port.cdc.connected = mtk.port.cdc.connect()
-        if mtk.port.cdc.connected and os.path.exists(".state"):
-            info = mtk.daloader.reinit()
+            mtk.preloader.init()
         else:
-            if (hasattr(mtk.port.config, "socid") and mtk.port.config.socid != b"") or mtk.preloader.init(): #at least for now making it possible to continue without re-init
-                if mtk.config.target_config["daa"]:
-                    mtk = mtk.bypass_security()
-                    self.info("Device is protected.")
-                    if mtk is not None:
-                        if mtk.config.is_brom:
-                            self.info("Device is in BROM mode. Trying to dump preloader.")
-                            if preloader is None:
-                                preloader = self.dump_preloader_ram()
-                else:
-                    self.info("Device is unprotected.")
-                    if mtk.config.is_brom:
-                        mtk = mtk.bypass_security()  # Needed for dumping preloader
+            if mtk.port.cdc.connected and os.path.exists(".state"):
+                info = mtk.daloader.reinit()
+                return mtk
+        if mtk.config.target_config["daa"]:
+            mtk = mtk.bypass_security()
+            self.mtk = mtk
+            self.info("Device is protected.")
+            if mtk is not None:
+                if mtk.config.is_brom:
+                    self.info("Device is in BROM mode. Trying to dump preloader.")
+                    if preloader is None:
+                        preloader = self.dump_preloader_ram()
+        else:
+            self.info("Device is unprotected.")
+            if mtk.config.is_brom:
+                mtk = mtk.bypass_security()  # Needed for dumping preloader
+                if mtk is not None:
+                    self.mtk = mtk
+                    if preloader is None:
+                        self.warning(
+                            "Device is in BROM mode. No preloader given, trying to dump preloader from ram.")
+                        preloader = self.dump_preloader_ram()
                         if preloader is None:
-                            self.warning(
-                                "Device is in BROM mode. No preloader given, trying to dump preloader from ram.")
-                            preloader = self.dump_preloader_ram()
-                            if preloader is None:
-                                self.error("Failed to dump preloader from ram.")
-                if not mtk.daloader.upload_da(preloader=preloader):
-                    self.error("Error uploading da")
-                    return False
-                else:
-                    mtk.daloader.writestate()
-            else:
-                return False
+                            self.error("Failed to dump preloader from ram.")
+        if not mtk.daloader.upload_da(preloader=preloader):
+            self.error("Error uploading da")
+            return None
+        else:
+            mtk.daloader.writestate()
+            return mtk
+
+
 
     def da_gpt(self, directory:str):
         if directory is None:
@@ -506,12 +512,6 @@ class DA_handler(metaclass=LogBase):
             self.info(f"Successfully wrote data to {hex(addr)}, length {hex(len(data))}")
 
     def handle_da_cmds(self, mtk, cmd: str, args):
-        try:
-            preloader = args.preloader
-        except:
-            preloader = None
-        self.configure_da(mtk, preloader)
-
         if cmd == "gpt":
             directory = args.directory
             self.da_gpt(directory=directory)
@@ -657,6 +657,8 @@ class DA_handler(metaclass=LogBase):
                     mtk.daloader.read_rpmb(args.filename)
                 elif rpmb_subcmd == "w":
                     mtk.daloader.write_rpmb(args.filename)
+                elif rpmb_subcmd == "e":
+                    mtk.daloader.erase_rpmb()
             elif subcmd == "meta":
                 metamode = args.metamode
                 if metamode is None:

@@ -7,7 +7,7 @@ import os
 import hashlib
 from binascii import hexlify
 from struct import pack, unpack
-from mtkclient.Library.settings import writesetting
+from mtkclient.Library.settings import hwparam
 from mtkclient.Library.utils import LogBase, progress, logsetup
 from mtkclient.Library.error import ErrorHandler
 from mtkclient.Library.daconfig import EMMC_PartitionType, UFS_PartitionType, DaStorage
@@ -153,6 +153,7 @@ class DAXFlash(metaclass=LogBase):
         self.partition = Partition(self.mtk, self.readflash, self.read_pmt, loglevel)
         self.progress = progress(self.daconfig.pagesize)
         self.pathconfig = pathconfig()
+        self.hwparam = hwparam(self.mtk.config.meid)
         self.patch = False
         self.generatekeys = self.mtk.config.generatekeys
         if self.generatekeys:
@@ -559,7 +560,7 @@ class DAXFlash(metaclass=LogBase):
                 except:
                     pass
                 self.info(f"EMMC CID:        {hexlify(emmc.cid).decode('utf-8')}")
-                writesetting("cid", hexlify(emmc.cid).decode('utf-8'))
+                self.hwparam.writesetting("cid", hexlify(emmc.cid).decode('utf-8'))
                 self.info(f"EMMC Boot1 Size: {hex(emmc.boot1_size)}")
                 self.info(f"EMMC Boot2 Size: {hex(emmc.boot2_size)}")
                 self.info(f"EMMC GP1 Size:   {hex(emmc.gp1_size)}")
@@ -663,7 +664,7 @@ class DAXFlash(metaclass=LogBase):
                     except:
                         pass
                     self.info(f"UFS CID:      {hexlify(ufs.cid).decode('utf-8')}")
-                    writesetting("cid", hexlify(ufs.cid).decode('utf-8'))
+                    self.hwparam.writesetting("cid", hexlify(ufs.cid).decode('utf-8'))
                     self.info(f"UFS LU0 Size: {hex(ufs.lu0_size)}")
                     self.info(f"UFS LU1 Size: {hex(ufs.lu1_size)}")
                     self.info(f"UFS LU2 Size: {hex(ufs.lu2_size)}")
@@ -1106,7 +1107,7 @@ class DAXFlash(metaclass=LogBase):
                         # if self.get_da_stor_life_check() == 0x0:
                         cid = self.get_chip_id()
                         self.info("DA-CODE      : 0x%X", (cid.hw_code << 4) + (cid.hw_code >> 4))
-                        writesetting("hwcode", hex(self.config.hwcode))
+                        self.hwparam.writesetting("hwcode", hex(self.config.hwcode))
 
                         daextdata = self.xft.patch()
                         if daextdata is not None:
