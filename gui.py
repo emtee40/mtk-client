@@ -69,21 +69,23 @@ def getDevInfo(self, parameters):
                 mtkClass.preloader.init()
             except:
                 print("OH NO 1");
-            # device should now be connected, get the info
-            phoneInfo['chipset'] = str(mtkClass.config.cpu);
-            phoneInfo['chipset'] = str(mtkClass.config.chipconfig.name) + " (" + str(mtkClass.config.chipconfig.description) + ")";
-            if (mtkClass.config.is_brom):
-                phoneInfo['bootMode'] = "Bootrom mode"
-            elif (mtkClass.config.chipconfig.damode):
-                phoneInfo['bootMode'] = "DA mode"
-            else:
-                phoneInfo['bootMode'] = "Preloader mode"
-            #phoneInfoTextbox.setText("Phone detected:\n" + phoneInfo['chipset'] + "\n" + phoneInfo['bootMode']);
-            self.sendUpdateSignal.emit();
-            #print(mtkClass.port.cdc.detectusbdevices());
-            #mtkClass.port.cdc.connect();
-            #self.sendToLogSignal.emit(str(mtkClass.port.cdc.connected));
-            #time.sleep(0.5);
+        # device should now be connected, get the info
+        phoneInfo['chipset'] = str(mtkClass.config.cpu);
+        phoneInfo['chipset'] = str(mtkClass.config.chipconfig.name) + " (" + str(mtkClass.config.chipconfig.description) + ")";
+        if (mtkClass.config.is_brom):
+            phoneInfo['bootMode'] = "Bootrom mode"
+        elif (mtkClass.config.chipconfig.damode):
+            phoneInfo['bootMode'] = "DA mode"
+        else:
+            phoneInfo['bootMode'] = "Preloader mode"
+        #phoneInfoTextbox.setText("Phone detected:\n" + phoneInfo['chipset'] + "\n" + phoneInfo['bootMode']);
+        self.sendUpdateSignal.emit();
+        #print(mtkClass.port.cdc.detectusbdevices());
+        #mtkClass.port.cdc.connect();
+        #self.sendToLogSignal.emit(str(mtkClass.port.cdc.connected));
+        #time.sleep(0.5);
+        #else:
+        #    print(mtkClass.preloader.init());
     except:
         phoneInfo['cdcInit'] = False;
         self.sendUpdateSignal.emit();
@@ -101,6 +103,13 @@ def getDevInfo(self, parameters):
     #    print("OH NO 2");
     if res != False:
         phoneInfo['daInit'] = True
+        phoneInfo['chipset'] = str(mtkClass.config.chipconfig.name) + " (" + str(mtkClass.config.chipconfig.description) + ")";
+        if (mtkClass.config.is_brom):
+            phoneInfo['bootMode'] = "Bootrom mode"
+        elif (mtkClass.config.chipconfig.damode):
+            phoneInfo['bootMode'] = "DA mode"
+        else:
+            phoneInfo['bootMode'] = "Preloader mode"
         self.sendUpdateSignal.emit();
     #try:
     #    print(mtkClass.daloader.get_partition_data(parttype="user"))
