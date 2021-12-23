@@ -128,12 +128,12 @@ python gui.py
 
 1. Dump boot and vbmeta
 ```
-python mtk.py r boot,vbmeta boot.img,vbmeta.img
+python mtk r boot,vbmeta boot.img,vbmeta.img
 ```
 
 2. Reboot the phone
 ```
-python mtk.py reset
+python mtk reset
 ```
 
 3. Download patched magisk for mtk:
@@ -163,12 +163,12 @@ mv [displayed magisk patched boot filename here] boot.patched
 
 8. Flash magisk-patched boot and empty vbmeta
 ```
-python mtk.py w boot,vbmeta boot.patched,vbmeta.img.empty
+python mtk w boot,vbmeta boot.patched,vbmeta.img.empty
 ```
 
 9. Reboot the phone
 ```
-python mtk.py reset
+python mtk reset
 ```
 
 10. Disconnect usb cable and enjoy your rooted phone :)
@@ -179,7 +179,7 @@ python mtk.py reset
 Example:
 
 ```
-python mtk.py payload --metamode FASTBOOT
+python mtk payload --metamode FASTBOOT
 ```
 
 
@@ -187,21 +187,21 @@ python mtk.py payload --metamode FASTBOOT
 
 1. Erase metadata and userdata (and md_udc if existing):
 ```
-python mtk.py e metadata,userdata,md_udc
+python mtk e metadata,userdata,md_udc
 ```
 
 2. Unlock bootloader:
 ```
-python mtk.py da seccfg unlock
+python mtk da seccfg unlock
 ```
 for relocking use:
 ```
-python mtk.py da seccfg lock
+python mtk da seccfg lock
 ```
 
 3. Reboot the phone:
 ```
-python mtk.py reset
+python mtk reset
 ```
 
 and disconnect usb cable to let the phone reboot.
@@ -216,44 +216,44 @@ then the device should boot within 5 seconds.
 Dump boot partition to filename boot.bin via preloader
 
 ```
-python mtk.py r boot boot.bin
+python mtk r boot boot.bin
 ```
 
 Dump boot partition to filename boot.bin via bootrom
 
 ```
-python mtk.py r boot boot.bin [--preloader=Loader/Preloader/your_device_preloader.bin]
+python mtk r boot boot.bin [--preloader=Loader/Preloader/your_device_preloader.bin]
 ```
 
 
 Dump preloader partition to filename preloader.bin via bootrom
 
 ```
-python mtk.py r preloader preloader.bin --parttype=boot1 [--preloader=Loader/Preloader/your_device_preloader.bin]
+python mtk r preloader preloader.bin --parttype=boot1 [--preloader=Loader/Preloader/your_device_preloader.bin]
 ```
 
 Read full flash to filename flash.bin (use --preloader for brom)
 
 ```
-python mtk.py rf flash.bin
+python mtk rf flash.bin
 ```
 
 Read flash offset 0x128000 with length 0x200000 to filename flash.bin (use --preloader for brom)
 
 ```
-python mtk.py ro 0x128000 0x200000 flash.bin
+python mtk ro 0x128000 0x200000 flash.bin
 ```
 
 Dump all partitions to directory "out". (use --preloader for brom)
 
 ```
-python mtk.py rl out
+python mtk rl out
 ```
 
 Show gpt (use --preloader for brom)
 
 ```
-python mtk.py printgpt
+python mtk printgpt
 ```
 
 
@@ -263,83 +263,83 @@ python mtk.py printgpt
 Write filename boot.bin to boot partition
 
 ```
-python mtk.py w boot boot.bin
+python mtk w boot boot.bin
 ```
 
 Write filename flash.bin as full flash (currently only works in da mode)
 
 ```
-python mtk.py wf flash.bin
+python mtk wf flash.bin
 ```
 
 Write all files in directory "out" to the flash partitions
 
 ```
-python mtk.py wl out
+python mtk wl out
 ```
 
 write file flash.bin to flash offset 0x128000 with length 0x200000 (use --preloader for brom)
 
 ```
-python mtk.py wo 0x128000 0x200000 flash.bin
+python mtk wo 0x128000 0x200000 flash.bin
 ```
 
 ### Erase flash
 
 Erase boot partition
 ```
-python mtk.py e boot
+python mtk e boot
 ```
 
 Erase boot sectors
 ```
-python mtk.py es boot [sector count]
+python mtk es boot [sector count]
 ```
 
 ### DA commands:
 
 Peek memory
 ```
-python mtk.py da peek [addr in hex] [length in hex] [optional: -filename filename.bin for reading to file]
+python mtk da peek [addr in hex] [length in hex] [optional: -filename filename.bin for reading to file]
 ```
 
 Poke memory
 ```
-python mtk.py da peek [addr in hex] [data as hexstring or -filename for reading from file]
+python mtk da peek [addr in hex] [data as hexstring or -filename for reading from file]
 ```
 
 Read rpmb (Only xflash for now)
 ```
-python mtk.py da rpmb r [will read to rpmb.bin]
+python mtk da rpmb r [will read to rpmb.bin]
 ```
 
 Write rpmb [Currently broken, xflash only]
 ```
-python mtk.py da rpmb w filename
+python mtk da rpmb w filename
 ```
 
 Generate and display rpmb1-3 key
 ```
-python mtk.py da generatekeys
+python mtk da generatekeys
 ```
 
 Unlock / Lock bootloader
 ```
-python mtk.py da seccfg [lock or unlock]
+python mtk da seccfg [lock or unlock]
 ```
 
 ---------------------------------------------------------------------------------------------------------------
 
 ### Bypass SLA, DAA and SBC (using generic_patcher_payload)
 `` 
-python mtk.py payload
+python mtk payload
 `` 
 If you want to use SP Flash tool afterwards, make sure you select "UART" in the settings, not "USB".
 
 ### Dump preloader
 - Device has to be in bootrom mode and preloader has to be intact on the device
 ```
-python mtk.py dumppreloader [--ptype=["amonet","kamakiri","kamakiri2","hashimoto"]] [--filename=preloader.bin]
+python mtk dumppreloader [--ptype=["amonet","kamakiri","kamakiri2","hashimoto"]] [--filename=preloader.bin]
 ```
 
 ### Dump brom
@@ -350,12 +350,12 @@ python mtk.py dumppreloader [--ptype=["amonet","kamakiri","kamakiri2","hashimoto
   and "hashimoto" (via cqdma)
 
 ```
-python mtk.py dumpbrom --ptype=["amonet","kamakiri","hashimoto"] [--filename=brom.bin]
+python mtk dumpbrom --ptype=["amonet","kamakiri","hashimoto"] [--filename=brom.bin]
 ```
 
 For to dump unknown bootroms, use brute option :
 ```
-python mtk.py brute
+python mtk brute
 ```
 If it's successful, please add an issue over here and append the bootrom in order to add full support.
 
@@ -364,19 +364,19 @@ If it's successful, please add an issue over here and append the bootrom in orde
 ### Crash da in order to enter brom
 
 ```
-python mtk.py crash [--vid=vid] [--pid=pid] [--interface=interface]
+python mtk crash [--vid=vid] [--pid=pid] [--interface=interface]
 ```
 
 ### Read memory using patched preloader
 - Boot in Brom or crash to Brom
 ```
-python mtk.py peek [addr] [length] --preloader=patched_preloader.bin
+python mtk peek [addr] [length] --preloader=patched_preloader.bin
 ```
 
 ### Run custom payload
 
 ```
-python mtk.py payload --payload=payload.bin [--var1=var1] [--wdt=wdt] [--uartaddr=addr] [--da_addr=addr] [--brom_addr=addr]
+python mtk payload --payload=payload.bin [--var1=var1] [--wdt=wdt] [--uartaddr=addr] [--da_addr=addr] [--brom_addr=addr]
 ```
 
 ---------------------------------------------------------------------------------------------------------------
@@ -385,18 +385,18 @@ python mtk.py payload --payload=payload.bin [--var1=var1] [--wdt=wdt] [--uartadd
 
 #### Run stage2 in bootrom
 `` 
-python mtk.py stage
+python mtk stage
 `` 
 
 #### Run stage2 in preloader
 `` 
-python mtk.py plstage
+python mtk plstage
 `` 
 
 #### Run stage2 plstage in bootrom
 - Boot in Brom or crash to Brom
 ```
-python mtk.py plstage --preloader=preloader.bin
+python mtk plstage --preloader=preloader.bin
 ```
 
 ### Use stage2 tool

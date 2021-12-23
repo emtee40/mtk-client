@@ -37,22 +37,22 @@ class DA_handler(metaclass=LogBase):
                 data = data[idx:]
                 length = unpack("<I", data[0x20:0x24])[0]
                 time.sleep(0.15)
-                data = bytearray();
-                startidx = idx;
-                multiplier = 32;
+                data = bytearray()
+                startidx = idx
+                multiplier = 32
                 while True:
                     try:
                         data.extend(b"".join([pack("<I", val) for val in self.mtk.preloader.read32(0x200000 + idx, (4*multiplier))]))
-                        idx = idx + (16*multiplier);
+                        idx = idx + (16*multiplier)
                         #sys.stdout.write("\r"+str(length-(idx-startidx)))
                         #sys.stdout.flush()
                         if ((idx-startidx) > length):
                             #done reading
-                            break;
+                            break
                     except Exception as err:
                         self.error(str(err))
-                        break;
-                data = bytes(data);
+                        break
+                data = bytes(data)
                 preloader = data[:length]
                 idx = data.find(b"MTK_BLOADER_INFO")
                 if idx != -1:
