@@ -17,7 +17,7 @@ from mtkclient.Library.settings import hwparam
 
 class DAloader(metaclass=LogBase):
     def __init__(self, mtk, loglevel=logging.INFO):
-        self.__logger = logsetup(self, self.__logger, loglevel)
+        self.__logger = logsetup(self, self.__logger, loglevel, mtk.config.gui)
         self.mtk = mtk
         self.config = mtk.config
         self.loglevel = loglevel

@@ -12,7 +12,7 @@ from mtkclient.config.payloads import pathconfig
 
 class Kamakiri(metaclass=LogBase):
     def __init__(self, mtk, loglevel=logging.INFO):
-        self.__logger = logsetup(self, self.__logger, loglevel)
+        self.__logger = logsetup(self, self.__logger, loglevel, mtk.config.gui)
         self.lasterror = ""
         self.mtk = mtk
         self.chipconfig = self.mtk.config.chipconfig
@@ -114,6 +114,7 @@ class Kamakiri(metaclass=LogBase):
             self.da_write(payloadaddr, len(payload), payload)
             self.da_write(ptr_send, 4, pack("<I", payloadaddr), False)
         except usb.core.USBError as e:
+            print("USB CORE ERROR")
             print(e)
         return True
 

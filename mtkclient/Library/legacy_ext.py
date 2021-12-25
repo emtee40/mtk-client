@@ -18,7 +18,7 @@ class LCmd:
 class legacyext(metaclass=LogBase):
     def __init__(self, mtk, legacy, loglevel):
         self.pathconfig = pathconfig()
-        self.__logger = logsetup(self, self.__logger, loglevel)
+        self.__logger = logsetup(self, self.__logger, loglevel, mtk.config.gui)
         self.info = self.__logger.info
         self.debug = self.__logger.debug
         self.error = self.__logger.error
@@ -119,7 +119,7 @@ class legacyext(metaclass=LogBase):
         setup.read32 = self.readmem
         setup.write32 = self.writeregister
         setup.writemem = self.writemem
-        return hwcrypto(setup, self.loglevel)
+        return hwcrypto(setup, self.loglevel, self.config.gui)
 
     def seccfg(self, lockflag):
         if lockflag not in ["unlock", "lock"]:

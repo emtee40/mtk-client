@@ -1,4 +1,6 @@
-# mtkclient
+# MTKClient
+![Logo](gui/images/logo_256.png)
+
 Just some mtk tool for exploitation, reading/writing flash and doing crazy stuff. 
 For windows, you need to install the stock mtk port and the usbdk driver (see instructions below).
 For linux, a patched kernel is only needed when using old kamakiri (see Setup folder) (except for read/write flash).
@@ -11,7 +13,7 @@ release the buttons.
 - kamakiri [xyzz]
 - linecode exploit [chimera]
 - Chaosmaster
-- cygnusx (GUI)
+- Geert-Jan Kreileman (GUI, design & fixes)
 - All contributors
 
 ## Installation
@@ -23,7 +25,7 @@ User: user, Password:user (based on Ubuntu 22.04 LTS)
 
 ## Install
 
-### Linux - (Ubuntu recommended, no patched kernel needed except for kamakiri)
+### Linux  / Mac OS - (Ubuntu recommended, no patched kernel needed except for kamakiri)
 
 #### Install python >=3.8, git and other deps
 
@@ -114,6 +116,12 @@ sudo reboot
 ---------------------------------------------------------------------------------------------------------------
 
 ## Usage
+
+### Using MTKTools via the graphical user interface:
+For the 'basics' you can use the GUI interface. This supports dumping partitions for now. Run the following command:
+```
+python mtk_gui.py
+```
 
 ### Root the phone (Tested with android 9 - 12)
 

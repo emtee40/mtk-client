@@ -21,7 +21,10 @@ class Port(metaclass=LogBase):
             self.pid = pid
 
     def __init__(self, mtk, portconfig, loglevel=logging.INFO):
-        self.__logger = logsetup(self, self.__logger, loglevel)
+        self.__logger = logsetup(self, self.__logger, loglevel, mtk.config.gui)
+        self.info = self.__logger.info
+        self.debug = self.__logger.debug
+        self.error = self.__logger.error
         self.config = mtk.config
         self.mtk = mtk
         self.cdc = usb_class(portconfig=portconfig, loglevel=loglevel, devclass=10)

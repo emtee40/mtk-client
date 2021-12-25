@@ -1,5 +1,6 @@
 import os
 import logging
+import sys
 from mtkclient.Library.utils import LogBase
 
 class damodes:
@@ -1435,7 +1436,8 @@ hwconfig = {
 
 
 class Mtk_Config(metaclass=LogBase):
-    def __init__(self, loglevel=logging.INFO):
+    def __init__(self, loglevel=logging.INFO, gui:bool = False):
+        self.gui = gui
         self.pid = -1
         self.vid = -1
         self.var1 = 0xA

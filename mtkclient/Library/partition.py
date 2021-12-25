@@ -9,7 +9,7 @@ from mtkclient.Library.gpt import gpt
 class Partition(metaclass=LogBase):
     def __init__(self, mtk, readflash, read_pmt, loglevel=logging.INFO):
         self.mtk = mtk
-        self.__logger = logsetup(self, self.__logger, loglevel)
+        self.__logger = logsetup(self, self.__logger, loglevel, mtk.config.gui)
         self.config = self.mtk.config
         self.readflash = readflash
         self.read_pmt = read_pmt

@@ -112,7 +112,7 @@ class DA:
 
 class DAconfig(metaclass=LogBase):
     def __init__(self, mtk, loader=None, preloader=None, loglevel=logging.INFO):
-        self.__logger = logsetup(self, self.__logger, loglevel)
+        self.__logger = logsetup(self, self.__logger, loglevel, mtk.config.gui)
         self.mtk = mtk
         self.pathconfig = pathconfig()
         self.config = self.mtk.config

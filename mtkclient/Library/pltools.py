@@ -14,7 +14,7 @@ from mtkclient.Library.Port import Port
 
 class PLTools(metaclass=LogBase):
     def __init__(self, mtk, loglevel=logging.INFO):
-        self.__logger = logsetup(self, self.__logger, loglevel)
+        self.__logger = logsetup(self, self.__logger, loglevel, mtk.config.gui)
         self.mtk = mtk
         self.chipconfig = self.mtk.config.chipconfig
         self.config = self.mtk.config
@@ -42,7 +42,7 @@ class PLTools(metaclass=LogBase):
         setup.ap_dma_mem = self.mtk.config.chipconfig.ap_dma_mem
         setup.meid_addr = self.mtk.config.chipconfig.meid_addr
         setup.prov_addr = self.mtk.config.chipconfig.prov_addr
-        self.hwcrypto=hwcrypto(setup,loglevel)
+        self.hwcrypto=hwcrypto(setup,loglevel,self.mtk.config.gui)
 
         self.pathconfig = pathconfig()
         if loglevel == logging.DEBUG:

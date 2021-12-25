@@ -27,11 +27,11 @@ class crypto_setup:
     prov_addr = None
 
 class hwcrypto(metaclass=LogBase):
-    def __init__(self, setup, loglevel=logging.INFO):
-        self.__logger = logsetup(self, self.__logger, loglevel)
+    def __init__(self, setup, loglevel=logging.INFO, gui:bool=False):
+        self.__logger = logsetup(self, self.__logger, loglevel, gui)
 
-        self.dxcc = dxcc(setup, loglevel)
-        self.gcpu = GCpu(setup, loglevel)
+        self.dxcc = dxcc(setup, loglevel, gui)
+        self.gcpu = GCpu(setup, loglevel, gui)
         self.sej = sej(setup, loglevel)
         self.cqdma = cqdma(setup, loglevel)
         self.hwcode = setup.hwcode

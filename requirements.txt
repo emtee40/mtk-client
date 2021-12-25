@@ -3,3 +3,5 @@ pyusb
 pycryptodome
 colorama
 usb
+PySide2
+mock

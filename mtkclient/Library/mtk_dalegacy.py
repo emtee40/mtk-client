@@ -654,7 +654,7 @@ class DALegacy(metaclass=LogBase):
         ENTER_RELAY_MODE_CMD = b"\xFF"
 
     def __init__(self, mtk, daconfig, loglevel=logging.INFO):
-        self.__logger = logsetup(self, self.__logger, loglevel)
+        self.__logger = logsetup(self, self.__logger, loglevel, mtk.config.gui)
         self.debug = self.debug
         self.error = self.error
         self.info = self.info

@@ -12,3 +12,9 @@ class pathconfig:
 
     def get_payloads_path(self):
         return os.path.abspath(os.path.join(self.scriptpath,"..","payloads"))
+
+    def get_gui_path(self):
+        return os.path.abspath(os.path.join(self.scriptpath,"..","gui"))
+
+    def get_images_path(self,file=""):
+        return os.path.abspath(os.path.join(self.scriptpath,"..","gui","images",file))

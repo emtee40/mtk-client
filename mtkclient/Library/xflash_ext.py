@@ -40,7 +40,7 @@ rpmb_error = [
 class xflashext(metaclass=LogBase):
     def __init__(self, mtk, xflash, loglevel):
         self.pathconfig = pathconfig()
-        self.__logger = logsetup(self, self.__logger, loglevel)
+        self.__logger = logsetup(self, self.__logger, loglevel, mtk.config.gui)
         self.info = self.__logger.info
         self.debug = self.__logger.debug
         self.error = self.__logger.error
@@ -444,7 +444,7 @@ class xflashext(metaclass=LogBase):
         setup.read32 = self.readmem
         setup.write32 = self.writeregister
         setup.writemem = self.writemem
-        return hwcrypto(setup, self.loglevel)
+        return hwcrypto(setup, self.loglevel, self.config.gui)
 
     def seccfg(self, lockflag):
         if lockflag not in ["unlock", "lock"]:
@@ -562,6 +562,7 @@ class xflashext(metaclass=LogBase):
                 self.info("HRID        : " + hexlify(hrid).decode('utf-8'))
                 open(os.path.join("logs", "hrid.txt"), "wb").write(hexlify(hrid))
             """
+            return {"rpmb": hexlify(rpmbkey).decode('utf-8'),"rpmb2":hexlify(rpmb2key).decode('utf-8'),"fde":hexlify(fdekey).decode('utf-8'),"ikey":hexlify(ikey).decode('utf-8')}
         elif self.config.chipconfig.sej_base is not None:
             if meid == b"":
                 if self.config.chipconfig.meid_addr:

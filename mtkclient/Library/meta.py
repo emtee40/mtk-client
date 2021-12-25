@@ -22,7 +22,7 @@ class META(metaclass=LogBase):
 
     def __init__(self, mtk, loglevel=logging.INFO):
         self.mtk = mtk
-        self.__logger = logsetup(self, self.__logger, loglevel)
+        self.__logger = logsetup(self, self.__logger, loglevel, mtk.config.gui)
         self.info = self.__logger.info
         self.debug = self.__logger.debug
         self.error = self.__logger.error

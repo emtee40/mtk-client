@@ -1067,8 +1067,8 @@ class dxcc(metaclass=LogBase):
         self.write32(self.dxcc_base + self.DX_DSCRPTR_QUEUE0_WORD4, data[4])
         self.write32(self.dxcc_base + self.DX_DSCRPTR_QUEUE0_WORD5, data[5])
 
-    def __init__(self, setup, loglevel=logging.INFO):
-        self.__logger = logsetup(self, self.__logger, loglevel)
+    def __init__(self, setup, loglevel=logging.INFO, gui:bool = False):
+        self.__logger = logsetup(self, self.__logger, loglevel, gui)
         self.hwcode = setup.hwcode
         self.dxcc_base = setup.dxcc_base
         self.read32 = setup.read32

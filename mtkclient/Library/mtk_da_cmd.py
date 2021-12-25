@@ -22,7 +22,7 @@ class DA_handler(metaclass=LogBase):
         self.pid = mtk.config.pid
         self.interface = mtk.config.interface
         self.pathconfig = pathconfig()
-        self.__logger = logsetup(self, self.__logger, loglevel)
+        self.__logger = logsetup(self, self.__logger, loglevel, mtk.config.gui)
         self.eh = ErrorHandler()
         self.mtk = mtk
 
@@ -38,19 +38,20 @@ class DA_handler(metaclass=LogBase):
                 length = unpack("<I", data[0x20:0x24])[0]
                 time.sleep(0.15)
                 data = bytearray()
-                startidx = idx;
+                startidx = idx
+                multiplier = 32
                 while True:
                     try:
-                        data.extend(b"".join([pack("<I", val) for val in self.mtk.preloader.read32(0x200000 + idx, 4)]))
-                        idx = idx + 16;
-                        sys.stdout.write("\r"+str(length-(idx-startidx)))
-                        sys.stdout.flush()
+                        data.extend(b"".join([pack("<I", val) for val in self.mtk.preloader.read32(0x200000 + idx, (4*multiplier))]))
+                        idx = idx + (16*multiplier)
+                        #sys.stdout.write("\r"+str(length-(idx-startidx)))
+                        #sys.stdout.flush()                        sys.stdout.write("\r"+str(length-(idx-startidx)))
                         if ((idx-startidx) > length):
                             #done reading
-                            break;
+                            break
                     except Exception as err:
                         self.error(str(err))
-                        break;
+                        break
                 data = bytes(data)
                 preloader = data[:length]
                 idx = data.find(b"MTK_BLOADER_INFO")
@@ -70,6 +71,7 @@ class DA_handler(metaclass=LogBase):
             return None
 
     def configure_da(self, mtk, preloader):
+        mtk.port.cdc.connected = mtk.port.cdc.connect()
         if mtk.port.cdc.connected is None or not mtk.port.cdc.connected:
             mtk.preloader.init()
         else:
