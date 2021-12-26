@@ -13,8 +13,8 @@ from mtkclient.Library.error import ErrorHandler
 from mtkclient.Library.daconfig import DaStorage, EMMC_PartitionType
 from mtkclient.Library.partition import Partition
 from mtkclient.config.payloads import pathconfig
-from mtkclient.Library.settings import hwparam
 from mtkclient.Library.legacy_ext import legacyext
+from mtkclient.config.mtk_config import Mtk_Config
 
 class norinfo:
     m_nor_ret = None
@@ -149,11 +149,11 @@ class emmcinfo:
     m_emmc_cid = None
     m_emmc_fwver = None
 
-    def __init__(self, hwparam: hwparam, data = None):
+    def __init__(self, config: Mtk_Config, data = None):
         if data is None:
             return
         sh = structhelper(data)
-        self.hwparam = hwparam
+        self.config = config
         self.m_emmc_ret = sh.dword(True)
         self.m_emmc_boot1_size = sh.qword(True)
         self.m_emmc_boot2_size = sh.qword(True)
@@ -175,8 +175,8 @@ class emmcinfo:
         res += f"m_emmc_ua_size = {hex(self.m_emmc_ua_size)}\n"
         cid = pack("<QQ", self.m_emmc_cid[0], self.m_emmc_cid[1])
         res += f"m_emmc_cid = {hexlify(cid).decode('utf-8')}\n"
-        if self.hwparam is not None:
-            self.hwparam.writesetting("cid", hexlify(cid).decode('utf-8'))
+        if self.config.hwparam is not None:
+            self.config.hwparam.writesetting("cid", hexlify(cid).decode('utf-8'))
         res += f"m_emmc_fwver = {hexlify(self.m_emmc_fwver).decode('utf-8')}\n"
         return res
 
@@ -186,11 +186,11 @@ class sdcinfo:
     m_sdmmc_ua_size = None
     m_sdmmc_cid = None
 
-    def __init__(self, hwparam:hwparam, data = None):
+    def __init__(self, config: Mtk_Config, data = None):
         if data is None:
             return
         sh = structhelper(data)
-        self.hwparam = hwparam
+        self.config = config
         self.m_sdmmc_info = sh.dword(True)
         self.m_sdmmc_ua_size = sh.qword(True)
         self.m_sdmmc_cid = sh.qwords(2, True)
@@ -199,8 +199,8 @@ class sdcinfo:
         print(f"m_sdmmc_info = {hex(self.m_sdmmc_info)}")
         print(f"m_sdmmc_ua_size = {hex(self.m_sdmmc_ua_size)}")
         cid = pack("<QQ", self.m_sdmmc_cid[0], self.m_sdmmc_cid[1])
-        if self.hwparam is not None:
-            self.hwparam.writesetting("cid", hexlify(cid).decode('utf-8'))
+        if self.config.hwparam is not None:
+            self.config.hwparam.writesetting("cid", hexlify(cid).decode('utf-8'))
         print(f"m_sdmmc_cid = {hexlify(cid).decode('utf-8')}")
 
 
@@ -680,7 +680,6 @@ class DALegacy(metaclass=LogBase):
         self.pathconfig = pathconfig()
         self.patch = False
         self.generatekeys = self.mtk.config.generatekeys
-        self.hwparam = hwparam(self.mtk.config.meid)
         if self.generatekeys:
             self.patch = True
         self.lft = legacyext(self.mtk, self, loglevel)
@@ -954,8 +953,8 @@ class DALegacy(metaclass=LogBase):
         m_nand_dev_code = unpack(">" + str(nandcount) + "H", nc)
         self.nand.m_nand_flash_dev_code = m_nand_dev_code
         self.nand.info2 = nandinfo2(self.usbread(9))
-        self.emmc = emmcinfo(self.hwparam,self.usbread(0x5C))
-        self.sdc = sdcinfo(self.hwparam,self.usbread(0x1C))
+        self.emmc = emmcinfo(self.config,self.usbread(0x5C))
+        self.sdc = sdcinfo(self.config,self.usbread(0x1C))
         self.flashconfig = configinfo(self.usbread(0x26))
         pi = passinfo(self.usbread(0xA))
         if pi.ack == 0x5A:

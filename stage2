@@ -14,7 +14,7 @@ from mtkclient.Library.usblib import usb_class
 from mtkclient.Library.utils import LogBase
 from mtkclient.Library.utils import print_progress
 from mtkclient.Library.hwcrypto import crypto_setup, hwcrypto
-from mtkclient.config.brom_config import Mtk_Config
+from mtkclient.config.mtk_config import Mtk_Config
 from mtkclient.config.usb_ids import default_ids
 
 class Stage2(metaclass=LogBase):
@@ -61,7 +61,7 @@ class Stage2(metaclass=LogBase):
         self.setup.writemem = self.memwrite
         self.setup.meid_addr = self.config.chipconfig.meid_addr
         self.setup.socid_addr = self.config.chipconfig.socid_addr
-        self.hwcrypto = hwcrypto(self.setup, self.loglevel)
+        self.hwcrypto = hwcrypto(self.setup, self.loglevel, self.config.gui)
         return True
 
     def init_emmc(self):

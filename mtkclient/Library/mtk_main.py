@@ -12,7 +12,7 @@ from mtkclient.config.payloads import pathconfig
 from mtkclient.Library.pltools import PLTools
 from mtkclient.Library.meta import META
 from mtkclient.Library.utils import LogBase, getint
-from mtkclient.config.brom_config import Mtk_Config
+from mtkclient.config.mtk_config import Mtk_Config
 from mtkclient.Library.utils import print_progress
 from mtkclient.Library.error import ErrorHandler
 from mtkclient.Library.mtk_da_cmd import DA_handler

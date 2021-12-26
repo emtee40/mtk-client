@@ -8,19 +8,20 @@ import traceback
 import math
 import logging
 import ctypes
-from PySide2.QtCore import Qt, QVariantAnimation
+from PySide2.QtCore import Qt, QVariantAnimation, Signal, QObject, QSize
 from PySide2.QtGui import QTextOption, QPixmap, QTransform, QIcon
-from PySide2.QtWidgets import *
+from PySide2.QtWidgets import QMainWindow, QApplication, QAction, QWidget
 
 from mtkclient.Library.mtk import Mtk
+from mtkclient.Library.mtk_da_cmd import DA_handler
 from mtkclient.Library.gpt import gpt_settings
 from mtkclient.Library.mtk_main import Main, Mtk_Config
-from mtkclient.Library.mtk_da_cmd import DA_handler
-from mtkclient.gui.readFlashPartitions import *
-from mtkclient.gui.toolsMenu import *
-from mtkclient.gui.toolkit import *
+
+from mtkclient.gui.readFlashPartitions import ReadFlashWindow
+from mtkclient.gui.toolsMenu import generateKeysMenu
+from mtkclient.gui.toolkit import asyncThread, trap_exc_during_debug
 from mtkclient.config.payloads import pathconfig
-from mtkclient.gui.main_gui import *
+from mtkclient.gui.main_gui import Ui_MainWindow
 # TO do Move all GUI modifications to signals!
 # install exception hook: without this, uncaught exception would cause application to exit
 sys.excepthook = trap_exc_during_debug
@@ -37,18 +38,29 @@ MtkTool = Main(variables)
 guiState = "welcome"
 phoneInfo = {"chipset": "", "bootMode": "", "daInit": False, "cdcInit": False}
 
+class DeviceHandler(QObject):
+    sendToLogSignal = Signal(str)
+    mtkClass = None
+    da_handler = None
+
+    def __init__(self, parent, preloader: str = None, loglevel=logging.INFO, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+        config = Mtk_Config(loglevel=logging.INFO, gui=self.sendToLogSignal)
+        config.gpt_settings = gpt_settings(gpt_num_part_entries='0', gpt_part_entry_size='0',
+                                           gpt_part_entry_start_lba='0')  # This actually sets the right GPT settings..
+        self.mtkClass = Mtk(config=config, loglevel=logging.INFO)
+        self.loglevel = logging.DEBUG
+        self.da_handler = DA_handler(self.mtkClass, loglevel)
 
 def getDevInfo(self, parameters):
-    print(parameters)
-    config = Mtk_Config(loglevel=logging.INFO, gui=self.sendToLogSignal)
-    config.gpt_settings = gpt_settings(gpt_num_part_entries='0', gpt_part_entry_size='0',
-                                       gpt_part_entry_start_lba='0')  # This actually sets the right GPT settings..
+    loglevel = parameters[0]
+    phoneInfo = parameters[1]
+    devhandler = parameters[2]
 
-    phoneInfo = parameters[0]
+    mtkClass = devhandler.mtkClass
+    da_handler = devhandler.da_handler
+
     self.sendToLogSignal.emit("CONNECTING!")
-    mtkClass = Mtk(config=config, loglevel=logging.INFO)
-    loglevel = logging.INFO
-    da_handler = DA_handler(mtkClass, loglevel)
     mtkClass = da_handler.configure_da(mtkClass, preloader=None)
     if mtkClass:
         phoneInfo['daInit'] = True
@@ -96,14 +108,15 @@ def updateGui():
 
 def openReadflashWindow(q):
     # status.setText("OH YEAH"+str(q.text()))
-    readFlashWindowVal = ReadFlashWindow(w, mtkClass, da_handler, sendToLog)
+    readFlashWindowVal = ReadFlashWindow(w, devhandler.mtkClass, devhandler.da_handler, sendToLog)
     # w.close()
 
 
 def openToolsMenu(q):
     # status.setText("OH YEAH"+str(q.text()))
-    if q.text() == "Generate RPMB keys":
-        readFlashWindowVal = generateKeysMenu(w, mtkClass, da_handler, sendToLog)
+    curmenutext=q.text()
+    if curmenutext == "Generate RPMB keys":
+        readFlashWindowVal = generateKeysMenu(w, devhandler.mtkClass, devhandler.da_handler, sendToLog)
     # w.close()
 
 
@@ -195,8 +208,13 @@ if __name__ == '__main__':
     mainwindow.menubar.setEnabled(False)
     win.show()
 
+    # Device setup
+    loglevel = logging.INFO
+    devhandler = DeviceHandler(parent=app,preloader=None,loglevel=loglevel)
+    devhandler.sendToLogSignal.connect(sendToLog)
+
     # Get the device info
-    thread = asyncThread(app, 0, getDevInfo, [phoneInfo])
+    thread = asyncThread(parent=app, n=0, function=getDevInfo, parameters=[loglevel,phoneInfo,devhandler])
     thread.sendToLogSignal.connect(sendToLog)
     thread.sendUpdateSignal.connect(updateGui)
     thread.start()

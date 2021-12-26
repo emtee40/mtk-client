@@ -19,7 +19,8 @@ class generateKeysMenu(QDialog):
     @Slot()
     def updateKeys(self):
         print(self.keysStatus)
-        self.statusText.setText("Keys saved to hwparam.json")
+        path = os.path.join(self.hwparamFolder,"hwparam.json")
+        self.statusText.setText(f"Keys saved to {path}.")
         # self.keyListText.setText("RPMB key: ")
         self.keyValueText.setText(self.keysStatus['result']['rpmb'] + "\n" + self.keysStatus['result']['rpmb2'] + "\n" +
                                   self.keysStatus['result']['fde'] + "\n" + self.keysStatus['result']['ikey'])
@@ -28,22 +29,21 @@ class generateKeysMenu(QDialog):
     def generateKeys(self):
         self.startBtn.setEnabled(False)
         self.statusText.setText("Generating...")
-        thread = asyncThread(self, 0, self.generateKeysAsync, [])
+        hwparamFolder = str(QFileDialog.getExistingDirectory(self, "Select output directory"))
+        if hwparamFolder == "":
+            hwparamFolder = "logs"
+        else:
+            self.mtkClass.config.set_hwparam_path(hwparamFolder)
+        self.hwparamFolder = hwparamFolder
+        thread = asyncThread(self.parent.parent(), 0, self.generateKeysAsync, [self.hwparamFolder])
         thread.sendToLogSignal.connect(self.sendToLog)
         thread.sendUpdateSignal.connect(self.updateKeys)
         thread.start()
 
     def generateKeysAsync(self, toolkit, parameters):
-        # global MtkTool
-        # global mtkClass
         self.sendToLogSignal = toolkit.sendToLogSignal
         self.sendUpdateSignal = toolkit.sendUpdateSignal
-        toolkit.sendToLogSignal.emit("test")
-        # partitionname = args.partitionname
-        # parttype = args.parttype
-        # filename = args.filename
-        # print(self.partitionCheckboxes)
-        # self.da_handler.close = self.dumpPartDone #Ignore the normally used sys.exit
+        toolkit.sendToLogSignal.emit("Generating keys")
         self.keysStatus["result"] = self.mtkClass.daloader.keys()
         # MtkTool.cmd_stage(mtkClass, None, None, None, False)
         self.keysStatus["done"] = True
@@ -51,6 +51,7 @@ class generateKeysMenu(QDialog):
 
     def __init__(self, parent, mtkClass:Mtk, da_handler:DA_handler, sendToLog):  # def __init__(self, *args, **kwargs):
         super(generateKeysMenu, self).__init__(parent)
+        self.parent = parent
         self.mtkClass = mtkClass
         self.sendToLog = sendToLog
         self.keysStatus = {}

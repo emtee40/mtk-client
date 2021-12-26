@@ -186,7 +186,7 @@ def xor_data(a: bytearray, b: bytearray, length=None):
 
 
 class GCpu(metaclass=LogBase):
-    def __init__(self, setup, loglevel=logging.INFO, gui:bool=False):
+    def __init__(self, setup, loglevel=logging.INFO, gui: bool = False):
         self.__logger = logsetup(self, self.__logger, loglevel, gui)
         self.read32 = setup.read32
         self.write32 = setup.write32
@@ -228,7 +228,7 @@ class GCpu(metaclass=LogBase):
 
     def mem_read(self, addr: int, length: int):
         self.reg.GCPU_REG_MEM_ADDR = addr
-        return b"".join([pack("<I", self.reg.GCPU_REG_MEM_DATA+i*4) for i in range(length//4)])
+        return b"".join([pack("<I", self.reg.GCPU_REG_MEM_DATA + i * 4) for i in range(length // 4)])
 
     def mem_write(self, addr: int, data):
         if isinstance(data, bytes) or isinstance(data, bytearray):
@@ -374,18 +374,18 @@ class GCpu(metaclass=LogBase):
         # src to VALID address which has all zeroes (otherwise, update pattern)
         return self.aes_cbc(encrypt=encrypt, src=src, dst=addr, length=16, keyslot=keyslot, ivslot=ivslot)
 
-    def readmem(self,addr,length):
-        if length//4==0:
-            return pack("<I",self.read32(addr,length//4))
-        return b"".join([pack("<I",val) for val in self.read32(addr,length//4)])
+    def readmem(self, addr, length):
+        if length // 4 == 0:
+            return pack("<I", self.read32(addr, length // 4))
+        return b"".join([pack("<I", val) for val in self.read32(addr, length // 4)])
 
     def mtk_gcpu_decrypt_mtee_img(self, data, seed):
         src = 0x68000000
         dst = 0x68000000
-        data=data[:0x200]
-        self.write32(src,to_dwords(data))
-        aeskey1=bytes.fromhex("A5DA42C3B4F6C5BAE162C568ADBD2605")
-        aeskey2=bytes.fromhex("5572247C05586BAA37818D2868949ADB")
+        data = data[:0x200]
+        self.write32(src, to_dwords(data))
+        aeskey1 = bytes.fromhex("A5DA42C3B4F6C5BAE162C568ADBD2605")
+        aeskey2 = bytes.fromhex("5572247C05586BAA37818D2868949ADB")
         # aeskey3=bytes.fromhex("9C4DEE58E7C7AFD090D8951035F84BEB")
         self.memptr_set(0x12, aeskey1)
         self.memptr_set(0x16, seed[:0x10])
@@ -393,19 +393,19 @@ class GCpu(metaclass=LogBase):
         self.reg.GCPU_REG_MEM_P0 = 1
         self.reg.GCPU_REG_MEM_P2 = 0x16
         self.reg.GCPU_REG_MEM_P3 = 0x1A
-        self.cmd(AESPK_D) # 0x78
-        out=bytearray()
+        self.cmd(AESPK_D)  # 0x78
+        out = bytearray()
         for i in range(4):
-            val=unpack("<I",seed[0x10+(i*4):0x10+(i*4)+4])[0]
-            out.extend(pack("<I",unpack("<I",aeskey2[i*4:(i*4)+4])[0]^val))
+            val = unpack("<I", seed[0x10 + (i * 4):0x10 + (i * 4) + 4])[0]
+            out.extend(pack("<I", unpack("<I", aeskey2[i * 4:(i * 4) + 4])[0] ^ val))
         self.memptr_set(0x12, out)
         self.reg.GCPU_REG_MEM_P0 = src
         self.reg.GCPU_REG_MEM_P1 = dst
-        self.reg.GCPU_REG_MEM_P2 = len(data)>>4
+        self.reg.GCPU_REG_MEM_P2 = len(data) >> 4
         self.reg.GCPU_REG_MEM_P3 = 0x1A
         self.reg.GCPU_REG_MEM_P4 = 0x1A
         self.cmd(AESPK_EK_DCBC)  # 0x7E
-        rdata=self.readmem(dst,len(data))
+        rdata = self.readmem(dst, len(data))
         return rdata
 
     def aes_read_ecb(self, data, encrypt=False, src=0x12, dst=0x1a, keyslot=0x30):
@@ -496,7 +496,6 @@ class GCpu(metaclass=LogBase):
                 return from_dwords(self.read32(0x10206144))
         return bytearray()
 
-    # init_array=bytes.from_hex("735f23c962e7a10ab201d9a6426064b1") for sloane
     def mtk_crypto_hmac_sha256_by_devkey(self, data: bytearray, seed: bytearray):
         if seed is None:
             seed = bytearray("\x00" * 16)
@@ -506,3 +505,20 @@ class GCpu(metaclass=LogBase):
         seed[4:4 + 4] = xor_data(seed[4:4 + 4], dev_val, 4)
         self.info("seed: " + hexlify(seed[:16]).decode('utf-8'))
         return self.mtk_crypto_hmac_sha256_by_devkey_using_seed(seed, data)
+
+    def byteswap(self, data):
+        data = bytearray(data)
+        for i in range(0, len(data) // 2):
+            j = len(data) - i - 1
+            o = data[i]
+            data[j] = data[i]
+            data[i] = o
+        return data
+
+    def derive_rpmb(self, cid):
+        expand = bytearray([cid[i % 16] for i in range(64)])
+        init_seed = bytearray(bytes.fromhex("735f23c962e7a10ab201d9a6426064b1"))
+        result = self.mtk_crypto_hmac_sha256_by_devkey(data=expand, seed=init_seed)
+        rpmb_key = hmac.new(key=result[:0x20], digestmod=hashlib.sha256, msg="RPMB\x00").digest()
+        rpmb_key = self.byteswap(rpmb_key)
+        return rpmb_key

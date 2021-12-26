@@ -40,8 +40,8 @@ class Ui_MainWindow(object):
         self.actionWrite_RPMB.setObjectName(u"actionWrite_RPMB")
         self.actionRead_preloader = QAction(MainWindow)
         self.actionRead_preloader.setObjectName(u"actionRead_preloader")
-        self.actionGenerate_RPMB_Keys = QAction(MainWindow)
-        self.actionGenerate_RPMB_Keys.setObjectName(u"actionGenerate_RPMB_Keys")
+        self.actionGenerate_RPMB_keys = QAction(MainWindow)
+        self.actionGenerate_RPMB_keys.setObjectName(u"actionGenerate_RPMB_keys")
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.formLayout = QFormLayout(self.centralwidget)
@@ -222,7 +222,7 @@ class Ui_MainWindow(object):
         self.toolsFlashMenu.addAction(self.actionWrite_RPMB)
         self.toolsFlashMenu.addAction(self.actionRead_preloader)
         self.toolsFlashMenu.addSeparator()
-        self.toolsFlashMenu.addAction(self.actionGenerate_RPMB_Keys)
+        self.toolsFlashMenu.addAction(self.actionGenerate_RPMB_keys)
 
         self.retranslateUi(MainWindow)
 
@@ -242,7 +242,7 @@ class Ui_MainWindow(object):
         self.actionRead_RPMB.setText(QCoreApplication.translate("MainWindow", u"Read RPMB", None))
         self.actionWrite_RPMB.setText(QCoreApplication.translate("MainWindow", u"Write RPMB", None))
         self.actionRead_preloader.setText(QCoreApplication.translate("MainWindow", u"Read preloader", None))
-        self.actionGenerate_RPMB_Keys.setText(QCoreApplication.translate("MainWindow", u"Generate RPMB Keys", None))
+        self.actionGenerate_RPMB_keys.setText(QCoreApplication.translate("MainWindow", u"Generate RPMB keys", None))
         self.title.setText(QCoreApplication.translate("MainWindow", u"MTKClient v2.0", None))
         self.status.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Please connect a Mediatek phone to continue.</p><p><br/></p><p>Hint: Power off the phone before connecting.</p><p><br/></p><p>For brom mode:</p><p>Press and hold vol up, vol dwn, or all hw buttons and connect usb.</p><p><br/></p><p>For preloader mode:</p><p>Don't press any hw button and connect usb.</p></body></html>", None))
         self.pic.setText("")

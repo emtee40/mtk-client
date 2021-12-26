@@ -5,10 +5,10 @@ from binascii import hexlify
 class hwparam:
     paramsetting = None
     hwcode = None
-    logpath = "logs"
-    paramfile = os.path.join(logpath, "hwparam.json")
 
-    def __init__(self, meid:str):
+    def __init__(self, meid:str, path:str="logs"):
+        self.paramfile = os.path.join(path, "hwparam.json")
+        self.hwparampath = path
         if isinstance(meid,bytearray) or isinstance(meid,bytes):
             meid=hexlify(meid).decode('utf-8')
         if meid is None:
@@ -19,8 +19,8 @@ class hwparam:
                 if meid!=self.paramsetting["meid"]:
                     self.paramsetting = {}
         else:
-            self.paramsetting = {};
-            self.paramsetting["meid"] = meid;
+            self.paramsetting = {}
+            self.paramsetting["meid"] = meid
             open(self.paramfile, "w").write(json.dumps(self.paramsetting))
 
     def loadsetting(self,key:str):
@@ -36,6 +36,6 @@ class hwparam:
 
     def write_json(self):
         if self.paramsetting is not None:
-            if not os.path.exists(self.logpath):
-                os.mkdir(self.logpath)
+            if not os.path.exists(self.hwparampath):
+                os.mkdir(self.hwparampath)
             open(self.paramfile, "w").write(json.dumps(self.paramsetting))

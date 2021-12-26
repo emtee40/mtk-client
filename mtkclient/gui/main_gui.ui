@@ -310,7 +310,7 @@
     <addaction name="actionWrite_RPMB"/>
     <addaction name="actionRead_preloader"/>
     <addaction name="separator"/>
-    <addaction name="actionGenerate_RPMB_Keys"/>
+    <addaction name="actionGenerate_RPMB_keys"/>
    </widget>
    <addaction name="readFlashMenu"/>
    <addaction name="writeFlashMenu"/>
@@ -373,9 +373,9 @@
     <string>Read preloader</string>
    </property>
   </action>
-  <action name="actionGenerate_RPMB_Keys">
+  <action name="actionGenerate_RPMB_keys">
    <property name="text">
-    <string>Generate RPMB Keys</string>
+    <string>Generate RPMB keys</string>
    </property>
   </action>
  </widget>

@@ -1,10 +1,10 @@
 from random import random
 
 from PySide2.QtCore import Slot, Qt
-from PySide2.QtGui import QTextOption, QPixmap
-from PySide2.QtWidgets import *
+from PySide2.QtWidgets import QDialog, QFileDialog, QCheckBox, QVBoxLayout, QSizePolicy, QWidget
 import mock
-from mtkclient.gui.toolkit import *
+from mtkclient.gui.toolkit import trap_exc_during_debug, asyncThread
+from mtkclient.gui.readpart_gui import Ui_partitionListWidget
 import os
 import sys
 import time
@@ -26,13 +26,13 @@ class ReadFlashWindow(QDialog):
         doneBytes = doneBytes + self.dumpStatus["currentPartitionSizeDone"]
         percentageDone = (self.dumpStatus["currentPartitionSizeDone"] / self.dumpStatus["currentPartitionSize"]) * 100
         fullPercentageDone = (doneBytes / totalBytes) * 100
-        self.partProgress.setValue(percentageDone)
-        self.partProgressText.setText("Current partition: " + self.dumpStatus["currentPartition"] + " (" + str(
+        self.ui.partProgress.setValue(percentageDone)
+        self.ui.partProgressText.setText("Current partition: " + self.dumpStatus["currentPartition"] + " (" + str(
             round((self.dumpStatus["currentPartitionSizeDone"] / 1024 / 1024))) + "Mb / " + str(
             round((self.dumpStatus["currentPartitionSize"] / 1024 / 1024))) + " Mb)")
 
-        self.fullProgress.setValue(fullPercentageDone)
-        self.fullProgressText.setText("Total: (" + str(round((doneBytes / 1024 / 1024))) + "Mb / " + str(
+        self.ui.fullProgress.setValue(fullPercentageDone)
+        self.ui.fullProgressText.setText("Total: (" + str(round((doneBytes / 1024 / 1024))) + "Mb / " + str(
             round((totalBytes / 1024 / 1024))) + " Mb)")
 
     def updateDumpStateAsync(self, toolkit, parameters):
@@ -46,24 +46,22 @@ class ReadFlashWindow(QDialog):
             except:
                 time.sleep(0.1)
         print("DONE")
-        self.startBtn.setEnabled(True)
+        self.ui.startBtn.setEnabled(True)
 
     def dumpPartDone(self):
-        self.sendToLogSignal.emit("dump klaar!")
+        self.sendToLogSignal.emit("dump done!")
 
     def dumpPartition(self):
-        self.startBtn.setEnabled(False)
+        self.ui.startBtn.setEnabled(False)
         self.dumpFolder = str(QFileDialog.getExistingDirectory(self, "Select output directory"))
         # self.startBtn.setText("In progress..")
-        thread = asyncThread(self, 0, self.dumpPartitionAsync, [])
+        thread = asyncThread(parent=self, n=0, function=self.dumpPartitionAsync,parameters=[])
         thread.sendToLogSignal.connect(self.sendToLog)
         thread.sendUpdateSignal.connect(self.updateDumpState)
         thread.start()
 
 
     def dumpPartitionAsync(self, toolkit, parameters):
-        # global MtkTool
-        # global mtkClass
         self.sendToLogSignal = toolkit.sendToLogSignal
         toolkit.sendToLogSignal.emit("test")
         # partitionname = args.partitionname
@@ -71,7 +69,7 @@ class ReadFlashWindow(QDialog):
         # filename = args.filename
         # print(self.partitionCheckboxes)
         self.dumpStatus["done"] = False
-        thread = asyncThread(self, 0, self.updateDumpStateAsync, [])
+        thread = asyncThread(self.parent.parent(), 0, self.updateDumpStateAsync, [])
         thread.sendUpdateSignal.connect(self.updateDumpState)
         thread.start()
         # calculate total bytes
@@ -101,80 +99,42 @@ class ReadFlashWindow(QDialog):
     def __init__(self, parent, mtkClass, da_handler, sendToLog):  # def __init__(self, *args, **kwargs):
         super(ReadFlashWindow, self).__init__(parent)
         self.mtkClass = mtkClass
+        self.parent = parent.parent()
         self.sendToLog = sendToLog
         self.dumpStatus = {}
         self.da_handler = da_handler
-        self.setFixedSize(400, 500)
-        # widget = QWidget()
+        #self.setFixedSize(400, 500)
         self.setWindowTitle("Read partition(s)")
 
-        title = QLabel(self)
-        title.setGeometry(10, 0, 480, 40)
+        #partitionListWidget = QWidget(self)
+        self.ui = Ui_partitionListWidget()
+        self.ui.setupUi(self)
 
         data, guid_gpt = self.mtkClass.daloader.get_gpt()
         if guid_gpt is None:
             print("Error reading gpt")
-            title.setText("Error reading gpt")
+            self.ui.title.setText("Error reading gpt")
         else:
-            title.setText("Select partitions to dump")
+            self.ui.title.setText("Select partitions to dump")
             # guid_gpt.print()
-            position = 40
-            partitionList = QScrollArea(self)
-            # partitionList.setFrameShape(frame)
-            partitionListWidget = QWidget(self)
-            partitionListWidgetVBox = QVBoxLayout()
-            partitionListWidget.setLayout(partitionListWidgetVBox)
-            partitionList.setWidget(partitionListWidget)
-            # partitionListWidget.addWidget(partitionList)
-            partitionList.setWidgetResizable(True)
-            # partitionListWidget = QWidget(partitionList)
-            # partitionListWidget.size(1000, 900)
-            partitionList.setGeometry(10, 40, 380, 320)
 
-            partitionList.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-            partitionList.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-            # partitionList.setWidget(self)
+            partitionListWidgetVBox = QVBoxLayout()
+            partitionListWidget = QWidget(self)
+            partitionListWidget.setLayout(partitionListWidgetVBox)
+            self.ui.partitionList.setWidget(partitionListWidget)
+            self.ui.partitionList.setWidgetResizable(True)
+            self.ui.partitionList.setGeometry(10,40,380,320)
+            self.ui.partitionList.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+            self.ui.partitionList.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
             self.partitionCheckboxes = {}
-            print(self.partitionCheckboxes)
             for partition in guid_gpt.partentries:
-                # print(partition.name)
-                # print()
                 self.partitionCheckboxes[partition.name] = {}
                 self.partitionCheckboxes[partition.name]['size'] = (partition.sectors * guid_gpt.sectorsize)
                 self.partitionCheckboxes[partition.name]['box'] = QCheckBox()
                 self.partitionCheckboxes[partition.name]['box'].setText(partition.name + " (" + str(
                     round(((partition.sectors * guid_gpt.sectorsize) / 1024 / 1024), 1)) + " Mb)")
                 partitionListWidgetVBox.addWidget(self.partitionCheckboxes[partition.name]['box'])
-        # partition progress bar
-        self.partProgressText = QLabel(self)
-        self.partProgressText.setText("Ready to start...")
-        self.partProgressText.setGeometry(10, 355, 480, 40)
-        self.partProgress = QProgressBar(self)
-        self.partProgress.setValue(0)
-        self.partProgress.setGeometry(10, 390, 380, 20)
-        self.partProgress.show()
 
-        # full progress bar
-        self.fullProgressText = QLabel(self)
-        self.fullProgressText.setText("")
-        self.fullProgressText.setGeometry(10, 405, 480, 40)
-        self.fullProgress = QProgressBar(self)
-        self.fullProgress.setValue(0)
-        self.fullProgress.setGeometry(10, 430, 380, 20)
-        self.fullProgress.show()
-
-        # start button
-        self.startBtn = QPushButton(self)
-        self.startBtn.setText("Start dumping")
-        self.startBtn.clicked.connect(self.dumpPartition)
-        self.startBtn.setGeometry((400 - 240 - 150), (500 - 30 - 10), 150, 30)
-        self.startBtn.show()
-
-        self.CloseBtn = QPushButton(self)
-        self.CloseBtn.setText("Close")
-        self.CloseBtn.clicked.connect(self.close)
-        self.CloseBtn.setGeometry((400 - 60), (500 - 30 - 10), 50, 30)
-        self.CloseBtn.show()
-
+        self.ui.startBtn.clicked.connect(self.dumpPartition)
+        self.ui.closeBtn.clicked.connect(self.close)
         self.show()
-        # parent.setCentralWidget(self)

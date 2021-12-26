@@ -6,6 +6,8 @@ from struct import pack, unpack
 from mtkclient.Library.utils import LogBase
 from binascii import hexlify
 
+# SEJ = Security Engine for JTAG protection
+
 def bytes_to_dwords(buf):
     res = []
     for i in range(0, len(buf) // 4):
@@ -296,7 +298,7 @@ class sej(metaclass=LogBase):
             self.reg.HACC_ASRC1 = psrc[pos + 1]
             self.reg.HACC_ASRC2 = psrc[pos + 2]
             self.reg.HACC_ASRC3 = psrc[pos + 3]
-            self.reg.HACC_ACON2 = 1
+            self.reg.HACC_ACON2 = self.HACC_AES_START
             while True:
                 if self.reg.HACC_ACON2 & self.HACC_AES_RDY != 0:
                     break
@@ -371,46 +373,14 @@ class sej(metaclass=LogBase):
         self.reg.HACC_ACON = acon_setting
         self.reg.HACC_ACONK = 0
 
-    def SEJ_V3_Terminate(self):
-        self.reg.HACC_ACON2 = self.HACC_AES_CLR
-        self.reg.HACC_AKEY0 = 0
-        self.reg.HACC_AKEY1 = 0
-        self.reg.HACC_AKEY2 = 0
-        self.reg.HACC_AKEY3 = 0
-        self.reg.HACC_AKEY4 = 0
-        self.reg.HACC_AKEY5 = 0
-        self.reg.HACC_AKEY6 = 0
-        self.reg.HACC_AKEY7 = 0
-
-    def SEJ_V3_Run(self, data):
-        pdst = bytearray()
-        psrc = bytes_to_dwords(data)
-        plen = len(psrc)
-        pos = 0
-        for i in range(plen // 4):
-            self.reg.HACC_ASRC0 = psrc[pos + 0]
-            self.reg.HACC_ASRC1 = psrc[pos + 1]
-            self.reg.HACC_ASRC2 = psrc[pos + 2]
-            self.reg.HACC_ASRC3 = psrc[pos + 3]
-            self.reg.HACC_ACON2 = 1
-            while True:
-                if self.reg.HACC_ACON2 & self.HACC_AES_RDY != 0:
-                    break
-            pdst.extend(pack("<I", self.reg.HACC_AOUT0))
-            pdst.extend(pack("<I", self.reg.HACC_AOUT1))
-            pdst.extend(pack("<I", self.reg.HACC_AOUT2))
-            pdst.extend(pack("<I", self.reg.HACC_AOUT3))
-            pos+=4
-        return pdst
-
     def hw_aes128_cbc_encrypt(self, buf, encrypt=True):
         self.tz_pre_init()
         self.info("HACC init")
         self.SEJ_V3_Init(encrypt)
         self.info("HACC run")
-        buf2 = self.SEJ_V3_Run(buf)
+        buf2 = self.SEJ_Run(buf)
         self.info("HACC terminate")
-        self.SEJ_V3_Terminate()
+        self.SEJ_Terminate()
         return buf2
 
     def sej_set_otp(self,data):
@@ -436,7 +406,7 @@ class sej(metaclass=LogBase):
         self.reg.HACC_ACFG2 = piv[2]
         self.reg.HACC_ACFG3 = piv[3]
         if encrypt:
-            self.reg.HACC_ACON |= 1
+            self.reg.HACC_ACON |= self.HACC_AES_ENC
         else:
             self.reg.HACC_ACON &= 0xFFFFFFFE
         pdst = bytearray()
@@ -449,7 +419,7 @@ class sej(metaclass=LogBase):
                 self.reg.HACC_ASRC1 = psrc[pos + 1]
                 self.reg.HACC_ASRC2 = psrc[pos + 2]
                 self.reg.HACC_ASRC3 = psrc[pos + 3]
-                self.reg.HACC_ACON2 |= 1
+                self.reg.HACC_ACON2 |= self.HACC_AES_START
                 while True:
                     if self.reg.HACC_ACON2 & self.HACC_AES_RDY != 0:
                         break
@@ -500,11 +470,12 @@ class sej(metaclass=LogBase):
         self.info("HACC init")
         self.SEJ_V3_Init(encrypt=encrypt)
         self.info("HACC run")
-        dec=self.SEJ_V3_Run(data)
+        dec=self.SEJ_Run(data)
         self.info("HACC terminate")
-        self.SEJ_V3_Terminate()
+        self.SEJ_Terminate()
         return dec
 
+    # seclib_get_msg_auth_key
     def generate_rpmb(self,meid,otp,derivedlen=32):
         #self.sej_sec_cfg_decrypt(bytes.fromhex("1FF7EB9EEA3BA346C2C94E3D44850C2172B56BC26D2450CA9ADBAB7136604542C3B2EA50057037669A4C493BF7CC7E6E2644563808F73B3AA5AFE2D48D97597E"))
         #self.sej_key_config(b"1A52A367CB12C458965D32CD874B36B2")
@@ -513,5 +484,5 @@ class sej(metaclass=LogBase):
         buf=bytearray()
         meid=bytearray(meid) # 0x100010
         for i in range(derivedlen):
-            buf.append(meid[i%16])
+            buf.append(meid[i%len(meid)])
         return self.hw_aes128_cbc_encrypt(buf)
