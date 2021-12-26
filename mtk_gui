@@ -20,6 +20,7 @@ from mtkclient.gui.readFlashPartitions import *
 from mtkclient.gui.toolsMenu import *
 from mtkclient.gui.toolkit import *
 from mtkclient.config.payloads import pathconfig
+from mtkclient.gui.main_gui import *
 # TO do Move all GUI modifications to signals!
 
 class guiLogger:
@@ -95,28 +96,28 @@ def getDevInfo(self, parameters):
 
 def sendToLog(info):
     t = time.localtime()
-    logBox.appendPlainText(time.strftime("[%H:%M:%S", t) + "]: " + info)
-    logBox.verticalScrollBar().setValue(logBox.verticalScrollBar().maximum())
+    mainwindow.logBox.appendPlainText(time.strftime("[%H:%M:%S", t) + "]: " + info)
+    mainwindow.logBox.verticalScrollBar().setValue(mainwindow.logBox.verticalScrollBar().maximum())
 
 
 def updateGui():
     global phoneInfo
-    phoneInfoTextbox.setText("Phone detected:\n" + phoneInfo['chipset'] + "\n" + phoneInfo['bootMode'])
-    status.setText("Device detected, please wait.\nThis can take a while...")
+    mainwindow.phoneInfoTextbox.setText("Phone detected:\n" + phoneInfo['chipset'] + "\n" + phoneInfo['bootMode'])
+    mainwindow.status.setText("Device detected, please wait.\nThis can take a while...")
     if phoneInfo['daInit']:
-        status.setText("Device connected :)")
-        menuBar.setEnabled(True)
+        mainwindow.status.setText("Device connected :)")
+        mainwindow.menubar.setEnabled(True)
         pixmap = QPixmap(path.get_images_path("phone_connected.png")).scaled(128, 128,
                                                                              Qt.KeepAspectRatio, Qt.SmoothTransformation)
         pixmap.setDevicePixelRatio(2.0)
-        pic.setPixmap(pixmap)
+        mainwindow.pic.setPixmap(pixmap)
         spinnerAnim.stop()
-        spinner_pic.setHidden(True)
+        mainwindow.spinner_pic.setHidden(True)
     else:
         if not phoneInfo['cdcInit']:
-            status.setText("Error initialising. Did you install the drivers?")
+            mainwindow.status.setText("Error initialising. Did you install the drivers?")
         spinnerAnim.start()
-        spinner_pic.setHidden(False)
+        mainwindow.spinner_pic.setHidden(False)
 
 
 def openReadflashWindow(q):
@@ -136,6 +137,8 @@ if __name__ == '__main__':
     # Init the app window
     app = QApplication(sys.argv)
     win = QMainWindow()
+    mainwindow=Ui_MainWindow()
+    mainwindow.setupUi(win)
     icon = QIcon()
     icon.addFile(path.get_images_path('logo_32.png'), QSize(32, 32))
     icon.addFile(path.get_images_path('logo_64.png'), QSize(64, 64))
@@ -153,83 +156,34 @@ if __name__ == '__main__':
     addTopMargin = 20
     if sys.platform.startswith('darwin'):  # MacOS has the toolbar in the top bar insted of in the app...
         addTopMargin = 0
-    win.setFixedSize(600, 400 + addTopMargin)
+    #win.setFixedSize(600, 400 + addTopMargin)
     w = QWidget(win)
     w.move(0,addTopMargin)
-
     w.setFixedSize(600, 400)
     win.setWindowTitle("MTKClient - Version 2.0 beta")
     # lay = QVBoxLayout(self)
 
     # Menubar
-    menuBar = QMenuBar()
-    menuBar.setEnabled(False)
-    win.setMenuBar(menuBar)
-    readFlashMenu = menuBar.addMenu("&Read Flash")
-    readFlashMenu.addAction("Read partition(s)")
-    # readPartitions = QAction("Read partition(s)", w)
-    # readFlashMenu.addAction(readPartitions)
-    readFlashMenu.triggered[QAction].connect(openReadflashWindow)
-    readFlashMenu.addAction("Read full flash")
-    readFlashMenu.addAction("Read offset")
-
-    writeFlashMenu = menuBar.addMenu("&Write Flash")
-    writeFlashMenu.addAction("Write partition(s)")
-    writeFlashMenu.addAction("Write full flash")
-    writeFlashMenu.addAction("Write offset")
-
-    eraseFlashMenu = menuBar.addMenu("&Erase Flash")
-    eraseFlashMenu.addAction("Erase partition(s)")
-    eraseFlashMenu.addAction("Erase bootsectors")
-
-    toolsFlashMenu = menuBar.addMenu("&Tools")
-    toolsFlashMenu.addAction("Read RPMB")
-    toolsFlashMenu.triggered[QAction].connect(openToolsMenu)
-    toolsFlashMenu.addAction("Generate RPMB keys")
-    menuBar.show()
-
-    # titles
-    title = QLabel(w)
-    title.setText("MTKClient v2.0")
-    title.setGeometry(10, 0, 480, 40)
-    title.setStyleSheet("font-size: 17px")
-    title.show()
-
-    # status info
-    status = QLabel(w)
-    status.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-    status.setText("Please connect a Mediatek phone to continue.\n\nHint: Power off the phone before connecting.\n" + \
-                   "For brom mode, press and hold vol up, vol dwn, or all hw buttons " + \
-                   "and connect usb.\n" +
-                   "For preloader mode, don't press any hw button and connect usb.")
-    status.setGeometry(10, 30, 465, 256)
-    status.setWordWrap(True)
-    status.setStyleSheet("font-size: 12px vertical-align: top")
-    status.show()
-
-    # Device info
-    # phone icon
-    pic = QLabel(w)
-    pixmap = QPixmap(path.get_images_path('phone_notfound.png')).scaled(128, 128, Qt.AspectRatioMode.KeepAspectRatio,
-                                                             Qt.TransformationMode.SmoothTransformation)
-    pixmap.setDevicePixelRatio(2.0)
-    pic.setPixmap(pixmap)
-    pic.resize(pixmap.width() // 2, pixmap.height() // 2)
-    pic.move(545, 10)
-    pic.show()
+    mainwindow.readFlashMenu.triggered[QAction].connect(openReadflashWindow)
+    mainwindow.toolsFlashMenu.triggered[QAction].connect(openToolsMenu)
 
     # phone spinner
-    spinner_pic = QLabel(w)
     pixmap = QPixmap(path.get_images_path("phone_loading.png")).scaled(64, 64, Qt.AspectRatioMode.KeepAspectRatio,
                                                             Qt.TransformationMode.SmoothTransformation)
     pixmap.setDevicePixelRatio(2.0)
-    # trans = QTransform()
-    # trans.rotate(90)
-    spinner_pic.setPixmap(pixmap)
-    spinner_pic.resize(pixmap.width() // 2, pixmap.height() // 2)
-    spinner_pic.move(551, 25)
-    spinner_pic.show()
+    mainwindow.spinner_pic.setPixmap(pixmap)
+    mainwindow.spinner_pic.resize(pixmap.width() // 2, pixmap.height() // 2)
+    #mainwindow.spinner_pic.move(551, 25)
+    mainwindow.spinner_pic.show()
 
+    nfpixmap = QPixmap(path.get_images_path("phone_notfound.png")).scaled(128, 128,
+                                                                         Qt.KeepAspectRatio, Qt.SmoothTransformation)
+    mainwindow.pic.setPixmap(nfpixmap)
+
+    logo = QPixmap(path.get_images_path("logo_256.png")).scaled(128, 128,
+                                                                         Qt.KeepAspectRatio, Qt.SmoothTransformation)
+    mainwindow.logoPic.setPixmap(logo)
+    mainwindow.logBox.setHidden(True)
 
     def spinnerAnimRot(angle):
         # print(angle)
@@ -242,7 +196,7 @@ if __name__ == '__main__':
         xoffset = (newPixmap.width() - pixmap.width()) // 2
         yoffset = (newPixmap.height() - pixmap.height()) // 2
         rotated = newPixmap.copy(ax=xoffset, ay=yoffset, awidth=pixmap.width(), aheight=pixmap.height())
-        spinner_pic.setPixmap(rotated)
+        mainwindow.spinner_pic.setPixmap(rotated)
 
 
     spinnerAnim = QVariantAnimation()
@@ -251,73 +205,20 @@ if __name__ == '__main__':
     spinnerAnim.setEndValue(360)
     spinnerAnim.setLoopCount(-1)
     spinnerAnim.valueChanged.connect(spinnerAnimRot)
-    spinner_pic.setHidden(True)
 
-    # phone info
-    phoneInfoTextbox = QLabel(w)
-    phoneInfoTextbox.setText("No phone found")
-    phoneInfoTextbox.setGeometry(10, 10, 520, 100)
-    phoneInfoTextbox.setAlignment(Qt.AlignRight | Qt.AlignTop)
-    phoneInfoTextbox.setStyleSheet("font-size: 12px")
-    phoneInfoTextbox.show()
-
-    # Line
-    line = QFrame(w)
-    line.setGeometry(10, 108, 580, 20)
-    line.setFrameShape(QFrame.HLine)
-    line.setFrameShadow(QFrame.Sunken)
-
-    # logo
-    logoPic = QLabel(w)
-    logoPixmap = QPixmap(path.get_images_path("logo_512.png")).scaled(int(128 * dpiMultiplier), int(128 * dpiMultiplier),
-                                                           Qt.AspectRatioMode.KeepAspectRatio,
-                                                           Qt.TransformationMode.SmoothTransformation)
-    logoPixmap.setDevicePixelRatio(dpiMultiplier)
-    logoPic.setPixmap(logoPixmap)
-    logoPic.resize(logoPixmap.width() // dpiMultiplier, logoPixmap.height() // dpiMultiplier)
-    logoPic.move(10, 130)
-    logoPic.show()
-
-    # Copyright info
-    copyrightInfo = QLabel(w)
-    copyrightInfo.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-    copyrightInfo.setText("Made by: Bjoern Kerler\n" + \
-                          "Gui by: Geert-Jan Kreileman\n\n" + \
-                          "Credits: \n" + \
-                          "kamakiri [xyzz]\n" +
-                          "linecode exploit [chimera]\n" +
-                          "Chaosmaster\n" +
-                          "and all contributers")
-    copyrightInfo.setGeometry(150,135,405,256)
-    copyrightInfo.setWordWrap(True)
-    copyrightInfo.setStyleSheet("font-size: 12px color: #333 vertical-align: top")
-    copyrightInfo.show()
-
+    mainwindow.spinner_pic.setHidden(True)
 
     def showDebugInfo():
-        logBox.show()
-        if w.frameGeometry().height() < 500:
-            win.setFixedSize(600, 700 + addTopMargin)
-            w.setFixedSize(600, 700)
-            debugBtn.setText("Hide debug info")
+        if mainwindow.logBox.isHidden():
+            mainwindow.logBox.setHidden(False)
+            mainwindow.debugBtn.setText("Hide debug info")
         else:
-            w.setFixedSize(600, 400)
-            win.setFixedSize(600, 400 + addTopMargin)
-            debugBtn.setText("Show debug info")
+            mainwindow.logBox.setHidden(True)
+            mainwindow.debugBtn.setText("Show debug info")
 
-
-    # debug
-    debugBtn = QPushButton(w)
-    debugBtn.setText("Show debug info")
-    debugBtn.clicked.connect(showDebugInfo)
-    debugBtn.setGeometry((600 - 150 - 10), (400 - 30 - 10), 150, 30)
-    debugBtn.show()
-
-    logBox = QPlainTextEdit(w)
-    logBox.setGeometry(11, (700 - 280 - 10), 578, 280)
-    logBox.setWordWrapMode(QTextOption.NoWrap)
-    logBox.setReadOnly(True)
-
+    mainwindow.debugBtn.clicked.connect(showDebugInfo)
+    mainwindow.logBox.setWordWrapMode(QTextOption.NoWrap)
+    mainwindow.menubar.setEnabled(False)
     win.show()
 
     # Get the device info
