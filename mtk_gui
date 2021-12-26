@@ -22,30 +22,6 @@ from mtkclient.gui.toolkit import *
 from mtkclient.config.payloads import pathconfig
 from mtkclient.gui.main_gui import *
 # TO do Move all GUI modifications to signals!
-
-class guiLogger:
-    global guiState
-
-    def info(text):
-        sendToLog(text)
-        # grab useful stuff from this log
-        # if ("\tCPU:" in text):
-        #    phoneInfo['chipset'] = text.replace("\t","").replace("CPU:","").replace("()","")
-        # elif ("BROM mode detected" in text):
-        #    phoneInfo['bootMode'] = "In Bootrom"
-        # if (guiState == "welcome") and (phoneInfo['chipset'] is not ""):
-        #    phoneInfoTextbox.setText("Phone detected:\n" + phoneInfo['chipset']+"\n"+phoneInfo['bootMode'])
-
-    def debug(text):
-        sendToLog(text)
-
-    def error(text):
-        sendToLog(text)
-
-    def setLevel(logLevel):
-        return True
-
-
 # install exception hook: without this, uncaught exception would cause application to exit
 sys.excepthook = trap_exc_during_debug
 
