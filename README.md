@@ -1,5 +1,5 @@
 # MTKClient
-![Logo](gui/images/logo_256.png)
+![Logo](mtkclient/gui/images/logo_256.png)
 
 Just some mtk tool for exploitation, reading/writing flash and doing crazy stuff. 
 For windows, you need to install the stock mtk port and the usbdk driver (see instructions below).
