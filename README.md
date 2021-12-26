@@ -120,7 +120,7 @@ sudo reboot
 ### Using MTKTools via the graphical user interface:
 For the 'basics' you can use the GUI interface. This supports dumping partitions for now. Run the following command:
 ```
-python mtk_gui.py
+python mtk_gui
 ```
 
 ### Root the phone (Tested with android 9 - 12)
