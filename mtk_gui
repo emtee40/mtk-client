@@ -30,15 +30,9 @@ variables = mock.Mock()
 variables.cmd = "stage"
 variables.debugmode = True
 path=pathconfig()
-config = Mtk_Config(loglevel=logging.INFO, gui=None)
-config.gpt_settings = gpt_settings(gpt_num_part_entries='0', gpt_part_entry_size='0',
-                                   gpt_part_entry_start_lba='0')  # This actually sets the right GPT settings..
 # if sys.platform.startswith('darwin'):
 #    config.ptype = "kamakiri" #Temp for Mac testing
 MtkTool = Main(variables)
-mtkClass = Mtk(config=config, loglevel=logging.INFO)
-loglevel = logging.INFO
-da_handler = DA_handler(mtkClass, loglevel)
 
 guiState = "welcome"
 phoneInfo = {"chipset": "", "bootMode": "", "daInit": False, "cdcInit": False}
@@ -46,11 +40,15 @@ phoneInfo = {"chipset": "", "bootMode": "", "daInit": False, "cdcInit": False}
 
 def getDevInfo(self, parameters):
     print(parameters)
-    mtkClass = parameters[0]
-    da_handler = parameters[1]
-    phoneInfo = parameters[2]
+    config = Mtk_Config(loglevel=logging.INFO, gui=self.sendToLogSignal)
+    config.gpt_settings = gpt_settings(gpt_num_part_entries='0', gpt_part_entry_size='0',
+                                       gpt_part_entry_start_lba='0')  # This actually sets the right GPT settings..
+
+    phoneInfo = parameters[0]
     self.sendToLogSignal.emit("CONNECTING!")
-    mtkClass.config.gui = self.sendToLogSignal
+    mtkClass = Mtk(config=config, loglevel=logging.INFO)
+    loglevel = logging.INFO
+    da_handler = DA_handler(mtkClass, loglevel)
     mtkClass = da_handler.configure_da(mtkClass, preloader=None)
     if mtkClass:
         phoneInfo['daInit'] = True
@@ -198,7 +196,7 @@ if __name__ == '__main__':
     win.show()
 
     # Get the device info
-    thread = asyncThread(app, 0, getDevInfo, [mtkClass, da_handler, phoneInfo])
+    thread = asyncThread(app, 0, getDevInfo, [phoneInfo])
     thread.sendToLogSignal.connect(sendToLog)
     thread.sendUpdateSignal.connect(updateGui)
     thread.start()
