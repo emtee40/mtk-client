@@ -95,6 +95,7 @@ class ReadFlashWindow(QDialog):
                 self.dumpStatus["allPartitions"][partition]['done'] = True
                 # MtkTool.cmd_stage(mtkClass, None, None, None, False)
         self.dumpStatus["done"] = True
+        thread.wait()
 
     def __init__(self, parent, mtkClass, da_handler, sendToLog):  # def __init__(self, *args, **kwargs):
         super(ReadFlashWindow, self).__init__(parent)
