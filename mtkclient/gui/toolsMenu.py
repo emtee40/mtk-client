@@ -84,7 +84,7 @@ class generateKeysMenu(QDialog):
         self.statusText = QLabel(self)
         self.statusText.setText("Ready to start.")
         self.statusText.setStyleSheet("font-style: italic color:#555")
-        self.statusText.setGeometry(10, 135, (580 - 200), 20)
+        self.statusText.setGeometry(10, 135, (580 - 150), 20)
 
         # start button
         self.startBtn = QPushButton(self)

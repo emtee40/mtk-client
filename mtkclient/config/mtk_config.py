@@ -1,4 +1,5 @@
 import os
+import sys
 import logging
 from binascii import hexlify
 from mtkclient.Library.utils import LogBase
@@ -21,7 +22,10 @@ class Mtk_Config(metaclass=LogBase):
         self.preloader_filename = None
         self.payloadfile = None
         self.loader = None
-        self.ptype = "kamakiri2"
+        if sys.platform.startswith('darwin'):
+            self.ptype = "kamakiri"
+        else:
+            self.ptype = "kamakiri2"
         self.generatekeys = None
         self.bmtflag = None
         self.bmtblockcount = None
