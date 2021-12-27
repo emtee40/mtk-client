@@ -51,6 +51,15 @@ class ReadFlashWindow(QDialog):
     def dumpPartDone(self):
         self.sendToLogSignal.emit("dump done!")
 
+    def selectAll(self):
+        if self.ui.SelectAllCheckbox.isChecked():
+            for partition in self.partitionCheckboxes:
+                self.partitionCheckboxes[partition]['box'].setChecked(True);
+        else:
+            for partition in self.partitionCheckboxes:
+                self.partitionCheckboxes[partition]['box'].setChecked(False);
+
+
     def dumpPartition(self):
         self.ui.startBtn.setEnabled(False)
         self.dumpFolder = str(QFileDialog.getExistingDirectory(self, "Select output directory"))
@@ -94,6 +103,17 @@ class ReadFlashWindow(QDialog):
                 self.da_handler.handle_da_cmds(self.mtkClass, "r", variables)
                 self.dumpStatus["allPartitions"][partition]['done'] = True
                 # MtkTool.cmd_stage(mtkClass, None, None, None, False)
+        if self.ui.DumpGPTCheckbox.isChecked():
+            #also dump the GPT
+            variables = mock.Mock()
+            variables.directory = self.dumpFolder
+            variables.parttype = None
+            self.dumpStatus["allPartitions"]["GPT"] = {};
+            self.dumpStatus["allPartitions"]["GPT"]['size'] = 17;
+            self.dumpStatus["currentPartition"] = "GPT"
+            self.da_handler.close = self.dumpPartDone  # Ignore the normally used sys.exit
+            self.da_handler.handle_da_cmds(self.mtkClass, "gpt", variables)
+            self.dumpStatus["allPartitions"]["GPT"]['done'] = True
         self.dumpStatus["done"] = True
         thread.wait()
 
@@ -137,5 +157,6 @@ class ReadFlashWindow(QDialog):
                 partitionListWidgetVBox.addWidget(self.partitionCheckboxes[partition.name]['box'])
 
         self.ui.startBtn.clicked.connect(self.dumpPartition)
+        self.ui.SelectAllCheckbox.clicked.connect(self.selectAll);
         self.ui.closeBtn.clicked.connect(self.close)
         self.show()
