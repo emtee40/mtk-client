@@ -62,10 +62,13 @@ def getDevInfo(self, parameters):
 
     mtkClass = devhandler.mtkClass
     da_handler = devhandler.da_handler
-    if mtkClass.port.cdc.connect() == False:
-        mtkClass.preloader.init()
-    else:
-        phoneInfo['cdcInit'] = True;
+    try:
+        if mtkClass.port.cdc.connect() == False:
+            mtkClass.preloader.init()
+        else:
+            phoneInfo['cdcInit'] = True
+    except:
+        phoneInfo['cantConnect'] = True
     phoneInfo['chipset'] = str(mtkClass.config.chipconfig.name) + \
                            " (" + str(mtkClass.config.chipconfig.description) + ")"
     self.sendUpdateSignal.emit()
@@ -80,6 +83,9 @@ def getDevInfo(self, parameters):
             phoneInfo['bootMode'] = "DA mode"
         else:
             phoneInfo['bootMode'] = "Preloader mode"
+        self.sendUpdateSignal.emit()
+    else:
+        phoneInfo['cantConnect'] = True
         self.sendUpdateSignal.emit()
     # try:
     #    print(mtkClass.daloader.get_partition_data(parttype="user"))
@@ -96,7 +102,10 @@ def sendToLog(info):
 
 def updateGui():
     global phoneInfo
-    mainwindow.phoneInfoTextbox.setText("Phone detected:\n" + phoneInfo['chipset'] + "\n" + phoneInfo['bootMode'])
+    if (phoneInfo['cdcInit'] and phoneInfo['bootMode'] == "" ):
+        mainwindow.phoneInfoTextbox.setText("Phone detected:\nReading model info...")
+    else:
+        mainwindow.phoneInfoTextbox.setText("Phone detected:\n" + phoneInfo['chipset'] + "\n" + phoneInfo['bootMode'])
     mainwindow.status.setText("Device detected, please wait.\nThis can take a while...")
     if phoneInfo['daInit']:
         mainwindow.status.setText("Device connected :)")
@@ -106,7 +115,7 @@ def updateGui():
         spinnerAnim.stop()
         mainwindow.spinner_pic.setHidden(True)
     else:
-        if not phoneInfo['cdcInit']:
+        if 'cantConnect' in phoneInfo:
             mainwindow.status.setText("Error initialising. Did you install the drivers?")
         spinnerAnim.start()
         mainwindow.spinner_pic.setHidden(False)

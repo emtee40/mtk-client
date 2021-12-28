@@ -118,7 +118,7 @@ sudo reboot
 ## Usage
 
 ### Using MTKTools via the graphical user interface:
-For the 'basics' you can use the GUI interface. This supports dumping partitions for now. Run the following command:
+For the 'basics' you can use the GUI interface. This supports dumping partitions or the full flash for now. Run the following command:
 ```
 python mtk_gui
 ```

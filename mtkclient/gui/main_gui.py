@@ -198,7 +198,6 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.toolsFlashMenu.menuAction())
         self.readFlashMenu.addAction(self.actionRead_partition_s)
         self.readFlashMenu.addAction(self.actionRead_full_flash)
-        self.readFlashMenu.addAction(self.actionRead_offset)
         self.writeFlashMenu.addAction(self.actionWrite_partition_s)
         self.writeFlashMenu.addAction(self.actionWrite_full_flash)
         self.writeFlashMenu.addAction(self.actionWrite_at_offset)

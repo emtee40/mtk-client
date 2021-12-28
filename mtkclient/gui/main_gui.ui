@@ -413,7 +413,6 @@
     </property>
     <addaction name="actionRead_partition_s"/>
     <addaction name="actionRead_full_flash"/>
-    <addaction name="actionRead_offset"/>
    </widget>
    <widget class="QMenu" name="writeFlashMenu">
     <property name="title">
