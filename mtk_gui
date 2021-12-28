@@ -18,6 +18,7 @@ from mtkclient.Library.gpt import gpt_settings
 from mtkclient.Library.mtk_main import Main, Mtk_Config
 
 from mtkclient.gui.readFlashPartitions import ReadFlashWindow
+from mtkclient.gui.readFull import ReadFullFlashWindow
 from mtkclient.gui.toolsMenu import generateKeysMenu
 from mtkclient.gui.toolkit import asyncThread, trap_exc_during_debug
 from mtkclient.config.payloads import pathconfig
@@ -113,7 +114,11 @@ def updateGui():
 
 def openReadflashWindow(q):
     # status.setText("OH YEAH"+str(q.text()))
-    readFlashWindowVal = ReadFlashWindow(w, devhandler.mtkClass, devhandler.da_handler, sendToLog)
+    curmenutext = q.text()
+    if curmenutext == "Read partition(s)":
+        readFlashWindowVal = ReadFlashWindow(w, devhandler.mtkClass, devhandler.da_handler, sendToLog)
+    elif curmenutext == "Read full flash":
+        readFlashWindowVal = ReadFullFlashWindow(w, devhandler.mtkClass, devhandler.da_handler, sendToLog)
     # w.close()
 
 
