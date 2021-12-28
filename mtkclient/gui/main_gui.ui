@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>746</width>
-    <height>420</height>
+    <height>600</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -60,7 +60,7 @@
       <x>12</x>
       <y>401</y>
       <width>722</width>
-      <height>163</height>
+      <height>186</height>
      </rect>
     </property>
     <property name="minimumSize">
@@ -72,7 +72,7 @@
     <property name="maximumSize">
      <size>
       <width>722</width>
-      <height>163</height>
+      <height>186</height>
      </size>
     </property>
     <property name="styleSheet">
@@ -91,7 +91,7 @@
       <x>12</x>
       <y>184</y>
       <width>721</width>
-      <height>135</height>
+      <height>141</height>
      </rect>
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -141,7 +141,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Made by: 	Bjoern Kerler&lt;br/&gt;Gui by: 	Geert-Jan Kreileman&lt;br/&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Credits:&lt;br/&gt;	kamakiri [xyzz]&lt;br/&gt;	linecode exploit [chimera]&lt;br/&gt;	Chaosmaster&lt;br/&gt;	and all contributers&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string>&lt;b&gt;Made by:&lt;/b&gt; Bjoern Kerler&lt;br/&gt;&lt;b&gt;Gui by:&lt;/b&gt; Geert-Jan Kreileman&lt;br/&gt;&lt;br/&gt;&lt;b&gt;Credits:&lt;/b&gt;&lt;br/&gt;kamakiri [xyzz]&lt;br/&gt;linecode exploit [chimera]&lt;br/&gt;Chaosmaster&lt;br/&gt;and all contributers&lt;/p&gt;</string>
        </property>
       </widget>
      </item>
@@ -184,8 +184,23 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>110</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
         <string>Show debug log</string>
+       </property>
+       <property name="autoDefault">
+        <bool>false</bool>
+       </property>
+       <property name="default">
+        <bool>false</bool>
+       </property>
+       <property name="flat">
+        <bool>false</bool>
        </property>
       </widget>
      </item>
@@ -294,49 +309,9 @@
     <property name="geometry">
      <rect>
       <x>14</x>
-      <y>9</y>
-      <width>118</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="sizePolicy">
-     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-      <horstretch>0</horstretch>
-      <verstretch>0</verstretch>
-     </sizepolicy>
-    </property>
-    <property name="maximumSize">
-     <size>
-      <width>16777215</width>
-      <height>20</height>
-     </size>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>17</pointsize>
-      <weight>50</weight>
-      <bold>false</bold>
-      <strikeout>false</strikeout>
-      <kerning>true</kerning>
-     </font>
-    </property>
-    <property name="text">
-     <string>MTKClient v2.0</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-    </property>
-    <property name="wordWrap">
-     <bool>false</bool>
-    </property>
-   </widget>
-   <widget class="QLabel" name="status">
-    <property name="geometry">
-     <rect>
-      <x>14</x>
-      <y>40</y>
-      <width>400</width>
-      <height>105</height>
+      <y>10</y>
+      <width>231</width>
+      <height>24</height>
      </rect>
     </property>
     <property name="sizePolicy">
@@ -347,14 +322,64 @@
     </property>
     <property name="minimumSize">
      <size>
-      <width>400</width>
-      <height>0</height>
+      <width>0</width>
+      <height>24</height>
+     </size>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777215</width>
+      <height>20</height>
      </size>
     </property>
     <property name="font">
      <font>
-      <pointsize>12</pointsize>
+      <family>Arial</family>
+      <pointsize>18</pointsize>
      </font>
+    </property>
+    <property name="lineWidth">
+     <number>0</number>
+    </property>
+    <property name="text">
+     <string>MTKClient v2.0</string>
+    </property>
+    <property name="textFormat">
+     <enum>Qt::AutoText</enum>
+    </property>
+    <property name="scaledContents">
+     <bool>false</bool>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+    </property>
+    <property name="wordWrap">
+     <bool>false</bool>
+    </property>
+    <property name="indent">
+     <number>0</number>
+    </property>
+   </widget>
+   <widget class="QLabel" name="status">
+    <property name="geometry">
+     <rect>
+      <x>14</x>
+      <y>40</y>
+      <width>451</width>
+      <height>111</height>
+     </rect>
+    </property>
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>400</width>
+      <height>0</height>
+     </size>
     </property>
     <property name="text">
      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Please connect a Mediatek phone to continue.&lt;br/&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Hint:&lt;/span&gt; Power off the phone before connecting.&lt;br/&gt;&lt;span style=&quot; font-style:italic; color:#393939;&quot;&gt;For brom mode:&lt;/span&gt;&lt;span style=&quot; color:#393939;&quot;&gt;&lt;br/&gt;Press and hold vol up, vol dwn, or all hw buttons and connect usb.&lt;br/&gt;&lt;/span&gt;&lt;span style=&quot; font-style:italic; color:#393939;&quot;&gt;For preloader mode:&lt;/span&gt;&lt;span style=&quot; color:#393939;&quot;&gt;&lt;br/&gt;Don't press any hw button and connect usb.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
