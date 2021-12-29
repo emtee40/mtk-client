@@ -8,7 +8,7 @@ import traceback
 import math
 import logging
 import ctypes
-from PySide2.QtCore import Qt, QVariantAnimation, Signal, QObject, QSize
+from PySide2.QtCore import Qt, QVariantAnimation, Signal, QObject, QSize, QTranslator, QLocale, QLibraryInfo
 from PySide2.QtGui import QTextOption, QPixmap, QTransform, QIcon
 from PySide2.QtWidgets import QMainWindow, QApplication, QAction, QWidget
 
@@ -139,11 +139,33 @@ def openToolsMenu(q):
     # w.close()
 
 
+def load_translations(application):
+    """
+    Load application translations and the QT base translations for the current locale
+    :param application: QApplication object
+    """
+    locale = QLocale.system()
+    translator = QTranslator(application)
+    directory = os.path.dirname(__file__)
+    lang = 'mtkclient/gui/i18n/' + locale.name()
+    if translator.load(lang, directory):
+        application.installTranslator(translator)
+
+    translations_path = QLibraryInfo.location(QLibraryInfo.TranslationsPath)
+    base_translator = QTranslator(application)
+    if base_translator.load(locale, "qtbase", "_", translations_path):
+        application.installTranslator(base_translator)
+
 if __name__ == '__main__':
+    # Enable nice 4K Scaling
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+    os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
+
     # Init the app window
     app = QApplication(sys.argv)
     win = QMainWindow()
     w = QWidget(win)
+    load_translations(app)
     mainwindow=Ui_MainWindow()
     mainwindow.setupUi(win)
     icon = QIcon()
