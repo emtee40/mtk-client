@@ -236,18 +236,18 @@ if __name__ == '__main__':
     def showDebugInfo():
         if mainwindow.logBox.isHidden():
             mainwindow.logBox.setHidden(False)
-            win.setFixedSize(746, 600 + addTopMargin)
+            #win.setFixedSize(746, 600 + addTopMargin)
             mainwindow.debugBtn.setText("Hide debug info")
         else:
             mainwindow.logBox.setHidden(True)
-            win.setFixedSize(746, 400 + addTopMargin)
+            #win.setFixedSize(746, 400 + addTopMargin)
             mainwindow.debugBtn.setText("Show debug info")
 
     mainwindow.debugBtn.clicked.connect(showDebugInfo)
     mainwindow.logBox.setWordWrapMode(QTextOption.NoWrap)
     mainwindow.menubar.setEnabled(False)
     win.show()
-    win.setFixedSize(746, 400 + addTopMargin)
+    #win.setFixedSize(746, 400 + addTopMargin)
 
     # Device setup
     loglevel = logging.INFO
