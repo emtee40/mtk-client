@@ -63,7 +63,7 @@ def getDevInfo(self, parameters):
     mtkClass = devhandler.mtkClass
     da_handler = devhandler.da_handler
     try:
-        if mtkClass.port.cdc.connect() == False:
+        if not mtkClass.port.cdc.connect():
             mtkClass.preloader.init()
         else:
             phoneInfo['cdcInit'] = True
@@ -94,50 +94,6 @@ def getDevInfo(self, parameters):
     # MtkTool.cmd_stage(mtkClass, None, None, None, False)
 
 
-def sendToLog(info):
-    t = time.localtime()
-    mainwindow.logBox.appendPlainText(time.strftime("[%H:%M:%S", t) + "]: " + info)
-    mainwindow.logBox.verticalScrollBar().setValue(mainwindow.logBox.verticalScrollBar().maximum())
-
-
-def updateGui():
-    global phoneInfo
-    if (phoneInfo['cdcInit'] and phoneInfo['bootMode'] == "" ):
-        mainwindow.phoneInfoTextbox.setText("Phone detected:\nReading model info...")
-    else:
-        mainwindow.phoneInfoTextbox.setText("Phone detected:\n" + phoneInfo['chipset'] + "\n" + phoneInfo['bootMode'])
-    mainwindow.status.setText("Device detected, please wait.\nThis can take a while...")
-    if phoneInfo['daInit']:
-        mainwindow.status.setText("Device connected :)")
-        mainwindow.menubar.setEnabled(True)
-        pixmap = QPixmap(path.get_images_path("phone_connected.png"))
-        mainwindow.pic.setPixmap(pixmap)
-        spinnerAnim.stop()
-        mainwindow.spinner_pic.setHidden(True)
-    else:
-        if 'cantConnect' in phoneInfo:
-            mainwindow.status.setText("Error initialising. Did you install the drivers?")
-        spinnerAnim.start()
-        mainwindow.spinner_pic.setHidden(False)
-
-
-def openReadflashWindow(q):
-    # status.setText("OH YEAH"+str(q.text()))
-    curmenutext = q.text()
-    if curmenutext == "Read partition(s)":
-        readFlashWindowVal = ReadFlashWindow(w, devhandler.mtkClass, devhandler.da_handler, sendToLog)
-    elif curmenutext == "Read full flash":
-        readFlashWindowVal = ReadFullFlashWindow(w, devhandler.mtkClass, devhandler.da_handler, sendToLog)
-    # w.close()
-
-
-def openToolsMenu(q):
-    # status.setText("OH YEAH"+str(q.text()))
-    curmenutext=q.text()
-    if curmenutext == "Generate RPMB keys":
-        readFlashWindowVal = generateKeysMenu(w, devhandler.mtkClass, devhandler.da_handler, sendToLog)
-    # w.close()
-
 
 def load_translations(application):
     """
@@ -160,6 +116,111 @@ def load_translations(application):
         application.installTranslator(base_translator)
 
 
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super(MainWindow, self).__init__()
+        w = QWidget(self)
+        self.ui=Ui_MainWindow()
+        self.ui.setupUi(self)
+        # Menubar
+        self.ui.readFlashMenu.triggered[QAction].connect(self.openReadflashWindow)
+        self.ui.toolsFlashMenu.triggered[QAction].connect(self.openToolsMenu)
+
+        self.initpixmap()
+
+        self.ui.debugBtn.clicked.connect(self.showDebugInfo)
+        self.ui.logBox.setWordWrapMode(QTextOption.NoWrap)
+        self.ui.menubar.setEnabled(False)
+
+    def sendToLog(self, info):
+        t = time.localtime()
+        self.ui.logBox.appendPlainText(time.strftime("[%H:%M:%S", t) + "]: " + info)
+        self.ui.logBox.verticalScrollBar().setValue(self.ui.logBox.verticalScrollBar().maximum())
+
+    def updateGui(self):
+        global phoneInfo
+        if phoneInfo['cdcInit'] and phoneInfo['bootMode'] == "":
+            self.ui.phoneInfoTextbox.setText("Phone detected:\nReading model info...")
+        else:
+            self.ui.phoneInfoTextbox.setText(
+                "Phone detected:\n" + phoneInfo['chipset'] + "\n" + phoneInfo['bootMode'])
+        self.ui.status.setText("Device detected, please wait.\nThis can take a while...")
+        if phoneInfo['daInit']:
+            self.ui.status.setText("Device connected :)")
+            self.ui.menubar.setEnabled(True)
+            self.pixmap = QPixmap(path.get_images_path("phone_connected.png"))
+            self.ui.pic.setPixmap(self.pixmap)
+            self.spinnerAnim.stop()
+            self.ui.spinner_pic.setHidden(True)
+        else:
+            if 'cantConnect' in phoneInfo:
+                self.ui.status.setText("Error initialising. Did you install the drivers?")
+            self.spinnerAnim.start()
+            self.ui.spinner_pic.setHidden(False)
+
+    def spinnerAnimRot(self, angle):
+        trans = QTransform()
+        dimension = self.pixmap.width() / math.sqrt(2)
+        newPixmap = self.pixmap.transformed(QTransform().rotate(angle), Qt.SmoothTransformation)
+        xoffset = (newPixmap.width() - self.pixmap.width())/2
+        yoffset = (newPixmap.height() - self.pixmap.height())/2
+        rotated = newPixmap.copy(xoffset, yoffset, self.pixmap.width(), self.pixmap.height())
+        self.ui.spinner_pic.setPixmap(rotated)
+
+    def initpixmap(self):
+        # phone spinner
+        self.pixmap = QPixmap(path.get_images_path("phone_loading.png")).scaled(96, 96, Qt.KeepAspectRatio,
+                                                                           Qt.SmoothTransformation)
+        self.pixmap.setDevicePixelRatio(2)
+        self.ui.spinner_pic.setPixmap(self.pixmap)
+        self.ui.spinner_pic.show()
+
+        nfpixmap = QPixmap(path.get_images_path("phone_notfound.png"))
+        self.ui.pic.setPixmap(nfpixmap)
+
+        logo = QPixmap(path.get_images_path("logo_256.png"))
+        self.ui.logoPic.setPixmap(logo)
+        self.ui.logBox.setHidden(True)
+
+        self.spinnerAnim = QVariantAnimation()
+        self.spinnerAnim.setDuration(3000)
+        self.spinnerAnim.setStartValue(0)
+        self.spinnerAnim.setEndValue(360)
+        self.spinnerAnim.setLoopCount(-1)
+        self.spinnerAnim.valueChanged.connect(self.spinnerAnimRot)
+
+        self.ui.spinner_pic.setHidden(True)
+
+
+    def openReadflashWindow(self, q):
+        # status.setText("OH YEAH"+str(q.text()))
+        curmenutext = q.text()
+        info=self.tr("Read partition(s)")
+        if curmenutext == self.tr("Read partition(s)"):
+            readFlashWindowVal = ReadFlashWindow(self, devhandler.mtkClass, devhandler.da_handler, self.sendToLog)
+        elif curmenutext == self.tr("Read full flash"):
+            readFlashWindowVal = ReadFullFlashWindow(self, devhandler.mtkClass, devhandler.da_handler, self.sendToLog)
+        # w.close()
+
+
+    def openToolsMenu(self, q):
+        # status.setText("OH YEAH"+str(q.text()))
+        curmenutext=q.text()
+        if curmenutext == self.tr("Generate RPMB keys"):
+            readFlashWindowVal = generateKeysMenu(self, devhandler.mtkClass, devhandler.da_handler, self.sendToLog)
+        # w.close()
+
+    def showDebugInfo(self):
+        if self.ui.logBox.isHidden():
+            self.ui.logBox.setHidden(False)
+            #win.setFixedSize(746, 600 + addTopMargin)
+            self.ui.debugBtn.setText(u"Hide debug info")
+        else:
+            self.ui.logBox.setHidden(True)
+            #win.setFixedSize(746, 400 + addTopMargin)
+            self.ui.debugBtn.setText(u"Show debug info")
+
+
 if __name__ == '__main__':
     # Enable nice 4K Scaling
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
@@ -167,11 +228,10 @@ if __name__ == '__main__':
 
     # Init the app window
     app = QApplication(sys.argv)
-    win = QMainWindow()
-    w = QWidget(win)
     load_translations(app)
-    mainwindow=Ui_MainWindow()
-    mainwindow.setupUi(win)
+
+    win = MainWindow()
+
     icon = QIcon()
     icon.addFile(path.get_images_path('logo_32.png'), QSize(32, 32))
     icon.addFile(path.get_images_path('logo_64.png'), QSize(64, 64))
@@ -192,72 +252,18 @@ if __name__ == '__main__':
     win.setWindowTitle("MTKClient - Version 2.0 beta")
     # lay = QVBoxLayout(self)
 
-    # Menubar
-    mainwindow.readFlashMenu.triggered[QAction].connect(openReadflashWindow)
-    mainwindow.toolsFlashMenu.triggered[QAction].connect(openToolsMenu)
-
-    # phone spinner
-    pixmap = QPixmap(path.get_images_path("phone_loading.png")).scaled(96, 96, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-    pixmap.setDevicePixelRatio(2)
-    mainwindow.spinner_pic.setPixmap(pixmap)
-    mainwindow.spinner_pic.show()
-
-    nfpixmap = QPixmap(path.get_images_path("phone_notfound.png"))
-    mainwindow.pic.setPixmap(nfpixmap)
-
-    logo = QPixmap(path.get_images_path("logo_256.png"))
-    mainwindow.logoPic.setPixmap(logo)
-    mainwindow.logBox.setHidden(True)
-
-    def spinnerAnimRot(angle):
-        # print(angle)
-        trans = QTransform()
-        # trans.translate(pixmap.width()+angle / 2, pixmap.height() / 2)
-        dimension = pixmap.width() / math.sqrt(2)
-        #trans.translate(100 , mainwindow.spinner_pic.height()/2.0)
-        #trans.rotate(angle)
-        #newPixmap = pixmap.transformed(trans, Qt.SmoothTransformation)
-        newPixmap = pixmap.transformed(QTransform().rotate(angle), Qt.SmoothTransformation)
-        xoffset = (newPixmap.width() - pixmap.width())/2
-        yoffset = (newPixmap.height() - pixmap.height())/2
-        rotated = newPixmap.copy(xoffset, yoffset, pixmap.width(), pixmap.height())
-        mainwindow.spinner_pic.setPixmap(rotated)
-
-
-    spinnerAnim = QVariantAnimation()
-    spinnerAnim.setDuration(3000)
-    spinnerAnim.setStartValue(0)
-    spinnerAnim.setEndValue(360)
-    spinnerAnim.setLoopCount(-1)
-    spinnerAnim.valueChanged.connect(spinnerAnimRot)
-
-    mainwindow.spinner_pic.setHidden(True)
-
-    def showDebugInfo():
-        if mainwindow.logBox.isHidden():
-            mainwindow.logBox.setHidden(False)
-            #win.setFixedSize(746, 600 + addTopMargin)
-            mainwindow.debugBtn.setText("Hide debug info")
-        else:
-            mainwindow.logBox.setHidden(True)
-            #win.setFixedSize(746, 400 + addTopMargin)
-            mainwindow.debugBtn.setText("Show debug info")
-
-    mainwindow.debugBtn.clicked.connect(showDebugInfo)
-    mainwindow.logBox.setWordWrapMode(QTextOption.NoWrap)
-    mainwindow.menubar.setEnabled(False)
     win.show()
     #win.setFixedSize(746, 400 + addTopMargin)
 
     # Device setup
     loglevel = logging.INFO
     devhandler = DeviceHandler(parent=app,preloader=None,loglevel=loglevel)
-    devhandler.sendToLogSignal.connect(sendToLog)
+    devhandler.sendToLogSignal.connect(win.sendToLog)
 
     # Get the device info
     thread = asyncThread(parent=app, n=0, function=getDevInfo, parameters=[loglevel,phoneInfo,devhandler])
-    thread.sendToLogSignal.connect(sendToLog)
-    thread.sendUpdateSignal.connect(updateGui)
+    thread.sendToLogSignal.connect(win.sendToLog)
+    thread.sendUpdateSignal.connect(win.updateGui)
     thread.start()
 
     # Run loop the app

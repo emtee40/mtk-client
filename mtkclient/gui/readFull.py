@@ -57,7 +57,7 @@ class ReadFullFlashWindow(QDialog):
         # filename = args.filename
         # print(self.partitionCheckboxes)
         self.dumpStatus["done"] = False
-        thread = asyncThread(self.parent.parent(), 0, self.updateDumpStateAsync, [])
+        thread = asyncThread(self, 0, self.updateDumpStateAsync, [])
         thread.sendUpdateSignal.connect(self.updateDumpState)
         thread.start()
         # calculate total bytes
