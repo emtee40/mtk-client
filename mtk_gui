@@ -148,6 +148,9 @@ def load_translations(application):
     translator = QTranslator(application)
     directory = os.path.dirname(__file__)
     lang = 'mtkclient/gui/i18n/' + locale.name()
+    #lang = 'mtkclient/gui/i18n/fr_FR'
+    #lang = 'mtkclient/gui/i18n/de_DE'
+    #lang = 'mtkclient/gui/i18n/en_EN'
     if translator.load(lang, directory):
         application.installTranslator(translator)
 
@@ -155,6 +158,7 @@ def load_translations(application):
     base_translator = QTranslator(application)
     if base_translator.load(locale, "qtbase", "_", translations_path):
         application.installTranslator(base_translator)
+
 
 if __name__ == '__main__':
     # Enable nice 4K Scaling
