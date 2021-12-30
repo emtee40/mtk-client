@@ -24,7 +24,8 @@ class ReadFullFlashWindow(QDialog):
 
     @Slot(int)
     def updateProgress(self, progress):
-        self.dumpStatus["doneBytes"] = progress
+        self.dumpStatus["doneBytes"] = progress * 0x100
+        self.dumpStatus["totalBytes"] = self.flashsize
         self.updateDumpState()
 
     def updateDumpStateAsync(self, toolkit, parameters):
