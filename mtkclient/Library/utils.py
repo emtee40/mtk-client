@@ -68,7 +68,8 @@ class progress:
         self.progpos = 0
         self.start = time.time()
         self.pagesize = pagesize
-        self.guiprogress = guiprogress.emit
+        if guiprogress is not None:
+            self.guiprogress = guiprogress.emit
 
     def calcProcessTime(self, starttime, cur_iter, max_iter):
         telapsed = time.time() - starttime
