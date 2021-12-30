@@ -32,7 +32,6 @@ class Mtk_Config(metaclass=LogBase):
         self.bmtpartsize = None
         self.packetsizeread = 0x400
         self.flashinfo = None
-        self.flashsize = 0
         self.readsize = 0
         self.sparesize = 16
         self.plcap = None

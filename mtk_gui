@@ -139,7 +139,7 @@ class MainWindow(QMainWindow):
 
         self.ui.actionGenerate_RPMB_keys.triggered.connect(self.on_generatekeys)
         self.ui.actionRead_preloader.triggered.connect(self.on_readpreloader)
-
+        self.ui.actionRead_boot2.triggered.connect(self.on_readboot2)
         #self.ui.toolsFlashMenu.triggered[QAction].connect(self.openToolsMenu)
 
         self.initpixmap()
@@ -161,6 +161,8 @@ class MainWindow(QMainWindow):
         return
 
     def on_readrpmb(self):
+        readFlashWindowVal = ReadFullFlashWindow(self, devhandler.mtkClass, devhandler.da_handler, self.sendToLog,
+                                                 parttype="rpmb")
         return
 
     def on_writerpmb(self):
@@ -177,13 +179,21 @@ class MainWindow(QMainWindow):
         return
 
     def on_readpreloader(self):
+        readFlashWindowVal = ReadFullFlashWindow(self, devhandler.mtkClass, devhandler.da_handler, self.sendToLog,
+                                             parttype="boot1")
+        return
+
+    def on_readboot2(self):
+        readFlashWindowVal = ReadFullFlashWindow(self, devhandler.mtkClass, devhandler.da_handler, self.sendToLog,
+                                             parttype="boot2")
         return
 
     def on_readpartflash(self):
         readFlashWindowVal = ReadFlashWindow(self, devhandler.mtkClass, devhandler.da_handler, self.sendToLog)
 
     def on_readfullflash(self):
-        readFlashWindowVal = ReadFullFlashWindow(self, devhandler.mtkClass, devhandler.da_handler, self.sendToLog)
+        readFlashWindowVal = ReadFullFlashWindow(self, devhandler.mtkClass, devhandler.da_handler, self.sendToLog,
+                                                 parttype="user")
 
     def sendToLog(self, info):
         t = time.localtime()

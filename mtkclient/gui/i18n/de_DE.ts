@@ -4,109 +4,114 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="main_gui.ui" line="72"/>
+        <location filename="main_gui.ui" line="161"/>
         <source>MTKClient v2.0</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="main_gui.ui" line="137"/>
+        <location filename="main_gui.ui" line="238"/>
         <source>No phone detected.</source>
         <translation>Kein Gerät erkannt.</translation>
     </message>
     <message>
-        <location filename="main_gui.ui" line="202"/>
+        <location filename="main_gui.ui" line="225"/>
         <source>&lt;b&gt;Made by:&lt;/b&gt; Bjoern Kerler&lt;br/&gt;&lt;b&gt;Gui by:&lt;/b&gt; Geert-Jan Kreileman&lt;br/&gt;&lt;br/&gt;&lt;b&gt;Credits:&lt;/b&gt;&lt;br/&gt;kamakiri [xyzz]&lt;br/&gt;linecode exploit [chimera]&lt;br/&gt;Chaosmaster&lt;br/&gt;and all contributers&lt;/p&gt;</source>
         <translation>&lt;b&gt;Erstellt von:&lt;/b&gt; Bjoern Kerler&lt;br/&gt;&lt;b&gt;Gui:&lt;/b&gt; Geert-Jan Kreileman&lt;br/&gt;&lt;br/&gt;&lt;b&gt;Credits:&lt;/b&gt;&lt;br/&gt;kamakiri [xyzz]&lt;br/&gt;linecode exploit [chimera]&lt;br/&gt;Chaosmaster&lt;br/&gt;und alle Mitwirkenden&lt;/p&gt;</translation>
     </message>
     <message>
-        <location filename="main_gui.ui" line="223"/>
+        <location filename="main_gui.ui" line="281"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Please connect a Mediatek phone to continue.&lt;br/&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Hint:&lt;/span&gt; Power off the phone before connecting.&lt;br/&gt;&lt;span style=&quot; font-style:italic; color:#393939;&quot;&gt;For brom mode:&lt;/span&gt;&lt;span style=&quot; color:#393939;&quot;&gt;&lt;br/&gt;Press and hold vol up, vol dwn, or all hw buttons and connect usb.&lt;br/&gt;&lt;/span&gt;&lt;span style=&quot; font-style:italic; color:#393939;&quot;&gt;For preloader mode:&lt;/span&gt;&lt;span style=&quot; color:#393939;&quot;&gt;&lt;br/&gt;Don&apos;t press any hw button and connect usb.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Bitte ein Mediatek-Gerät verbinden um fortzusetzen.&lt;br/&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Hinweis:&lt;/span&gt; Das Gerät vor dem Verbinden ausschalten.&lt;br/&gt;&lt;span style=&quot; font-style:italic; color:#393939;&quot;&gt;Für den Brom Modus:&lt;/span&gt;&lt;span style=&quot; color:#393939;&quot;&gt;&lt;br/&gt;Lautstärketaste hoch, runter oder alle Hardwaretasten am Gerät drücken &lt;br/&gt;und dann per USB verbinden.&lt;br/&gt;&lt;/span&gt;&lt;span style=&quot; font-style:italic; color:#393939;&quot;&gt;Für den Preloader Modus:&lt;/span&gt;&lt;span style=&quot; color:#393939;&quot;&gt;&lt;br/&gt;Keine Hardwaretaste drücken und das Gerät per USB verbinden.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <location filename="main_gui.ui" line="294"/>
+        <location filename="main_gui.ui" line="317"/>
         <source>Show debug log</source>
         <translation>Debug log anzeigen</translation>
     </message>
     <message>
-        <location filename="main_gui.ui" line="363"/>
+        <location filename="main_gui.ui" line="386"/>
         <source>&amp;Read Flash</source>
         <translation>&amp;Lese Flash</translation>
     </message>
     <message>
-        <location filename="main_gui.ui" line="370"/>
+        <location filename="main_gui.ui" line="393"/>
         <source>&amp;Write Flash</source>
         <translation>&amp;Schreibe Flash</translation>
     </message>
     <message>
-        <location filename="main_gui.ui" line="378"/>
+        <location filename="main_gui.ui" line="401"/>
         <source>&amp;Erase Flash</source>
         <translation>Lö&amp;sche Flash</translation>
     </message>
     <message>
-        <location filename="main_gui.ui" line="385"/>
+        <location filename="main_gui.ui" line="408"/>
         <source>&amp;Tools</source>
         <translation>&amp;Werkzeuge</translation>
     </message>
     <message>
-        <location filename="main_gui.ui" line="400"/>
+        <location filename="main_gui.ui" line="424"/>
         <source>Read partition(s)</source>
         <translation>Lese Partition(en)</translation>
     </message>
     <message>
-        <location filename="main_gui.ui" line="405"/>
+        <location filename="main_gui.ui" line="429"/>
         <source>Read full flash</source>
         <translation>Lese gesamten Flash</translation>
     </message>
     <message>
-        <location filename="main_gui.ui" line="410"/>
+        <location filename="main_gui.ui" line="434"/>
         <source>Read at offset</source>
         <translation>Lese ab Adresse</translation>
     </message>
     <message>
-        <location filename="main_gui.ui" line="415"/>
+        <location filename="main_gui.ui" line="439"/>
         <source>Write partition(s)</source>
         <translation>Schreibe Partition(en)</translation>
     </message>
     <message>
-        <location filename="main_gui.ui" line="420"/>
+        <location filename="main_gui.ui" line="444"/>
         <source>Write full flash</source>
         <translation>Schreibe gesamten Flash</translation>
     </message>
     <message>
-        <location filename="main_gui.ui" line="425"/>
+        <location filename="main_gui.ui" line="449"/>
         <source>Write at offset</source>
         <translation>Schreibe ab Adresse</translation>
     </message>
     <message>
-        <location filename="main_gui.ui" line="430"/>
+        <location filename="main_gui.ui" line="454"/>
         <source>Erase partitions(s)</source>
         <translation>Lösche Partition(en)</translation>
     </message>
     <message>
-        <location filename="main_gui.ui" line="435"/>
+        <location filename="main_gui.ui" line="459"/>
         <source>Erase at offset</source>
         <translation>Lösche ab Adresse</translation>
     </message>
     <message>
-        <location filename="main_gui.ui" line="440"/>
+        <location filename="main_gui.ui" line="464"/>
         <source>Read RPMB</source>
         <translation>Lese RPMB</translation>
     </message>
     <message>
-        <location filename="main_gui.ui" line="445"/>
+        <location filename="main_gui.ui" line="469"/>
         <source>Write RPMB</source>
         <translation>Schreibe RPMB</translation>
     </message>
     <message>
-        <location filename="main_gui.ui" line="450"/>
+        <location filename="main_gui.ui" line="474"/>
         <source>Read preloader</source>
         <translation>Lese Preloader</translation>
     </message>
     <message>
-        <location filename="main_gui.ui" line="455"/>
+        <location filename="main_gui.ui" line="479"/>
         <source>Generate RPMB keys</source>
         <translation>Generiere RPMB Schlüssel</translation>
+    </message>
+    <message>
+        <location filename="main_gui.ui" line="484"/>
+        <source>Read boot2</source>
+        <translation>Lese boot2</translation>
     </message>
 </context>
 <context>
@@ -178,6 +183,14 @@
         <location filename="readfull_gui.ui" line="98"/>
         <source>Ready to start...</source>
         <translation>Bereit...</translation>
+    </message>
+</context>
+<context>
+    <name>self.parent</name>
+    <message>
+        <location filename="readFull.py" line="24"/>
+        <source>Select output file</source>
+        <translation>Dateiname für das Speichern auswählen</translation>
     </message>
 </context>
 </TS>

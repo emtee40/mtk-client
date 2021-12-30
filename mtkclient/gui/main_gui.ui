@@ -410,6 +410,7 @@
     <addaction name="actionRead_RPMB"/>
     <addaction name="actionWrite_RPMB"/>
     <addaction name="actionRead_preloader"/>
+    <addaction name="actionRead_boot2"/>
     <addaction name="separator"/>
     <addaction name="actionGenerate_RPMB_keys"/>
    </widget>
@@ -476,6 +477,11 @@
   <action name="actionGenerate_RPMB_keys">
    <property name="text">
     <string>Generate RPMB keys</string>
+   </property>
+  </action>
+  <action name="actionRead_boot2">
+   <property name="text">
+    <string>Read boot2</string>
    </property>
   </action>
  </widget>

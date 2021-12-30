@@ -379,7 +379,7 @@ class xflashext(metaclass=LogBase):
     def read_rpmb(self, filename=None, display=True):
         progressbar = progress(1)
         sectors = 0
-        val = self.custom_rpmb_init()
+        #val = self.custom_rpmb_init()
         ufs = False
         if self.xflash.emmc.rpmb_size != 0:
             sectors = self.xflash.emmc.rpmb_size // 0x100
@@ -389,18 +389,18 @@ class xflashext(metaclass=LogBase):
             ufs = True
         if filename is None:
             filename = "rpmb.bin"
-            if sectors > 0:
-                with open(filename, "wb") as wf:
-                    for sector in range(sectors):
-                        if display:
-                            progressbar.show_progress("RPMB read", sector, sectors, display)
-                        data = self.custom_rpmb_read(sector=sector, ufs=ufs)
-                        if data == b"":
-                            self.error("Couldn't read rpmb.")
-                            return False
-                        wf.write(data)
-                self.info("Done reading rpmb to " + filename)
-                return True
+        if sectors > 0:
+            with open(filename, "wb") as wf:
+                for sector in range(sectors):
+                    if display:
+                        progressbar.show_progress("RPMB read", sector, sectors, display)
+                    data = self.custom_rpmb_read(sector=sector, ufs=ufs)
+                    if data == b"":
+                        self.error("Couldn't read rpmb.")
+                        return False
+                    wf.write(data)
+            self.info("Done reading rpmb to " + filename)
+            return True
         return False
 
     def write_rpmb(self, filename=None, display=True):

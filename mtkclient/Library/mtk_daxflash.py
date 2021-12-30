@@ -421,13 +421,13 @@ class DAXFlash(metaclass=LogBase):
             if parttype is None or parttype == "lu3" or parttype=="user":  # USER
                 parttype = UFS_PartitionType.UFS_LU3
                 length = min(length, self.ufs.lu0_size)
-            elif parttype == "lu1":  # BOOT1
+            elif parttype in ["lu1","boot1"]:  # BOOT1
                 parttype = UFS_PartitionType.UFS_LU1
                 length = min(length, self.ufs.lu1_size)
-            elif parttype == "lu2":  # BOOT2
+            elif parttype in ["lu2","boot2"]:  # BOOT2
                 parttype = UFS_PartitionType.UFS_LU2
                 length = min(length, self.ufs.lu2_size)
-            elif parttype == "lu4":  # RPMB
+            elif parttype in ["lu4","rpmb"]:  # RPMB
                 parttype = UFS_PartitionType.UFS_LU4
                 length = min(length, self.ufs.lu2_size)
             else:
@@ -1019,15 +1019,27 @@ class DAXFlash(metaclass=LogBase):
         if self.emmc is not None and self.emmc.type != 0:
                 self.daconfig.flashtype = "emmc"
                 self.daconfig.flashsize = self.emmc.user_size
+                self.daconfig.rpmbsize = self.emmc.rpmb_size
+                self.daconfig.boot1size = self.emmc.boot1_size
+                self.daconfig.boot2size = self.emmc.boot2_size
         elif self.nand is not None and self.nand.type != 0:
                 self.daconfig.flashtype = "nand"
                 self.daconfig.flashsize = self.nand.total_size
+                self.daconfig.rpmbsize = 0
+                self.daconfig.boot1size = 0x400000
+                self.daconfig.boot2size = 0x400000
         elif self.nor is not None and self.nor.type != 0:
                 self.daconfig.flashtype = "nor"
                 self.daconfig.flashsize = self.nor.available_size
+                self.daconfig.rpmbsize = 0
+                self.daconfig.boot1size = 0x400000
+                self.daconfig.boot2size = 0x400000
         elif self.ufs is not None and self.ufs.type != 0:
                 self.daconfig.flashtype = "ufs"
                 self.daconfig.flashsize = [self.ufs.lu0_size, self.ufs.lu1_size, self.ufs.lu2_size]
+                self.daconfig.rpmbsize = self.ufs.lu1_size
+                self.daconfig.boot1size = self.ufs.lu1_size
+                self.daconfig.boot2size = self.ufs.lu2_size
         self.chipid = self.get_chip_id()
         self.randomid = self.get_random_id()
         # if self.get_da_stor_life_check() == 0x0:
