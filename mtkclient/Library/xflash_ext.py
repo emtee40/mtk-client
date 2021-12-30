@@ -590,4 +590,6 @@ class xflashext(metaclass=LogBase):
                 self.config.hwparam.writesetting("rpmbkey", hexlify(rpmbkey).decode('utf-8'))
             else:
                 self.info("SEJ Mode: No meid found. Are you in brom mode ?")
-        return True
+        return {"rpmb": hexlify(rpmbkey).decode('utf-8'), "rpmb2": "None",
+                "fde": "None", "ikey": "None"}
+

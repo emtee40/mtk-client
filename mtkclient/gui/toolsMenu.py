@@ -35,7 +35,7 @@ class generateKeysMenu(QDialog):
         else:
             self.mtkClass.config.set_hwparam_path(hwparamFolder)
         self.hwparamFolder = hwparamFolder
-        thread = asyncThread(self.parent.parent(), 0, self.generateKeysAsync, [self.hwparamFolder])
+        thread = asyncThread(self, 0, self.generateKeysAsync, [self.hwparamFolder])
         thread.sendToLogSignal.connect(self.sendToLog)
         thread.sendUpdateSignal.connect(self.updateKeys)
         thread.start()
