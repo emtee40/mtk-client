@@ -123,14 +123,67 @@ class MainWindow(QMainWindow):
         self.ui=Ui_MainWindow()
         self.ui.setupUi(self)
         # Menubar
-        self.ui.readFlashMenu.triggered[QAction].connect(self.openReadflashWindow)
-        self.ui.toolsFlashMenu.triggered[QAction].connect(self.openToolsMenu)
+        self.ui.actionRead_full_flash.triggered.connect(self.on_readfullflash)
+        self.ui.actionRead_partition_s.triggered.connect(self.on_readpartflash)
+        self.ui.actionRead_offset.triggered.connect(self.on_readflashoffset)
+
+        self.ui.actionWrite_full_flash.triggered.connect(self.on_writefullflash)
+        self.ui.actionWrite_partition_s.triggered.connect(self.on_writepartflash)
+        self.ui.actionWrite_at_offset.triggered.connect(self.on_writeflashoffset)
+
+        self.ui.actionRead_RPMB.triggered.connect(self.on_readrpmb)
+        self.ui.actionWrite_RPMB.triggered.connect(self.on_writerpmb)
+
+        self.ui.actionErase_at_offset.triggered.connect(self.on_eraseoffset)
+        self.ui.actionErase_partitions_s.triggered.connect(self.on_erasepartflash)
+
+        self.ui.actionGenerate_RPMB_keys.triggered.connect(self.on_generatekeys)
+        self.ui.actionRead_preloader.triggered.connect(self.on_readpreloader)
+
+        #self.ui.toolsFlashMenu.triggered[QAction].connect(self.openToolsMenu)
 
         self.initpixmap()
 
         self.ui.debugBtn.clicked.connect(self.showDebugInfo)
         self.ui.logBox.setWordWrapMode(QTextOption.NoWrap)
         self.ui.menubar.setEnabled(False)
+
+    def on_readflashoffset(self):
+        return
+
+    def on_writefullflash(self):
+        return
+
+    def on_writepartflash(self):
+        return
+
+    def on_writeflashoffset(self):
+        return
+
+    def on_readrpmb(self):
+        return
+
+    def on_writerpmb(self):
+        return
+
+    def on_eraseoffset(self):
+        return
+
+    def on_erasepartflash(self):
+        return
+
+    def on_generatekeys(self):
+        readFlashWindowVal = generateKeysMenu(self, devhandler.mtkClass, devhandler.da_handler, self.sendToLog)
+        return
+
+    def on_readpreloader(self):
+        return
+
+    def on_readpartflash(self):
+        readFlashWindowVal = ReadFlashWindow(self, devhandler.mtkClass, devhandler.da_handler, self.sendToLog)
+
+    def on_readfullflash(self):
+        readFlashWindowVal = ReadFullFlashWindow(self, devhandler.mtkClass, devhandler.da_handler, self.sendToLog)
 
     def sendToLog(self, info):
         t = time.localtime()
@@ -191,24 +244,6 @@ class MainWindow(QMainWindow):
 
         self.ui.spinner_pic.setHidden(True)
 
-
-    def openReadflashWindow(self, q):
-        # status.setText("OH YEAH"+str(q.text()))
-        curmenutext = q.text()
-        info=self.tr("Read partition(s)")
-        if curmenutext == self.tr("Read partition(s)"):
-            readFlashWindowVal = ReadFlashWindow(self, devhandler.mtkClass, devhandler.da_handler, self.sendToLog)
-        elif curmenutext == self.tr("Read full flash"):
-            readFlashWindowVal = ReadFullFlashWindow(self, devhandler.mtkClass, devhandler.da_handler, self.sendToLog)
-        # w.close()
-
-
-    def openToolsMenu(self, q):
-        # status.setText("OH YEAH"+str(q.text()))
-        curmenutext=q.text()
-        if curmenutext == self.tr("Generate RPMB keys"):
-            readFlashWindowVal = generateKeysMenu(self, devhandler.mtkClass, devhandler.da_handler, self.sendToLog)
-        # w.close()
 
     def showDebugInfo(self):
         if self.ui.logBox.isHidden():
