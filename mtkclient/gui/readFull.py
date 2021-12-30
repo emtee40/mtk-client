@@ -4,32 +4,13 @@ from random import random
 from PySide2.QtCore import Slot, QCoreApplication
 from PySide2.QtWidgets import QDialog, QFileDialog
 import mock
-from mtkclient.gui.toolkit import trap_exc_during_debug, asyncThread
+from mtkclient.gui.toolkit import trap_exc_during_debug, asyncThread, convert_size, FDialog
 from mtkclient.gui.readfull_gui import Ui_readWidget
 import os
 import sys
 import time
 
 sys.excepthook = trap_exc_during_debug
-
-
-class FDialog():
-    lastpath = "."
-
-    def __init__(self, parent):
-        self.parent = parent
-
-    def save(self, filename=""):
-        fname = os.path.join(self.lastpath, filename)
-        ret = QFileDialog.getSaveFileName(parent=self.parent, caption=self.parent.tr("Select output file"), dir=fname,
-                                          filter="Binary dump (*.bin)")
-        if ret:
-            fname = ret[0]
-            if fname != "":
-                self.lastpath = os.path.dirname(fname)
-                return fname
-        return None
-
 
 class ReadFullFlashWindow(QDialog):
     # Partition
@@ -39,18 +20,17 @@ class ReadFullFlashWindow(QDialog):
         doneBytes = self.dumpStatus["doneBytes"]
         fullPercentageDone = round((doneBytes / totalBytes) * 100)
         self.ui.progress.setValue(fullPercentageDone)
-        self.ui.progressText.setText("Total: (" + str(round((doneBytes / 1024 / 1024))) + "Mb / " + str(
-            round((totalBytes / 1024 / 1024))) + " Mb)")
+        self.ui.progressText.setText("Total: (" + convert_size(doneBytes) + " / " + convert_size(totalBytes) + " )")
+
+    @Slot(int)
+    def updateProgress(self, progress):
+        self.dumpStatus["doneBytes"] = progress
+        self.updateDumpState()
 
     def updateDumpStateAsync(self, toolkit, parameters):
         while not self.dumpStatus["done"]:
             time.sleep(0.1)
-            try:
-                self.dumpStatus["totalBytes"] = self.flashsize
-                self.dumpStatus["doneBytes"] = os.stat(self.dumpStatus["dumpFile"]).st_size
-                toolkit.sendUpdateSignal.emit()
-            except:
-                time.sleep(0.1)
+            self.dumpStatus["totalBytes"] = self.flashsize
         self.ui.startBtn.setEnabled(True)
 
     def dumpPartDone(self):
@@ -60,7 +40,7 @@ class ReadFullFlashWindow(QDialog):
         self.ui.startBtn.setEnabled(False)
         self.dumpFile = self.fdialog.save("flash.bin")
         if self.dumpFile:
-            thread = asyncThread(parent=self, n=0, function=self.dumpFlashAsync, parameters=["user"])
+            thread = asyncThread(parent=self.parent, n=0, function=self.dumpFlashAsync, parameters=["user"])
             thread.sendToLogSignal.connect(self.sendToLog)
             thread.sendUpdateSignal.connect(self.updateDumpState)
             thread.start()
@@ -71,7 +51,7 @@ class ReadFullFlashWindow(QDialog):
         self.ui.startBtn.setEnabled(False)
         self.dumpFile = self.fdialog.save("rpmb.bin")
         if self.dumpFile:
-            thread = asyncThread(parent=self, n=0, function=self.dumpFlashAsync, parameters=["rpmb"])
+            thread = asyncThread(parent=self.parent, n=0, function=self.dumpFlashAsync, parameters=["rpmb"])
             thread.sendToLogSignal.connect(self.sendToLog)
             thread.sendUpdateSignal.connect(self.updateDumpState)
             thread.start()
@@ -82,7 +62,7 @@ class ReadFullFlashWindow(QDialog):
         self.ui.startBtn.setEnabled(False)
         self.dumpFile = self.fdialog.save("boot2.bin")
         if self.dumpFile:
-            thread = asyncThread(parent=self, n=0, function=self.dumpFlashAsync, parameters=["boot2"])
+            thread = asyncThread(parent=self.parent, n=0, function=self.dumpFlashAsync, parameters=["boot2"])
             thread.sendToLogSignal.connect(self.sendToLog)
             thread.sendUpdateSignal.connect(self.updateDumpState)
             thread.start()
@@ -93,7 +73,7 @@ class ReadFullFlashWindow(QDialog):
         self.ui.startBtn.setEnabled(False)
         self.dumpFile = self.fdialog.save("boot1.bin")
         if self.dumpFile:
-            thread = asyncThread(parent=self, n=0, function=self.dumpFlashAsync, parameters=["boot1"])
+            thread = asyncThread(parent=self.parent, n=0, function=self.dumpFlashAsync, parameters=["boot1"])
             thread.sendToLogSignal.connect(self.sendToLog)
             thread.sendUpdateSignal.connect(self.updateDumpState)
             thread.start()
@@ -131,20 +111,12 @@ class ReadFullFlashWindow(QDialog):
         self.dumpStatus["done"] = True
         thread.wait()
 
-    def convert_size(self, size_bytes):
-        if size_bytes == 0:
-            return "0B"
-        size_name = ("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
-        i = int(math.floor(math.log(size_bytes, 1024)))
-        p = math.pow(1024, i)
-        s = round(size_bytes / p, 2)
-        return "%s %s" % (s, size_name[i])
-
-    def __init__(self, parent, mtkClass, da_handler, sendToLog,
+    def __init__(self, parent, devhandler, da_handler, sendToLog,
                  parttype: str = "user"):  # def __init__(self, *args, **kwargs):
         super(ReadFullFlashWindow, self).__init__(parent)
         self.fdialog = FDialog(self)
-        self.mtkClass = mtkClass
+        devhandler.sendToProgressSignal.connect(self.updateProgress)
+        self.mtkClass = devhandler.mtkClass
         self.parent = parent.parent()
         self.sendToLog = sendToLog
         self.dumpStatus = {}
@@ -175,6 +147,6 @@ class ReadFullFlashWindow(QDialog):
             self.flashsize = self.mtkClass.daloader.daconfig.boot2size
             self.ui.startBtn.clicked.connect(self.dumpBoot2)
             self.setWindowTitle(QCoreApplication.translate("readWidget", u"Read boot2", None))
-        self.ui.progressText.setText("Ready to dump " + self.convert_size(self.flashsize))
+        self.ui.progressText.setText(self.tr("Ready to dump ") + convert_size(self.flashsize))
         self.ui.closeBtn.clicked.connect(self.close)
         self.show()

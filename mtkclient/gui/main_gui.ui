@@ -387,6 +387,8 @@
     </property>
     <addaction name="actionRead_partition_s"/>
     <addaction name="actionRead_full_flash"/>
+    <addaction name="actionRead_preloader"/>
+    <addaction name="actionRead_boot2"/>
    </widget>
    <widget class="QMenu" name="writeFlashMenu">
     <property name="title">
@@ -395,6 +397,8 @@
     <addaction name="actionWrite_partition_s"/>
     <addaction name="actionWrite_full_flash"/>
     <addaction name="actionWrite_at_offset"/>
+    <addaction name="actionWrite_preloader"/>
+    <addaction name="actionWrite_boot2"/>
    </widget>
    <widget class="QMenu" name="eraseFlashMenu">
     <property name="title">
@@ -409,8 +413,6 @@
     </property>
     <addaction name="actionRead_RPMB"/>
     <addaction name="actionWrite_RPMB"/>
-    <addaction name="actionRead_preloader"/>
-    <addaction name="actionRead_boot2"/>
     <addaction name="separator"/>
     <addaction name="actionGenerate_RPMB_keys"/>
    </widget>
@@ -482,6 +484,16 @@
   <action name="actionRead_boot2">
    <property name="text">
     <string>Read boot2</string>
+   </property>
+  </action>
+  <action name="actionWrite_preloader">
+   <property name="text">
+    <string>Write preloader</string>
+   </property>
+  </action>
+  <action name="actionWrite_boot2">
+   <property name="text">
+    <string>Write boot2</string>
    </property>
   </action>
  </widget>

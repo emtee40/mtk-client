@@ -62,12 +62,13 @@ def find_binary(data, strf, pos=0):
 
 
 class progress:
-    def __init__(self, pagesize):
+    def __init__(self, pagesize, guiprogress=None):
         self.progtime = 0
         self.prog = 0
         self.progpos = 0
         self.start = time.time()
         self.pagesize = pagesize
+        self.guiprogress = guiprogress.emit
 
     def calcProcessTime(self, starttime, cur_iter, max_iter):
         telapsed = time.time() - starttime
@@ -80,6 +81,13 @@ class progress:
         else:
             return 0, 0, ""
 
+
+    def clear(self):
+        self.prog = 0
+        self.start = time.time()
+        self.progtime = time.time()
+        self.progpos = 0
+
     def show_progress(self, prefix, pos, total, display=True):
         if pos != 0:
             prog = round(float(pos) / float(total) * float(100), 1)
@@ -90,6 +98,7 @@ class progress:
             self.start = time.time()
             self.progtime = time.time()
             self.progpos = pos
+            self.guiprogress(pos)
             print_progress(prog, 100, prefix='Done',
                            suffix=prefix + ' (Sector 0x%X of 0x%X) %0.2f MB/s' %
                                   (pos // self.pagesize,
@@ -97,6 +106,7 @@ class progress:
                                    0), bar_length=50)
 
         if prog > self.prog:
+            self.guiprogress(pos)
             if display:
                 t0 = time.time()
                 tdiff = t0 - self.progtime

@@ -7,8 +7,9 @@ from mtkclient.Library.settings import hwparam
 from mtkclient.config.brom_config import chipconfig, damodes, hwconfig
 
 class Mtk_Config(metaclass=LogBase):
-    def __init__(self, loglevel=logging.INFO, gui=None):
+    def __init__(self, loglevel=logging.INFO, gui=None, guiprogress=None):
         self.gui = gui
+        self.guiprogress = guiprogress
         self.pid = -1
         self.vid = -1
         self.var1 = 0xA

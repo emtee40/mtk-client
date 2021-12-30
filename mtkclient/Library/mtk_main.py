@@ -253,7 +253,8 @@ class Main(metaclass=LogBase):
                         if mtk.preloader.jump_da(daaddr):
                             self.info(f"Jumped to pl {hex(daaddr)}.")
                             time.sleep(2)
-                            config = Mtk_Config(loglevel=self.__logger.level, gui=mtk.config.gui)
+                            config = Mtk_Config(loglevel=self.__logger.level, gui=mtk.config.gui,
+                                                guiprogress=mtk.config.guiprogress)
                             mtk = Mtk(loglevel=self.__logger.level, config=config)
                             res = mtk.preloader.init()
                             if not res:
@@ -311,7 +312,7 @@ class Main(metaclass=LogBase):
             loglevel = logging.INFO
             self.__logger.setLevel(logging.INFO)
             pass
-        config = Mtk_Config(loglevel=loglevel, gui=None)
+        config = Mtk_Config(loglevel=loglevel, gui=None, guiprogress=None)
         ArgHandler(self.args, config)
         self.eh = ErrorHandler()
         mtk = Mtk(config=config, loglevel=loglevel)

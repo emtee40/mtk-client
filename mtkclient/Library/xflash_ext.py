@@ -377,7 +377,7 @@ class xflashext(metaclass=LogBase):
         hwc.sej.sej_set_otp(otp)
 
     def read_rpmb(self, filename=None, display=True):
-        progressbar = progress(1)
+        progressbar = progress(1,self.mtk.config.guiprogress)
         sectors = 0
         #val = self.custom_rpmb_init()
         ufs = False
@@ -404,7 +404,7 @@ class xflashext(metaclass=LogBase):
         return False
 
     def write_rpmb(self, filename=None, display=True):
-        progressbar = progress(1)
+        progressbar = progress(1, self.mtk.config.guiprogress)
         if filename is None:
             self.error("Filename has to be given for writing to rpmb")
             return False
@@ -431,7 +431,7 @@ class xflashext(metaclass=LogBase):
         return False
 
     def erase_rpmb(self, display=True):
-        progressbar = progress(1)
+        progressbar = progress(1, self.mtk.config.guiprogress)
         ufs = False
         sectors = 0
         if self.xflash.emmc.rpmb_size != 0:

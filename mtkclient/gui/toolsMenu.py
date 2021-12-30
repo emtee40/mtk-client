@@ -16,6 +16,10 @@ sys.excepthook = trap_exc_during_debug
 
 class generateKeysMenu(QDialog):
     # Partition
+    @Slot(int)
+    def updateProgress(self, progress):
+        return
+
     @Slot()
     def updateKeys(self):
         print(self.keysStatus)
@@ -49,10 +53,11 @@ class generateKeysMenu(QDialog):
         self.keysStatus["done"] = True
         self.sendUpdateSignal.emit()
 
-    def __init__(self, parent, mtkClass:Mtk, da_handler:DA_handler, sendToLog):  # def __init__(self, *args, **kwargs):
+    def __init__(self, parent, devhandler, da_handler:DA_handler, sendToLog):  # def __init__(self, *args, **kwargs):
         super(generateKeysMenu, self).__init__(parent)
         self.parent = parent
-        self.mtkClass = mtkClass
+        devhandler.sendToProgressSignal.connect(self.updateProgress)
+        self.mtkClass = devhandler.mtkClass
         self.sendToLog = sendToLog
         self.keysStatus = {}
         self.da_handler = da_handler

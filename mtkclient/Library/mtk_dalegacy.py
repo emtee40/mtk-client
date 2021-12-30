@@ -676,7 +676,7 @@ class DALegacy(metaclass=LogBase):
         self.sectorsize = self.daconfig.pagesize
         self.totalsectors = self.daconfig.flashsize
         self.partition = Partition(self.mtk, self.readflash, self.read_pmt, loglevel)
-        self.progress = progress(self.daconfig.pagesize)
+        self.progress = progress(self.daconfig.pagesize, self.mtk.config.guiprogress)
         self.pathconfig = pathconfig()
         self.patch = False
         self.generatekeys = self.mtk.config.generatekeys
@@ -1238,10 +1238,12 @@ class DALegacy(metaclass=LogBase):
         return True
 
     def writeflash(self, addr, length, filename, offset=0, parttype=None, wdata=None, display=True):
+        self.progress.clear()
         return self.sdmmc_write_data(addr=addr, length=length, filename=filename, offset=offset, parttype=parttype,
                                      wdata=wdata, display=display)
 
     def formatflash(self, addr, length, parttype=None, display=True):
+        self.progress.clear()
         length, parttype = self.get_parttype(length, parttype)
         self.check_usb_cmd()
         if self.daconfig.flashtype == "emmc":
@@ -1305,6 +1307,7 @@ class DALegacy(metaclass=LogBase):
         return length, parttype
 
     def readflash(self, addr, length, filename, parttype=None, display=True):
+        self.progress.clear()
         length, parttype = self.get_parttype(length, parttype)
         self.check_usb_cmd()
         packetsize = 0x0

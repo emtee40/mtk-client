@@ -18,7 +18,10 @@ from mtkclient.Library.gpt import gpt_settings
 from mtkclient.Library.mtk_main import Main, Mtk_Config
 
 from mtkclient.gui.readFlashPartitions import ReadFlashWindow
+from mtkclient.gui.writeFlashPartitions import WriteFlashWindow
+from mtkclient.gui.eraseFlashPartitions import EraseFlashWindow
 from mtkclient.gui.readFull import ReadFullFlashWindow
+from mtkclient.gui.writeFull import WriteFullFlashWindow
 from mtkclient.gui.toolsMenu import generateKeysMenu
 from mtkclient.gui.toolkit import asyncThread, trap_exc_during_debug
 from mtkclient.config.payloads import pathconfig
@@ -43,12 +46,13 @@ phoneInfo = {"chipset": "", "bootMode": "", "daInit": False, "cdcInit": False}
 
 class DeviceHandler(QObject):
     sendToLogSignal = Signal(str)
+    sendToProgressSignal = Signal(int)
     mtkClass = None
     da_handler = None
 
     def __init__(self, parent, preloader: str = None, loglevel=logging.INFO, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
-        config = Mtk_Config(loglevel=logging.INFO, gui=self.sendToLogSignal)
+        config = Mtk_Config(loglevel=logging.INFO, gui=self.sendToLogSignal, guiprogress=self.sendToProgressSignal)
         config.gpt_settings = gpt_settings(gpt_num_part_entries='0', gpt_part_entry_size='0',
                                            gpt_part_entry_start_lba='0')  # This actually sets the right GPT settings..
         self.mtkClass = Mtk(config=config, loglevel=logging.INFO)
@@ -106,7 +110,8 @@ def load_translations(application):
     lang = 'mtkclient/gui/i18n/' + locale.name()
     #lang = 'mtkclient/gui/i18n/fr_FR'
     #lang = 'mtkclient/gui/i18n/de_DE'
-    #lang = 'mtkclient/gui/i18n/en_EN'
+    #lang = 'mtkclient/gui/i18n/en_GB'
+    #lang = 'mtkclient/gui/i18n/es_ES'
     if translator.load(lang, directory):
         application.installTranslator(translator)
 
@@ -130,6 +135,8 @@ class MainWindow(QMainWindow):
         self.ui.actionWrite_full_flash.triggered.connect(self.on_writefullflash)
         self.ui.actionWrite_partition_s.triggered.connect(self.on_writepartflash)
         self.ui.actionWrite_at_offset.triggered.connect(self.on_writeflashoffset)
+        self.ui.actionWrite_boot2.triggered.connect(self.on_writeboot2)
+        self.ui.actionWrite_preloader.triggered.connect(self.on_writepreloader)
 
         self.ui.actionRead_RPMB.triggered.connect(self.on_readrpmb)
         self.ui.actionWrite_RPMB.triggered.connect(self.on_writerpmb)
@@ -152,53 +159,73 @@ class MainWindow(QMainWindow):
         return
 
     def on_writefullflash(self):
+        readFlashWindowVal = WriteFullFlashWindow(self, devhandler, devhandler.da_handler, self.sendToLog,
+                                                 parttype="user")
+        return
+
+    def on_writepreloader(self):
+        readFlashWindowVal = WriteFullFlashWindow(self, devhandler, devhandler.da_handler, self.sendToLog,
+                                                 parttype="boot1")
+        return
+
+    def on_writeboot2(self):
+        readFlashWindowVal = WriteFullFlashWindow(self, devhandler, devhandler.da_handler, self.sendToLog,
+                                                 parttype="boot2")
         return
 
     def on_writepartflash(self):
+        writeFlashWindowVal = WriteFlashWindow(self, devhandler, devhandler.da_handler, self.sendToLog)
         return
 
     def on_writeflashoffset(self):
         return
 
     def on_readrpmb(self):
-        readFlashWindowVal = ReadFullFlashWindow(self, devhandler.mtkClass, devhandler.da_handler, self.sendToLog,
+        readFlashWindowVal = ReadFullFlashWindow(self, devhandler, devhandler.da_handler, self.sendToLog,
                                                  parttype="rpmb")
         return
 
     def on_writerpmb(self):
+        readFlashWindowVal = WriteFullFlashWindow(self, devhandler, devhandler.da_handler, self.sendToLog,
+                                                 parttype="rpmb")
         return
+
 
     def on_eraseoffset(self):
         return
 
     def on_erasepartflash(self):
+        eraseFlashWindowVal = EraseFlashWindow(self, devhandler, devhandler.da_handler, self.sendToLog)
         return
 
     def on_generatekeys(self):
-        readFlashWindowVal = generateKeysMenu(self, devhandler.mtkClass, devhandler.da_handler, self.sendToLog)
+        readFlashWindowVal = generateKeysMenu(self, devhandler, devhandler.da_handler, self.sendToLog)
         return
 
     def on_readpreloader(self):
-        readFlashWindowVal = ReadFullFlashWindow(self, devhandler.mtkClass, devhandler.da_handler, self.sendToLog,
+        readFlashWindowVal = ReadFullFlashWindow(self, devhandler, devhandler.da_handler, self.sendToLog,
                                              parttype="boot1")
         return
 
     def on_readboot2(self):
-        readFlashWindowVal = ReadFullFlashWindow(self, devhandler.mtkClass, devhandler.da_handler, self.sendToLog,
+        readFlashWindowVal = ReadFullFlashWindow(self, devhandler, devhandler.da_handler, self.sendToLog,
                                              parttype="boot2")
         return
 
     def on_readpartflash(self):
-        readFlashWindowVal = ReadFlashWindow(self, devhandler.mtkClass, devhandler.da_handler, self.sendToLog)
+        readFlashWindowVal = ReadFlashWindow(self, devhandler, devhandler.da_handler, self.sendToLog)
 
     def on_readfullflash(self):
-        readFlashWindowVal = ReadFullFlashWindow(self, devhandler.mtkClass, devhandler.da_handler, self.sendToLog,
+        readFlashWindowVal = ReadFullFlashWindow(self, devhandler, devhandler.da_handler, self.sendToLog,
                                                  parttype="user")
 
     def sendToLog(self, info):
         t = time.localtime()
         self.ui.logBox.appendPlainText(time.strftime("[%H:%M:%S", t) + "]: " + info)
         self.ui.logBox.verticalScrollBar().setValue(self.ui.logBox.verticalScrollBar().maximum())
+
+    def sendToProgress(self, progress):
+        return
 
     def updateGui(self):
         global phoneInfo
@@ -309,6 +336,7 @@ if __name__ == '__main__':
     thread = asyncThread(parent=app, n=0, function=getDevInfo, parameters=[loglevel,phoneInfo,devhandler])
     thread.sendToLogSignal.connect(win.sendToLog)
     thread.sendUpdateSignal.connect(win.updateGui)
+    thread.sendToProgressSignal.connect(win.sendToProgress)
     thread.start()
 
     # Run loop the app
