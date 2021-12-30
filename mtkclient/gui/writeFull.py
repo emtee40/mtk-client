@@ -25,7 +25,7 @@ class WriteFullFlashWindow(QDialog):
 
     @Slot(int)
     def updateProgress(self, progress):
-        self.dumpStatus["doneBytes"] = progress
+        self.dumpStatus["doneBytes"] = progress * self.factor
         self.updateDumpState()
 
     def updateWriteStateAsync(self, toolkit, parameters):
@@ -92,8 +92,10 @@ class WriteFullFlashWindow(QDialog):
         self.writeStatus["writeFile"] = variables.filename
         self.da_handler.close = self.writePartDone  # Ignore the normally used sys.exit
         if "rpmb" in parameters:
+            self.factor = 0x100
             self.mtkClass.daloader.read_rpmb(variables.filename)
         else:
+            self.factor = 0x1
             if "boot1" in parameters:
                 variables.parttype = "boot1"
             elif "boot2" in parameters:
@@ -119,6 +121,9 @@ class WriteFullFlashWindow(QDialog):
         # partitionListWidget = QWidget(self)
         self.ui = Ui_writeWidget()
         self.ui.setupUi(self)
+        self.factor = 1
+        if parttype == "rpmb":
+            self.factor = 0x100
         self.flashsize = 0
         if parttype == "user":
             self.flashsize = self.mtkClass.daloader.daconfig.flashsize

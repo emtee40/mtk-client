@@ -24,7 +24,7 @@ class ReadFullFlashWindow(QDialog):
 
     @Slot(int)
     def updateProgress(self, progress):
-        self.dumpStatus["doneBytes"] = progress * 0x100
+        self.dumpStatus["doneBytes"] = progress * self.factor
         self.dumpStatus["totalBytes"] = self.flashsize
         self.updateDumpState()
 
@@ -93,8 +93,10 @@ class ReadFullFlashWindow(QDialog):
         self.dumpStatus["dumpFile"] = variables.filename
         self.da_handler.close = self.dumpPartDone  # Ignore the normally used sys.exit
         if "rpmb" in parameters:
+            self.factor = 0x100
             self.mtkClass.daloader.read_rpmb(variables.filename)
         else:
+            self.factor = 0x1
             if "boot1" in parameters:
                 variables.parttype = "boot1"
             elif "boot2" in parameters:
@@ -120,6 +122,9 @@ class ReadFullFlashWindow(QDialog):
         self.mtkClass = devhandler.mtkClass
         self.parent = parent.parent()
         self.sendToLog = sendToLog
+        self.factor = 1
+        if parttype=="rpmb":
+            self.factor = 0x100
         self.dumpStatus = {}
         self.da_handler = da_handler
         # self.setFixedSize(400, 500)
