@@ -6,8 +6,7 @@ import mock
 import time
 from PySide2.QtCore import Slot, Qt
 from PySide2.QtWidgets import QDialog, QCheckBox, QVBoxLayout, QWidget
-from mtkclient.gui.toolkit import convert_size, FDialog
-from mtkclient.gui.toolkit import trap_exc_during_debug, asyncThread
+from mtkclient.gui.toolkit import convert_size, FDialog, TimeEstim, trap_exc_during_debug, asyncThread
 from mtkclient.gui.readpart_gui import Ui_partitionListWidget
 
 
@@ -29,12 +28,16 @@ class ReadFlashWindow(QDialog):
         percentageDone = (self.dumpStatus["currentPartitionSizeDone"] / self.dumpStatus["currentPartitionSize"]) * 100
         fullPercentageDone = (doneBytes / totalBytes) * 100
         self.ui.partProgress.setValue(percentageDone)
+        timeinfo = self.timeEst.update(doneBytes, totalBytes)
         self.ui.partProgressText.setText("Current partition: " + self.dumpStatus["currentPartition"] + " (" +
                                          convert_size(self.dumpStatus["currentPartitionSizeDone"]) + " / " +
-                                         convert_size(self.dumpStatus["currentPartitionSize"])+")")
+                                         convert_size(self.dumpStatus["currentPartitionSize"])+
+                                         timeinfo+self.tr(" left")+")")
 
         self.ui.fullProgress.setValue(fullPercentageDone)
-        self.ui.fullProgressText.setText("Total: (" + convert_size(doneBytes) + " / " + convert_size(totalBytes)+")")
+        timeinfototal = self.timeEstTotal.update(fullPercentageDone, 100)
+        self.ui.fullProgressText.setText("Total: (" + convert_size(doneBytes) + " / " + convert_size(totalBytes)+
+                                         timeinfototal + self.tr(" left") + ")")
 
     @Slot(int)
     def updateProgress(self, progress):
@@ -72,6 +75,8 @@ class ReadFlashWindow(QDialog):
 
 
     def dumpPartitionAsync(self, toolkit, parameters):
+        self.timeEst.init()
+        self.timeEstTotal.init()
         self.sendToLogSignal = toolkit.sendToLogSignal
         toolkit.sendToLogSignal.emit("test")
         self.dumpStatus["done"] = False
@@ -115,6 +120,8 @@ class ReadFlashWindow(QDialog):
     def __init__(self, parent, devhandler, da_handler, sendToLog):  # def __init__(self, *args, **kwargs):
         super(ReadFlashWindow, self).__init__(parent)
         devhandler.sendToProgressSignal.connect(self.updateProgress)
+        self.timeEst = TimeEstim()
+        self.timeEstTotal = TimeEstim()
         self.mtkClass = devhandler.mtkClass
         self.parent = parent.parent()
         self.sendToLog = sendToLog

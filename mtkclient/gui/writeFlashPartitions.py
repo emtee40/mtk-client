@@ -6,7 +6,7 @@ from functools import partial
 from PySide2.QtCore import Slot, Qt
 from PySide2.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QWidget, QLineEdit, \
                               QPushButton
-from mtkclient.gui.toolkit import trap_exc_during_debug, asyncThread, convert_size, FDialog, CheckBox
+from mtkclient.gui.toolkit import trap_exc_during_debug, asyncThread, convert_size, FDialog, CheckBox, TimeEstim
 from mtkclient.gui.writepart_gui import Ui_writepartitionListWidget
 
 sys.excepthook = trap_exc_during_debug
@@ -27,12 +27,15 @@ class WriteFlashWindow(QDialog):
         percentageDone = (self.writeStatus["currentPartitionSizeDone"] / self.writeStatus["currentPartitionSize"]) * 100
         fullPercentageDone = (doneBytes / totalBytes) * 100
         self.ui.partProgress.setValue(percentageDone)
+        timeinfo = self.timeEst.update(doneBytes, totalBytes)
         self.ui.partProgressText.setText("Current partition: " + self.writeStatus["currentPartition"] + " (" +
                                          convert_size(self.writeStatus["currentPartitionSizeDone"]) + " / " +
-                                         convert_size(self.writeStatus["currentPartitionSize"]) + ")")
-
+                                         convert_size(self.writeStatus["currentPartitionSize"]) +
+                                         timeinfo + self.tr(" left") + ")")
+        timeinfototal = self.timeEstTotal.update(fullPercentageDone, 100)
         self.ui.fullProgress.setValue(fullPercentageDone)
-        self.ui.fullProgressText.setText("Total: (" + convert_size(doneBytes)+")")
+        self.ui.fullProgressText.setText("Total: (" + convert_size(doneBytes) + " / " + convert_size(totalBytes)+
+                                         timeinfototal + self.tr(" left") + ")")
 
     @Slot(int)
     def updateProgress(self, progress):
@@ -83,6 +86,8 @@ class WriteFlashWindow(QDialog):
         return fname
 
     def writePartitionAsync(self, toolkit, parameters):
+        self.timeEst.init()
+        self.timeEstTotal.init()
         self.sendToLogSignal = toolkit.sendToLogSignal
         toolkit.sendToLogSignal.emit("test")
         # partitionname = args.partitionname
@@ -127,6 +132,8 @@ class WriteFlashWindow(QDialog):
         self.writeStatus = {}
         self.fdialog = FDialog(self)
         self.da_handler = da_handler
+        self.timeEst = TimeEstim()
+        self.timeEstTotal = TimeEstim()
         #self.setFixedSize(400, 500)
         self.setWindowTitle("Write partition(s)")
 

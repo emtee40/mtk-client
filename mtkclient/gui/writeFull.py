@@ -4,7 +4,7 @@ from random import random
 from PySide2.QtCore import Slot, QCoreApplication
 from PySide2.QtWidgets import QDialog, QFileDialog
 import mock
-from mtkclient.gui.toolkit import trap_exc_during_debug, asyncThread, convert_size, FDialog
+from mtkclient.gui.toolkit import trap_exc_during_debug, asyncThread, convert_size, FDialog, TimeEstim
 from mtkclient.gui.writefull_gui import Ui_writeWidget
 import os
 import sys
@@ -20,8 +20,9 @@ class WriteFullFlashWindow(QDialog):
         doneBytes = self.writeStatus["doneBytes"]
         fullPercentageDone = round((doneBytes / totalBytes) * 100)
         self.ui.progress.setValue(fullPercentageDone)
-        self.ui.progressText.setText("Total: (" + str(round((doneBytes / 1024 / 1024))) + "Mb / " + str(
-            round((totalBytes / 1024 / 1024))) + " Mb)")
+        timeinfo = self.timeEst.update(doneBytes, totalBytes)
+        self.ui.progressText.setText("Total: (" + convert_size(doneBytes) + " / " +
+                                     convert_size(totalBytes) + " -> "+timeinfo+self.tr(" left")+")")
 
     @Slot(int)
     def updateProgress(self, progress):
@@ -81,6 +82,7 @@ class WriteFullFlashWindow(QDialog):
             self.ui.startBtn.setEnabled(True)
 
     def writeFlashAsync(self, toolkit, parameters):
+        self.timeEst.init()
         self.sendToLogSignal = toolkit.sendToLogSignal
         self.writeStatus["done"] = False
         thread = asyncThread(self, 0, self.updateWriteStateAsync, [])
@@ -110,6 +112,7 @@ class WriteFullFlashWindow(QDialog):
                  parttype: str = "user"):  # def __init__(self, *args, **kwargs):
         super(WriteFullFlashWindow, self).__init__(parent)
         self.fdialog = FDialog(self)
+        self.timeEst = TimeEstim()
         devhandler.sendToProgressSignal.connect(self.updateProgress)
         self.mtkClass = devhandler.mtkClass
         self.parent = parent.parent()

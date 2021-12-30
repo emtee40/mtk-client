@@ -2,9 +2,9 @@ import math
 from random import random
 
 from PySide2.QtCore import Slot, QCoreApplication
-from PySide2.QtWidgets import QDialog, QFileDialog
+from PySide2.QtWidgets import QDialog
 import mock
-from mtkclient.gui.toolkit import trap_exc_during_debug, asyncThread, convert_size, FDialog
+from mtkclient.gui.toolkit import trap_exc_during_debug, asyncThread, convert_size, FDialog, TimeEstim
 from mtkclient.gui.readfull_gui import Ui_readWidget
 import os
 import sys
@@ -20,7 +20,9 @@ class ReadFullFlashWindow(QDialog):
         doneBytes = self.dumpStatus["doneBytes"]
         fullPercentageDone = round((doneBytes / totalBytes) * 100)
         self.ui.progress.setValue(fullPercentageDone)
-        self.ui.progressText.setText("Total: (" + convert_size(doneBytes) + " / " + convert_size(totalBytes) + " )")
+        timeinfo = self.timeEst.update(doneBytes, totalBytes)
+        self.ui.progressText.setText("Total: (" + convert_size(doneBytes) + " / " +
+                                     convert_size(totalBytes) + " -> "+timeinfo+self.tr(" left")+")")
 
     @Slot(int)
     def updateProgress(self, progress):
@@ -82,6 +84,7 @@ class ReadFullFlashWindow(QDialog):
             self.ui.startBtn.setEnabled(True)
 
     def dumpFlashAsync(self, toolkit, parameters):
+        self.timeEst.init()
         self.sendToLogSignal = toolkit.sendToLogSignal
         self.dumpStatus["done"] = False
         thread = asyncThread(self, 0, self.updateDumpStateAsync, [])
@@ -117,6 +120,7 @@ class ReadFullFlashWindow(QDialog):
     def __init__(self, parent, devhandler, da_handler, sendToLog,
                  parttype: str = "user"):  # def __init__(self, *args, **kwargs):
         super(ReadFullFlashWindow, self).__init__(parent)
+        self.timeEst = TimeEstim()
         self.fdialog = FDialog(self)
         devhandler.sendToProgressSignal.connect(self.updateProgress)
         self.mtkClass = devhandler.mtkClass
@@ -134,8 +138,11 @@ class ReadFullFlashWindow(QDialog):
         self.ui.setupUi(self)
         if parttype != "user":
             self.ui.DumpGPTCheckbox.setHidden(True)
+            self.ui.label_2.setHidden(True)
             # self.setWindowTitle(self.translate("readWidget", u"Read rpmb", None))
-
+        else:
+            self.ui.DumpGPTCheckbox.setHidden(False)
+            self.ui.label_2.setHidden(False)
         self.flashsize = 0
         if parttype == "user":
             self.flashsize = self.mtkClass.daloader.daconfig.flashsize

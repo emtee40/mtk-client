@@ -6,7 +6,7 @@ import mock
 import time
 from PySide2.QtCore import Slot, Qt
 from PySide2.QtWidgets import QDialog, QCheckBox, QVBoxLayout, QWidget
-from mtkclient.gui.toolkit import convert_size, FDialog
+from mtkclient.gui.toolkit import convert_size, FDialog, TimeEstim
 from mtkclient.gui.toolkit import trap_exc_during_debug, asyncThread
 from mtkclient.gui.erasepart_gui import Ui_partitionListWidget
 
@@ -29,12 +29,16 @@ class EraseFlashWindow(QDialog):
         percentageDone = (self.eraseStatus["currentPartitionSizeDone"] / self.eraseStatus["currentPartitionSize"]) * 100
         fullPercentageDone = (doneBytes / totalBytes) * 100
         self.ui.partProgress.setValue(percentageDone)
+        timeinfo = self.timeEst.update(doneBytes, totalBytes)
         self.ui.partProgressText.setText("Current partition: " + self.eraseStatus["currentPartition"] + " (" +
                                          convert_size(self.eraseStatus["currentPartitionSizeDone"]) + " / " +
-                                         convert_size(self.eraseStatus["currentPartitionSize"])+")")
+                                         convert_size(self.eraseStatus["currentPartitionSize"])+" -> "+
+                                         timeinfo+self.tr(" left")+")")
 
         self.ui.fullProgress.setValue(fullPercentageDone)
-        self.ui.fullProgressText.setText("Total: (" + convert_size(doneBytes) + " / " + convert_size(totalBytes)+")")
+        timetotal = self.timeEstTotal.update(fullPercentageDone, 100)
+        self.ui.fullProgressText.setText("Total: (" + convert_size(doneBytes) + " / " +
+                                         convert_size(totalBytes)+" -> "+timetotal+self.tr(" left")+")")
 
     @Slot(int)
     def updateProgress(self, progress):
@@ -70,6 +74,8 @@ class EraseFlashWindow(QDialog):
 
 
     def erasePartitionAsync(self, toolkit, parameters):
+        self.timeEst.init()
+        self.timeEstTotal.init()
         self.sendToLogSignal = toolkit.sendToLogSignal
         toolkit.sendToLogSignal.emit("test")
         self.eraseStatus["done"] = False
@@ -106,6 +112,8 @@ class EraseFlashWindow(QDialog):
         self.eraseStatus = {}
         self.fdialog = FDialog(self)
         self.da_handler = da_handler
+        self.timeEst = TimeEstim()
+        self.timeEstTotal = TimeEstim()
         #self.setFixedSize(400, 500)
         self.setWindowTitle("Erase partition(s)")
 

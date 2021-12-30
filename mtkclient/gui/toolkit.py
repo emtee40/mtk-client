@@ -1,9 +1,52 @@
 import math
 import os
+import time
+import datetime as dt
 from PySide2.QtCore import Signal, QThread, Slot, Property
 from PySide2.QtWidgets import QFileDialog, QCheckBox
 from traceback import print_exception
+from mtkclient.config.payloads import pathconfig
 
+class TimeEstim:
+    def calcProcessTime(self, starttime, cur_iter, max_iter):
+        telapsed = time.time() - starttime
+        if telapsed > 0 and cur_iter > 0:
+            testimated = (telapsed / cur_iter) * max_iter
+            finishtime = starttime + testimated
+            finishtime = dt.datetime.fromtimestamp(finishtime).strftime("%H:%M:%S")  # in time
+            lefttime = testimated - telapsed  # in seconds
+            return int(telapsed), int(lefttime), finishtime
+        else:
+            return 0, 0, ""
+
+    def init(self):
+        self.prog = 0
+        self.start = time.time()
+        self.progtime = time.time()
+        self.progpos = 0
+
+    def update(self, pos, total):
+        t0 = time.time()
+        telapsed, lefttime, finishtime = self.calcProcessTime(self.start, pos, total)
+        hinfo = ""
+        if lefttime > 0:
+            sec = lefttime
+            if sec > 60:
+                min = sec // 60
+                sec = sec % 60
+                if min > 60:
+                    h = min // 24
+                    min = min % 24
+                    hinfo = "%02dh:%02dm:%02ds" % (h, min, sec)
+                else:
+                    hinfo = "%02dm:%02ds" % (min, sec)
+            else:
+                hinfo = "%02ds" % sec
+
+        self.prog = pos
+        self.progpos = pos
+        self.progtime = t0
+        return hinfo
 
 class CheckBox(QCheckBox):
     def __init__( self, *args ):
@@ -68,12 +111,15 @@ class asyncThread(QThread):
         self.function(self, self.parameters)
 
 class FDialog():
-    lastpath = "."
+    pc = pathconfig()
+    lastpath = os.path.dirname(os.path.dirname(pc.scriptpath))
 
     def __init__(self, parent):
         self.parent = parent
 
     def save(self, filename=""):
+        if self.lastpath=="":
+            self.lastpath="."
         fname = os.path.join(self.lastpath, filename)
         ret = QFileDialog.getSaveFileName(parent=self.parent, caption=self.parent.tr("Select output file"), dir=fname,
                                           filter="Binary dump (*.bin)")
@@ -85,6 +131,8 @@ class FDialog():
         return None
 
     def open(self, filename=""):
+        if self.lastpath=="":
+            self.lastpath="."
         fname = os.path.join(self.lastpath, filename)
         ret = QFileDialog.getOpenFileName(parent=self.parent, caption=self.parent.tr("Select input file"), dir=fname,
                                           filter="Binary dump (*.bin)")
@@ -96,6 +144,8 @@ class FDialog():
         return None
 
     def opendir(self,caption):
+        if self.lastpath=="":
+            self.lastpath="."
         fname = os.path.join(self.lastpath)
         fdir=QFileDialog.getExistingDirectory(parent=self.parent, dir=fname,
                                               caption=self.parent.tr(caption))
