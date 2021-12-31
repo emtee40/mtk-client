@@ -80,7 +80,7 @@ class progress:
             finishtime = starttime + testimated
             finishtime = dt.datetime.fromtimestamp(finishtime).strftime("%H:%M:%S")  # in time
             lefttime = testimated - telapsed  # in seconds
-            return (int(telapsed), int(lefttime), finishtime)
+            return int(telapsed), int(lefttime), finishtime
         else:
             return 0, 0, ""
 
@@ -101,7 +101,8 @@ class progress:
             self.start = time.time()
             self.progtime = time.time()
             self.progpos = pos
-            self.guiprogress(pos)
+            if self.guiprogress is not None:
+                self.guiprogress(pos)
             print_progress(prog, 100, prefix='Done',
                            suffix=prefix + ' (Sector 0x%X of 0x%X) %0.2f MB/s' %
                                   (pos // self.pagesize,
