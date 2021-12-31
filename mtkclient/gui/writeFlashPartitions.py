@@ -67,7 +67,7 @@ class WriteFlashWindow(QDialog):
 
     def writePartition(self):
         self.ui.startBtn.setEnabled(False)
-        thread = asyncThread(parent=self.parent, n=0, function=self.writePartitionAsync,parameters=[])
+        thread = asyncThread(parent=self, n=0, function=self.writePartitionAsync,parameters=[])
         thread.sendToLogSignal.connect(self.sendToLog)
         thread.sendUpdateSignal.connect(self.updateWriteState)
         thread.sendToProgressSignal.connect(self.updateProgress)
