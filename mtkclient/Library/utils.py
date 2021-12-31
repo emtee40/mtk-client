@@ -14,7 +14,6 @@ import copy
 import time
 import io
 import datetime as dt
-from PySide2.QtCore import Signal
 sys.stdout = io.TextIOWrapper(sys.stdout.detach(), encoding='utf-8')
 sys.stderr = io.TextIOWrapper(sys.stderr.detach(), encoding='utf-8')
 

@@ -1,8 +1,8 @@
 import math
 from random import random
 
-from PySide2.QtCore import Slot, QCoreApplication
-from PySide2.QtWidgets import QDialog
+from PySide6.QtCore import Slot, QCoreApplication
+from PySide6.QtWidgets import QDialog
 import mock
 from mtkclient.gui.toolkit import trap_exc_during_debug, asyncThread, convert_size, FDialog, TimeEstim
 from mtkclient.gui.readfull_gui import Ui_readWidget
@@ -43,7 +43,7 @@ class ReadFullFlashWindow(QDialog):
         self.ui.startBtn.setEnabled(False)
         self.dumpFile = self.fdialog.save("flash.bin")
         if self.dumpFile:
-            thread = asyncThread(parent=self.parent, n=0, function=self.dumpFlashAsync, parameters=["user"])
+            thread = asyncThread(parent=self, n=0, function=self.dumpFlashAsync, parameters=["user"])
             thread.sendToLogSignal.connect(self.sendToLog)
             thread.sendUpdateSignal.connect(self.updateDumpState)
             thread.start()
@@ -54,7 +54,7 @@ class ReadFullFlashWindow(QDialog):
         self.ui.startBtn.setEnabled(False)
         self.dumpFile = self.fdialog.save("rpmb.bin")
         if self.dumpFile:
-            thread = asyncThread(parent=self.parent, n=0, function=self.dumpFlashAsync, parameters=["rpmb"])
+            thread = asyncThread(parent=self, n=0, function=self.dumpFlashAsync, parameters=["rpmb"])
             thread.sendToLogSignal.connect(self.sendToLog)
             thread.sendUpdateSignal.connect(self.updateDumpState)
             thread.start()
@@ -65,7 +65,7 @@ class ReadFullFlashWindow(QDialog):
         self.ui.startBtn.setEnabled(False)
         self.dumpFile = self.fdialog.save("boot2.bin")
         if self.dumpFile:
-            thread = asyncThread(parent=self.parent, n=0, function=self.dumpFlashAsync, parameters=["boot2"])
+            thread = asyncThread(parent=self, n=0, function=self.dumpFlashAsync, parameters=["boot2"])
             thread.sendToLogSignal.connect(self.sendToLog)
             thread.sendUpdateSignal.connect(self.updateDumpState)
             thread.start()
@@ -76,7 +76,7 @@ class ReadFullFlashWindow(QDialog):
         self.ui.startBtn.setEnabled(False)
         self.dumpFile = self.fdialog.save("boot1.bin")
         if self.dumpFile:
-            thread = asyncThread(parent=self.parent, n=0, function=self.dumpFlashAsync, parameters=["boot1"])
+            thread = asyncThread(parent=self, n=0, function=self.dumpFlashAsync, parameters=["boot1"])
             thread.sendToLogSignal.connect(self.sendToLog)
             thread.sendUpdateSignal.connect(self.updateDumpState)
             thread.start()
@@ -87,7 +87,7 @@ class ReadFullFlashWindow(QDialog):
         self.timeEst.init()
         self.sendToLogSignal = toolkit.sendToLogSignal
         self.dumpStatus["done"] = False
-        thread = asyncThread(self, 0, self.updateDumpStateAsync, [])
+        thread = asyncThread(self.parent, 0, self.updateDumpStateAsync, [])
         thread.sendUpdateSignal.connect(self.updateDumpState)
         thread.start()
         variables = mock.Mock()
