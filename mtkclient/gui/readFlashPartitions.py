@@ -67,7 +67,7 @@ class ReadFlashWindow(QDialog):
         self.ui.startBtn.setEnabled(False)
         self.dumpFolder = self.fdialog.opendir(self.tr("Select output directory"))
         if self.dumpFolder:
-            thread = asyncThread(parent=self.parent, n=0, function=self.dumpPartitionAsync,parameters=[])
+            thread = asyncThread(parent=self, n=0, function=self.dumpPartitionAsync,parameters=[])
             thread.sendToLogSignal.connect(self.sendToLog)
             thread.sendUpdateSignal.connect(self.updateDumpState)
             thread.sendToProgressSignal.connect(self.updateProgress)
