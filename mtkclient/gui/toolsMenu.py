@@ -80,7 +80,7 @@ class generateKeysMenu(QDialog):
 
         # Line
         line = QFrame(self)
-        line.setGeometry(10, 25, 680, 20)
+        line.setGeometry(10, 30, 680, 20)
         line.setFrameShape(QFrame.HLine)
         line.setFrameShadow(QFrame.Sunken)
 
@@ -88,11 +88,11 @@ class generateKeysMenu(QDialog):
         self.keyListText = QLabel(self)
         self.keyListText.setText("")
         self.keyListText.setStyleSheet("font-weight: bold")
-        self.keyListText.setGeometry(10, 30, 380, 90)
+        self.keyListText.setGeometry(10, 40, 380, 90)
 
         self.keyValueText = QLabel(self)
         self.keyValueText.setText("")
-        self.keyValueText.setGeometry(100, 30, 580, 90)
+        self.keyValueText.setGeometry(100, 40, 580, 90)
 
         # Status text
         self.statusText = QLabel(self)
