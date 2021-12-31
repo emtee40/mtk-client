@@ -70,6 +70,8 @@ class progress:
         self.pagesize = pagesize
         if guiprogress is not None:
             self.guiprogress = guiprogress.emit
+        else:
+            self.guiprogress = None
 
     def calcProcessTime(self, starttime, cur_iter, max_iter):
         telapsed = time.time() - starttime
@@ -107,7 +109,8 @@ class progress:
                                    0), bar_length=50)
 
         if prog > self.prog:
-            self.guiprogress(pos)
+            if self.guiprogress is not None:
+                self.guiprogress(pos)
             if display:
                 t0 = time.time()
                 tdiff = t0 - self.progtime
