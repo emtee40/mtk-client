@@ -525,6 +525,8 @@ class xflashext(metaclass=LogBase):
 
     def generate_keys(self):
         hwc = self.cryptosetup()
+        #rdata=hwc.mtee(filename = "tee1.bin",offset = 0xF860)
+        #open("tee1.dec","wb").write(rdata)
         meid = self.config.get_meid()
         socid = self.config.get_socid()
         if meid is not None:
@@ -585,7 +587,7 @@ class xflashext(metaclass=LogBase):
                 open(os.path.join("logs", "hrid.txt"), "wb").write(hexlify(hrid))
             """
             return {"rpmb": hexlify(rpmbkey).decode('utf-8'), "rpmb2": hexlify(rpmb2key).decode('utf-8'),
-                    "fde": hexlify(fdekey).decode('utf-8'), "ikey": hexlify(ikey).decode('utf-8')}
+                    "fde": hexlify(fdekey).decode('utf-8'), "ikey": hexlify(ikey).decode('utf-8'), "mtee": None}
         elif self.config.chipconfig.sej_base is not None:
             if meid == b"":
                 if self.config.chipconfig.meid_addr:
@@ -597,8 +599,13 @@ class xflashext(metaclass=LogBase):
                 rpmbkey = hwc.aes_hwcrypt(mode="rpmb", data=meid, btype="sej")
                 self.info("RPMB        : " + hexlify(rpmbkey).decode('utf-8'))
                 self.config.hwparam.writesetting("rpmbkey", hexlify(rpmbkey).decode('utf-8'))
+                self.info("Generating sej mtee...")
+                mtee = hwc.aes_hwcrypt(mode="mtee", btype="sej")
+                self.info("MTEE        : " + hexlify(mtee).decode('utf-8'))
+                self.config.hwparam.writesetting("mtee", hexlify(mtee).decode('utf-8'))
+
             else:
                 self.info("SEJ Mode: No meid found. Are you in brom mode ?")
-        return {"rpmb": hexlify(rpmbkey).decode('utf-8'), "rpmb2": "None",
-                "fde": "None", "ikey": "None"}
+        return {"rpmb": hexlify(rpmbkey).decode('utf-8'), "rpmb2": None,
+                "fde": None, "ikey": None, "mtee": hexlify(mtee).decode('utf-8')}
 

@@ -11,6 +11,7 @@ from mtkclient.Library.hwcrypto_sej import sej
 from mtkclient.Library.cqdma import cqdma
 from struct import unpack
 
+
 class crypto_setup:
     hwcode = None
     dxcc_base = None
@@ -27,8 +28,9 @@ class crypto_setup:
     socid_addr = None
     prov_addr = None
 
+
 class hwcrypto(metaclass=LogBase):
-    def __init__(self, setup, loglevel=logging.INFO, gui:bool=False):
+    def __init__(self, setup, loglevel=logging.INFO, gui: bool = False):
         self.__logger = logsetup(self, self.__logger, loglevel, gui)
 
         self.dxcc = dxcc(setup, loglevel, gui)
@@ -68,10 +70,10 @@ class hwcrypto(metaclass=LogBase):
 
     def aes_hwcrypt(self, data=b"", iv=None, encrypt=True, otp=None, mode="cbc", btype="sej"):
         if otp is None:
-            otp=32*b"\00"
+            otp = 32 * b"\00"
         else:
-            if isinstance(otp,str):
-                otp=bytes.fromhex(otp)
+            if isinstance(otp, str):
+                otp = bytes.fromhex(otp)
         if btype == "sej":
             if encrypt:
                 if mode == "cbc":
@@ -79,8 +81,10 @@ class hwcrypto(metaclass=LogBase):
             else:
                 if mode == "cbc":
                     return self.sej.hw_aes128_cbc_encrypt(buf=data, encrypt=False)
-            if mode=="rpmb":
+            if mode == "rpmb":
                 return self.sej.generate_rpmb(meid=data, otp=otp)
+            elif mode == "mtee":
+                return self.sej.generate_mtee(otp=otp)
         elif btype == "gcpu":
             addr = self.setup.da_payload_addr
             if mode == "ecb":
@@ -113,7 +117,7 @@ class hwcrypto(metaclass=LogBase):
         self.write32(addr, self.read32(addr) & value)
 
     def disable_hypervisor(self):
-        self.write32(0x1021a060,self.read32(0x1021a060)|0x1)
+        self.write32(0x1021a060, self.read32(0x1021a060) | 0x1)
 
     def disable_range_blacklist(self, btype, refreshcache):
         if btype == "gcpu":

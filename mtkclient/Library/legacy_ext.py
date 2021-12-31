@@ -230,6 +230,8 @@ class legacyext(metaclass=LogBase):
                 self.info("HRID        : " + hexlify(hrid).decode('utf-8'))
                 open(os.path.join("logs", "hrid.txt"), "wb").write(hexlify(hrid))
             """
+            return {"rpmb": hexlify(rpmbkey).decode('utf-8'), "rpmb2": hexlify(rpmb2key).decode('utf-8'),
+                    "fde": hexlify(fdekey).decode('utf-8'), "ikey": hexlify(ikey).decode('utf-8'), "mtee": None}
         elif self.config.chipconfig.sej_base is not None:
             if meid == b"":
                 if self.config.chipconfig.meid_addr:
@@ -240,6 +242,11 @@ class legacyext(metaclass=LogBase):
                 rpmbkey = hwc.aes_hwcrypt(mode="rpmb", data=meid, btype="sej")
                 self.info("RPMB        : " + hexlify(rpmbkey).decode('utf-8'))
                 self.config.hwparam.writesetting("rpmbkey", hexlify(rpmbkey).decode('utf-8'))
+                self.info("Generating sej mtee...")
+                mtee = hwc.aes_hwcrypt(mode="mtee", btype="sej")
+                self.info("MTEE        : " + hexlify(mtee).decode('utf-8'))
+                self.config.hwparam.writesetting("mtee", hexlify(mtee).decode('utf-8'))
             else:
                 self.info("SEJ Mode: No meid found. Are you in brom mode ?")
-        return True
+        return {"rpmb": hexlify(rpmbkey).decode('utf-8'), "rpmb2": None,
+                "fde": None, "ikey": None, "mtee": hexlify(mtee).decode('utf-8')}

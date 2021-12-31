@@ -23,11 +23,19 @@ class generateKeysMenu(QDialog):
     @Slot()
     def updateKeys(self):
         print(self.keysStatus)
-        path = os.path.join(self.hwparamFolder,"hwparam.json")
+        path = os.path.join(self.hwparamFolder, "hwparam.json")
         self.statusText.setText(f"Keys saved to {path}.")
         # self.keyListText.setText("RPMB key: ")
-        self.keyValueText.setText(self.keysStatus['result']['rpmb'] + "\n" + self.keysStatus['result']['rpmb2'] + "\n" +
-                                  self.keysStatus['result']['fde'] + "\n" + self.keysStatus['result']['ikey'])
+        retkey = ""
+        retlist = ""
+        for keys in self.keysStatus['result']:
+            skey = self.keysStatus['result'][keys]
+            if skey is not None:
+                retlist += keys + ":\n"
+                retkey += skey + "\n"
+        self.keyListText.setText(retlist)
+        self.keyListText.setStyleSheet("font-weight: bold")
+        self.keyValueText.setText(retkey)
         self.sendToLogSignal.emit("Keys generated!")
 
     def generateKeys(self):
@@ -53,7 +61,7 @@ class generateKeysMenu(QDialog):
         self.keysStatus["done"] = True
         self.sendUpdateSignal.emit()
 
-    def __init__(self, parent, devhandler, da_handler:DA_handler, sendToLog):  # def __init__(self, *args, **kwargs):
+    def __init__(self, parent, devhandler, da_handler: DA_handler, sendToLog):  # def __init__(self, *args, **kwargs):
         super(generateKeysMenu, self).__init__(parent)
         self.parent = parent
         self.fdialog = FDialog(self)
@@ -78,7 +86,7 @@ class generateKeysMenu(QDialog):
 
         # Info
         self.keyListText = QLabel(self)
-        self.keyListText.setText("RPMB:\nRPMB2:\nFDE:\niTrustee:")
+        self.keyListText.setText("")
         self.keyListText.setStyleSheet("font-weight: bold")
         self.keyListText.setGeometry(10, 30, 380, 90)
 
