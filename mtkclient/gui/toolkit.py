@@ -2,8 +2,8 @@ import math
 import os
 import time
 import datetime as dt
-from PySide2.QtCore import Signal, QThread, Slot, Property
-from PySide2.QtWidgets import QFileDialog, QCheckBox
+from PySide6.QtCore import Signal, QThread, Slot, Property
+from PySide6.QtWidgets import QFileDialog, QCheckBox
 from traceback import print_exception
 from mtkclient.config.payloads import pathconfig
 

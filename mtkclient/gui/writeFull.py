@@ -1,8 +1,8 @@
 import math
 from random import random
 
-from PySide2.QtCore import Slot, QCoreApplication
-from PySide2.QtWidgets import QDialog, QFileDialog
+from PySide6.QtCore import Slot, QCoreApplication
+from PySide6.QtWidgets import QDialog, QFileDialog
 import mock
 from mtkclient.gui.toolkit import trap_exc_during_debug, asyncThread, convert_size, FDialog, TimeEstim
 from mtkclient.gui.writefull_gui import Ui_writeWidget

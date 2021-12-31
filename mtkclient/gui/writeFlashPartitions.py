@@ -3,8 +3,8 @@ import sys
 import time
 import mock
 from functools import partial
-from PySide2.QtCore import Slot, Qt
-from PySide2.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QWidget, QLineEdit, \
+from PySide6.QtCore import Slot, Qt
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QWidget, QLineEdit, \
                               QPushButton
 from mtkclient.gui.toolkit import trap_exc_during_debug, asyncThread, convert_size, FDialog, CheckBox, TimeEstim
 from mtkclient.gui.writepart_gui import Ui_writepartitionListWidget

@@ -208,8 +208,8 @@ class GCpu(metaclass=LogBase):
         self.reg.GCPU_REG_CTL = ctl | 0x1f
 
     def init(self):
-        keyslot = 18
-        ivslot = 26
+        keyslot = 0x12
+        ivslot = 0x1A
         self.reg.GCPU_REG_MEM_P2 = 0x0
         self.reg.GCPU_REG_MEM_P3 = 0x0
         self.reg.GCPU_REG_MEM_P4 = 0x0
@@ -238,14 +238,14 @@ class GCpu(metaclass=LogBase):
         self.reg.GCPU_REG_MEM_DATA = data
 
     def acquire(self):
-        if self.hwcode in [0x8172, 0x8127]:
+        if self.hwcode in [0x8172, 0x8127, None]:
             self.release()
             self.reg.GCPU_REG_MSC = self.reg.GCPU_REG_MSC & 0xFFFFDFFF
         else:
             self.reg.GCPU_REG_CTL = [0x1F, 0x12000]
 
     def release(self):
-        if self.hwcode in [0x8172, 0x8127]:
+        if self.hwcode in [0x8172, 0x8127, None]:
             self.reg.GCPU_REG_CTL = self.reg.GCPU_REG_CTL & 0xFFFFFFF0
             self.reg.GCPU_REG_CTL = self.reg.GCPU_REG_CTL | 0xF
 
@@ -380,9 +380,9 @@ class GCpu(metaclass=LogBase):
         return b"".join([pack("<I", val) for val in self.read32(addr, length // 4)])
 
     def mtk_gcpu_decrypt_mtee_img(self, data, seed):
-        src = 0x68000000
-        dst = 0x68000000
-        data = data[:0x200]
+        src = 0x43001240
+        dst = 0x43001000
+        #data = data[:0x200]
         self.write32(src, to_dwords(data))
         aeskey1 = bytes.fromhex("A5DA42C3B4F6C5BAE162C568ADBD2605")
         aeskey2 = bytes.fromhex("5572247C05586BAA37818D2868949ADB")
@@ -393,17 +393,22 @@ class GCpu(metaclass=LogBase):
         self.reg.GCPU_REG_MEM_P0 = 1
         self.reg.GCPU_REG_MEM_P2 = 0x16
         self.reg.GCPU_REG_MEM_P3 = 0x1A
-        self.cmd(AESPK_D)  # 0x78
-        out = bytearray()
-        for i in range(4):
-            val = unpack("<I", seed[0x10 + (i * 4):0x10 + (i * 4) + 4])[0]
-            out.extend(pack("<I", unpack("<I", aeskey2[i * 4:(i * 4) + 4])[0] ^ val))
-        self.memptr_set(0x12, out)
+        self.cmd(AESPK_D) # 0x78
+        seed=bytearray(seed)
+        aeskey2=bytearray(aeskey2)
+        for i in range(0x10):
+            v=seed[0x10 + i:0x10 + i + 1][0]
+            b=aeskey2[i]
+            r = v ^ b
+            aeskey2[i] = r
+        self.info(hexlify(aeskey2))
+        self.memptr_set(0x12, aeskey2)
         self.reg.GCPU_REG_MEM_P0 = src
         self.reg.GCPU_REG_MEM_P1 = dst
         self.reg.GCPU_REG_MEM_P2 = len(data) >> 4
-        self.reg.GCPU_REG_MEM_P3 = 0x1A
-        self.reg.GCPU_REG_MEM_P4 = 0x1A
+        self.reg.GCPU_REG_MEM_P4 = 0x12
+        self.reg.GCPU_REG_MEM_P5 = 0x1A
+        self.reg.GCPU_REG_MEM_P6 = 0x1A
         self.cmd(AESPK_EK_DCBC)  # 0x7E
         rdata = self.readmem(dst, len(data))
         return rdata

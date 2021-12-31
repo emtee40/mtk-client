@@ -1,10 +1,10 @@
 from random import random
 
-from PySide2.QtCore import Slot, Qt, QSize, QRect
-from PySide2.QtGui import QTextOption, QPixmap
-from PySide2.QtWidgets import *
+from PySide6.QtCore import Slot, Qt, QSize, QRect
+from PySide6.QtGui import QTextOption, QPixmap
+from PySide6.QtWidgets import QFrame, QLabel, QPushButton, QDialog
 import mock
-from mtkclient.gui.toolkit import *
+from mtkclient.gui.toolkit import trap_exc_during_debug, asyncThread, FDialog
 from mtkclient.Library.mtk import Mtk
 from mtkclient.Library.mtk_da_cmd import DA_handler
 import os
@@ -33,7 +33,7 @@ class generateKeysMenu(QDialog):
     def generateKeys(self):
         self.startBtn.setEnabled(False)
         self.statusText.setText("Generating...")
-        hwparamFolder = str(QFileDialog.getExistingDirectory(self, "Select output directory"))
+        hwparamFolder = self.fdialog.opendir(self.tr("Select output directory"))
         if hwparamFolder == "":
             hwparamFolder = "logs"
         else:
@@ -56,6 +56,7 @@ class generateKeysMenu(QDialog):
     def __init__(self, parent, devhandler, da_handler:DA_handler, sendToLog):  # def __init__(self, *args, **kwargs):
         super(generateKeysMenu, self).__init__(parent)
         self.parent = parent
+        self.fdialog = FDialog(self)
         devhandler.sendToProgressSignal.connect(self.updateProgress)
         self.mtkClass = devhandler.mtkClass
         self.sendToLog = sendToLog

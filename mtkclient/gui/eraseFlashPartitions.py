@@ -4,8 +4,8 @@ import os
 import sys
 import mock
 import time
-from PySide2.QtCore import Slot, Qt
-from PySide2.QtWidgets import QDialog, QCheckBox, QVBoxLayout, QWidget
+from PySide6.QtCore import Slot, Qt
+from PySide6.QtWidgets import QDialog, QCheckBox, QVBoxLayout, QWidget
 from mtkclient.gui.toolkit import convert_size, FDialog, TimeEstim
 from mtkclient.gui.toolkit import trap_exc_during_debug, asyncThread
 from mtkclient.gui.erasepart_gui import Ui_partitionListWidget

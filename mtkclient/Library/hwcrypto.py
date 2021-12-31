@@ -9,6 +9,7 @@ from mtkclient.Library.hwcrypto_gcpu import GCpu
 from mtkclient.Library.hwcrypto_dxcc import dxcc
 from mtkclient.Library.hwcrypto_sej import sej
 from mtkclient.Library.cqdma import cqdma
+from struct import unpack
 
 class crypto_setup:
     hwcode = None
@@ -42,6 +43,29 @@ class hwcrypto(metaclass=LogBase):
         self.socid_addr = setup.socid_addr
         self.prov_addr = setup.prov_addr
 
+    def mtee(self, filename, offset):
+        with open(filename, "rb") as rf:
+            rf.seek(offset + 8)
+            pos = unpack("<I", rf.read(4))[0]
+            rf.seek(offset + 0x14)
+            length = unpack("<I", rf.read(4))[0]
+            rf.seek(offset + 0x1C)
+            seed = rf.read(0x20)
+            rf.seek(offset + pos)
+            data = rf.read(length)
+            self.gcpu.init()
+            self.gcpu.acquire()
+            self.write32(0x1000009C, self.read32(0x1000009C) | 0x8000000)
+            self.write32(0x1020D000, self.read32(0x1020D000) & 0xFFFFFFF0)
+            self.write32(0x1020D000, self.read32(0x1020D000) | 0xF)
+            res = self.read32(0x1020D004) | 0x10000
+            self.write32(0x1020D000, self.read32(0x1020D000) & 0xFFFFFFE0)
+            self.write32(0x1020D004, self.read32(0x1020D004) | 0x10000)
+            self.write32(0x1020D000, self.read32(0x1020D000) | 0x1F)
+            self.write32(0x1020D004, self.read32(0x1020D004) | 0x2000)
+
+            return self.gcpu.mtk_gcpu_decrypt_mtee_img(data, seed)
+
     def aes_hwcrypt(self, data=b"", iv=None, encrypt=True, otp=None, mode="cbc", btype="sej"):
         if otp is None:
             otp=32*b"\00"
@@ -64,18 +88,6 @@ class hwcrypto(metaclass=LogBase):
             elif mode == "cbc":
                 if self.gcpu.aes_setup_cbc(addr=addr, data=data, iv=iv, encrypt=encrypt):
                     return self.gcpu.aes_read_cbc(addr=addr, encrypt=encrypt)
-            """
-            elif mode == "mtee":
-                path = "tee_tee.bin"
-                with open(path,"rb") as rf:
-                    rf.seek(0x240)
-                    data=rf.read(0x25D3C0)
-                    rf.seek(0x1C)
-                    seed=rf.read(0x20)
-                    self.gcpu.init()
-                    self.gcpu.acquire()
-                    self.gcpu.mtk_gcpu_decrypt_mtee_img(data,seed)
-            """
         elif btype == "dxcc":
             if mode == "fde":
                 return self.dxcc.generate_rpmb(1)

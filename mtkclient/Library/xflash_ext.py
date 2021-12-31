@@ -265,15 +265,20 @@ class xflashext(metaclass=LogBase):
 
     def readmem(self, addr, dwords=1):
         res = []
-        for pos in range(dwords):
-            val = self.custom_readregister(addr + pos * 4)
-            if val == b"":
-                return False
-            data = unpack("<I", val)[0]
-            if dwords == 1:
-                self.debug(f"RX: {hex(addr + (pos * 4))} -> " + hex(data))
-                return data
-            res.append(data)
+        if dwords<0x20:
+            for pos in range(dwords):
+                val = self.custom_readregister(addr + pos * 4)
+                if val == b"":
+                    return False
+                data = unpack("<I", val)[0]
+                if dwords == 1:
+                    self.debug(f"RX: {hex(addr + (pos * 4))} -> " + hex(data))
+                    return data
+                res.append(data)
+        else:
+            res=self.custom_read(addr,dwords*4)
+            res=[unpack("<I",res[i:i+4])[0] for i in range(0,len(res),4)]
+
         self.debug(f"RX: {hex(addr)} -> " + hexlify(b"".join(pack("<I", val) for val in res)).decode('utf-8'))
         return res
 
@@ -281,11 +286,15 @@ class xflashext(metaclass=LogBase):
         if isinstance(dwords, int):
             dwords = [dwords]
         pos = 0
-        for val in dwords:
-            self.debug(f"TX: {hex(addr + pos)} -> " + hex(val))
-            if not self.custom_writeregister(addr + pos, val):
-                return False
-            pos += 4
+        if len(dwords)<0x20:
+            for val in dwords:
+                self.debug(f"TX: {hex(addr + pos)} -> " + hex(val))
+                if not self.custom_writeregister(addr + pos, val):
+                    return False
+                pos += 4
+        else:
+            dat=b"".join([pack("<I",val) for val in dwords])
+            self.custom_write(addr,dat)
         return True
 
     def writemem(self, addr, data):
