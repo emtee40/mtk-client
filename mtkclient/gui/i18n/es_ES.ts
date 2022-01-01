@@ -155,7 +155,7 @@
     <message>
         <location filename="../readFlashPartitions.py" line="68"/>
         <source>Select output directory</source>
-        <translation>Seleccionar ubicación de almacenamiento para archivos</translation>
+        <translation>Seleccionar el directorio para los archivos de salida</translation>
     </message>
     <message>
         <location filename="../readFlashPartitions.py" line="140"/>
@@ -222,7 +222,7 @@
     <message>
         <location filename="../toolsMenu.py" line="36"/>
         <source>Select output directory</source>
-        <translation>Seleccionar ubicación de almacenamiento para archivos</translation>
+        <translation>Seleccionar el directorio para los archivos de salida</translation>
     </message>
 </context>
 <context>
@@ -274,7 +274,7 @@
     <message>
         <location filename="../erasepart_gui.ui" line="115"/>
         <source>Select partitions to erase</source>
-        <translation>Seleccionar particiones para borrar</translation>
+        <translation>Seleccione las particiones para borrar</translation>
     </message>
 </context>
 <context>
@@ -376,7 +376,7 @@
     <message>
         <location filename="../writepart_gui.ui" line="188"/>
         <source>Select from directory</source>
-        <translation>Llenar archivos del directorio</translation>
+        <translation>Seleccionar archivos de un directorio</translation>
     </message>
 </context>
 </TS>
