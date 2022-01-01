@@ -111,18 +111,22 @@ class asyncThread(QThread):
         self.function(self, self.parameters)
 
 class FDialog():
-    pc = pathconfig()
-    lastpath = os.path.dirname(os.path.dirname(pc.scriptpath))
-
     def __init__(self, parent):
+        pc = pathconfig()
         self.parent = parent
+        self.fdialog=QFileDialog(parent)
+        self.lastpath = os.path.dirname(os.path.dirname(pc.scriptpath))
+        self.fdialog.setDirectory(self.lastpath)
 
     def save(self, filename=""):
-        if self.lastpath=="":
-            self.lastpath="."
         fname = os.path.join(self.lastpath, filename)
-        ret = QFileDialog.getSaveFileName(parent=self.parent, caption=self.parent.tr("Select output file"), dir=fname,
-                                          filter="Binary dump (*.bin)")
+        self.fdialog.setDirectory(self.lastpath)
+        self.fdialog.selectFile(fname)
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        options |= QFileDialog.DontUseCustomDirectoryIcons
+        ret = self.fdialog.getSaveFileName(self.parent, self.parent.tr("Select output file"), fname,
+                                          "Binary dump (*.bin)",options=options)
         if ret:
             fname = ret[0]
             if fname != "":
@@ -131,11 +135,14 @@ class FDialog():
         return None
 
     def open(self, filename=""):
-        if self.lastpath=="":
-            self.lastpath="."
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        options |= QFileDialog.DontUseCustomDirectoryIcons
         fname = os.path.join(self.lastpath, filename)
-        ret = QFileDialog.getOpenFileName(parent=self.parent, caption=self.parent.tr("Select input file"), dir=fname,
-                                          filter="Binary dump (*.bin)")
+        self.fdialog.setDirectory(self.lastpath)
+        self.fdialog.selectFile(fname)
+        ret = self.fdialog.getOpenFileName(self.parent, self.parent.tr("Select input file"),
+                                   fname, "Binary dump (*.bin)",options=options)
         if ret:
             fname = ret[0]
             if fname != "":
@@ -144,12 +151,14 @@ class FDialog():
         return None
 
     def opendir(self,caption):
-        if self.lastpath=="":
-            self.lastpath="."
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        options |= QFileDialog.DontUseCustomDirectoryIcons
         fname = os.path.join(self.lastpath)
-        fdir=QFileDialog.getExistingDirectory(parent=self.parent, dir=fname,
-                                              caption=self.parent.tr(caption))
+        self.fdialog.setDirectory(self.lastpath)
+        fdir=self.fdialog.getExistingDirectory(self.parent, self.parent.tr(caption), fname, options=options)
         if fdir != "":
+            self.lastpath = fdir
             return fdir
         return None
 

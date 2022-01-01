@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# MTK Flash Client (c) G.Kreileman, B.Kerler 2021.
+# MTK Flash Client (c) B.Kerler, G.Kreileman 2021.
 # Licensed under GPLv3 License
 import sys
 import time
@@ -8,9 +8,12 @@ import traceback
 import math
 import logging
 import ctypes
-from PySide6.QtCore import Qt, QVariantAnimation, Signal, QObject, QSize, QTranslator, QLocale, QLibraryInfo
+from functools import partial
+from PySide6.QtCore import Qt, QVariantAnimation, Signal, QObject, QSize, QTranslator, QLocale, QLibraryInfo, \
+    Slot, QCoreApplication
 from PySide6.QtGui import QTextOption, QPixmap, QTransform, QIcon, QAction
-from PySide6.QtWidgets import QMainWindow, QApplication, QWidget
+from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QCheckBox, QVBoxLayout, QHBoxLayout, QLineEdit, \
+                            QPushButton
 
 from mtkclient.Library.mtk import Mtk
 from mtkclient.Library.mtk_da_cmd import DA_handler
@@ -20,14 +23,13 @@ from mtkclient.Library.mtk_main import Main, Mtk_Config
 from mtkclient.gui.readFlashPartitions import ReadFlashWindow
 from mtkclient.gui.writeFlashPartitions import WriteFlashWindow
 from mtkclient.gui.eraseFlashPartitions import EraseFlashWindow
-from mtkclient.gui.readFull import ReadFullFlashWindow
-from mtkclient.gui.writeFull import WriteFullFlashWindow
 from mtkclient.gui.toolsMenu import generateKeysMenu
-from mtkclient.gui.toolkit import asyncThread, trap_exc_during_debug
+from mtkclient.gui.toolkit import asyncThread, trap_exc_during_debug, convert_size, CheckBox, FDialog, TimeEstim
 from mtkclient.config.payloads import pathconfig
 from mtkclient.gui.main_gui import Ui_MainWindow
 import os
-os.environ['QT_MAC_WANTS_LAYER'] = '1' #This fixes a bug in pyside2 on MacOS Big Sur
+
+os.environ['QT_MAC_WANTS_LAYER'] = '1'  # This fixes a bug in pyside2 on MacOS Big Sur
 # TO do Move all GUI modifications to signals!
 # install exception hook: without this, uncaught exception would cause application to exit
 sys.excepthook = trap_exc_during_debug
@@ -36,13 +38,14 @@ sys.excepthook = trap_exc_during_debug
 variables = mock.Mock()
 variables.cmd = "stage"
 variables.debugmode = True
-path=pathconfig()
+path = pathconfig()
 # if sys.platform.startswith('darwin'):
 #    config.ptype = "kamakiri" #Temp for Mac testing
 MtkTool = Main(variables)
 
 guiState = "welcome"
 phoneInfo = {"chipset": "", "bootMode": "", "daInit": False, "cdcInit": False}
+
 
 class DeviceHandler(QObject):
     sendToLogSignal = Signal(str)
@@ -58,6 +61,8 @@ class DeviceHandler(QObject):
         self.mtkClass = Mtk(config=config, loglevel=logging.INFO)
         self.loglevel = logging.DEBUG
         self.da_handler = DA_handler(self.mtkClass, loglevel)
+
+
 
 def getDevInfo(self, parameters):
     loglevel = parameters[0]
@@ -91,27 +96,17 @@ def getDevInfo(self, parameters):
     else:
         phoneInfo['cantConnect'] = True
         self.sendUpdateSignal.emit()
-    # try:
-    #    print(mtkClass.daloader.get_partition_data(parttype="user"))
-    # except Exception:
-    #    print(traceback.format_exc())
-    # MtkTool.cmd_stage(mtkClass, None, None, None, False)
-
-
 
 def load_translations(application):
-    """
-    Load application translations and the QT base translations for the current locale
-    :param application: QApplication object
-    """
+    # Load application translations and the QT base translations for the current locale
     locale = QLocale.system()
     translator = QTranslator(application)
     directory = os.path.dirname(__file__)
     lang = 'mtkclient/gui/i18n/' + locale.name()
-    #lang = 'mtkclient/gui/i18n/fr_FR'
-    #lang = 'mtkclient/gui/i18n/de_DE'
-    #lang = 'mtkclient/gui/i18n/en_GB'
-    #lang = 'mtkclient/gui/i18n/es_ES'
+    # lang = 'mtkclient/gui/i18n/fr_FR'
+    # lang = 'mtkclient/gui/i18n/de_DE'
+    # lang = 'mtkclient/gui/i18n/en_GB'
+    # lang = 'mtkclient/gui/i18n/es_ES'
     if translator.load(lang, directory):
         application.installTranslator(translator)
 
@@ -124,100 +119,276 @@ def load_translations(application):
 class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
-        w = QWidget(self)
-        self.ui=Ui_MainWindow()
+        self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        # Menubar
-        self.ui.actionRead_full_flash.triggered.connect(self.on_readfullflash)
-        self.ui.actionRead_partition_s.triggered.connect(self.on_readpartflash)
-        self.ui.actionRead_offset.triggered.connect(self.on_readflashoffset)
-
-        self.ui.actionWrite_full_flash.triggered.connect(self.on_writefullflash)
-        self.ui.actionWrite_partition_s.triggered.connect(self.on_writepartflash)
-        self.ui.actionWrite_at_offset.triggered.connect(self.on_writeflashoffset)
-        self.ui.actionWrite_boot2.triggered.connect(self.on_writeboot2)
-        self.ui.actionWrite_preloader.triggered.connect(self.on_writepreloader)
-
-        self.ui.actionRead_RPMB.triggered.connect(self.on_readrpmb)
-        self.ui.actionWrite_RPMB.triggered.connect(self.on_writerpmb)
-
-        self.ui.actionErase_at_offset.triggered.connect(self.on_eraseoffset)
-        self.ui.actionErase_partitions_s.triggered.connect(self.on_erasepartflash)
-
-        self.ui.actionGenerate_RPMB_keys.triggered.connect(self.on_generatekeys)
-        self.ui.actionRead_preloader.triggered.connect(self.on_readpreloader)
-        self.ui.actionRead_boot2.triggered.connect(self.on_readboot2)
-        #self.ui.toolsFlashMenu.triggered[QAction].connect(self.openToolsMenu)
-
+        self.fdialog = FDialog(self)
         self.initpixmap()
-
-        self.ui.debugBtn.clicked.connect(self.showDebugInfo)
+        self.Status={}
+        self.timeEst = TimeEstim()
+        self.timeEstTotal = TimeEstim()
         self.ui.logBox.setWordWrapMode(QTextOption.NoWrap)
         self.ui.menubar.setEnabled(False)
+        self.devhandler = None
+        self.readflash = None
 
-    def on_readflashoffset(self):
-        return
+    @Slot()
+    def updateState(self):
+        totalBytes = 0
+        doneBytes = 0
+        if "allPartitions" in self.Status:
+            for partition in self.Status["allPartitions"]:
+                totalBytes = totalBytes + self.Status["allPartitions"][partition]['size']
+                if (self.Status["allPartitions"][partition]['done'] and partition != self.Status[
+                    "currentPartition"]):
+                    doneBytes = doneBytes + self.Status["allPartitions"][partition]['size']
+        else:
+            totalBytes = self.Status["currentPartitionSize"]
+        doneBytes = doneBytes + self.Status["currentPartitionSizeDone"]
+        percentageDone = (self.Status["currentPartitionSizeDone"] / self.Status["currentPartitionSize"]) * 100
+        fullPercentageDone = (doneBytes / totalBytes) * 100
+        self.ui.partProgress.setValue(percentageDone)
+        timeinfo = self.timeEst.update(doneBytes, totalBytes)
+        txt="Current partition: " + self.Status["currentPartition"] + " (" + \
+                                         convert_size(self.Status["currentPartitionSizeDone"]) + " / " + \
+                                         convert_size(self.Status["currentPartitionSize"])+") "+ \
+                                         timeinfo+QCoreApplication.translate("main"," left")
+        self.ui.partProgressText.setText(txt)
+
+        self.ui.fullProgress.setValue(fullPercentageDone)
+        timeinfototal = self.timeEstTotal.update(fullPercentageDone, 100)
+        self.ui.fullProgressText.setText("Total: (" + convert_size(doneBytes) + " / " + convert_size(totalBytes)+") "+
+                                         timeinfototal + QCoreApplication.translate("main"," left"))
+
+    def updateStateAsync(self, toolkit, parameters):
+        while not self.Status["done"]:
+            # print(self.dumpStatus)
+            time.sleep(0.1)
+        print("DONE")
+        self.ui.readpreloaderbtn.setEnabled(True)
+        self.ui.readpartitionsbtn.setEnabled(True)
+        self.ui.readboot2btn.setEnabled(True)
+        self.ui.readrpmbbtn.setEnabled(True)
+        self.ui.readflashbtn.setEnabled(True)
+
+        self.ui.writepartbtn.setEnabled(True)
+        self.ui.writeflashbtn.setEnabled(True)
+        self.ui.writeboot2btn.setEnabled(True)
+        self.ui.writepreloaderbtn.setEnabled(True)
+        self.ui.writerpmbbtn.setEnabled(True)
+
+        self.ui.erasepartitionsbtn.setEnabled(True)
+        self.ui.eraseboot2btn.setEnabled(True)
+        self.ui.erasepreloaderbtn.setEnabled(True)
+        self.ui.eraserpmbbtn.setEnabled(True)
+
+    @Slot(int)
+    def updateProgress(self, progress):
+        self.Status["currentPartitionSizeDone"] = progress
+        self.updateState()
+
+    def setdevhandler(self, devhandler):
+        self.devhandler = devhandler
+        devhandler.sendToProgressSignal.connect(self.updateProgress)
+
+    def initread(self):
+        self.readflash=ReadFlashWindow(self.ui, self, self.devhandler, self.devhandler.da_handler, self.sendToLog)
+        self.ui.readpartitionsbtn.clicked.connect(self.readflash.dumpPartition)
+        self.ui.readselectallcheckbox.clicked.connect(self.readflash.selectAll)
+        self.ui.readpreloaderbtn.clicked.connect(self.on_readpreloader)
+        self.ui.readflashbtn.clicked.connect(self.on_readfullflash)
+        self.ui.readrpmbbtn.clicked.connect(self.on_readrpmb)
+        self.ui.readboot2btn.clicked.connect(self.on_readboot2)
+
+    def initkeys(self):
+        self.genkeys = generateKeysMenu(self.ui, self, self.devhandler, self.devhandler.da_handler, self.sendToLog)
+        self.ui.generatekeybtn.clicked.connect(self.on_generatekeys)
+
+    def initerase(self):
+        self.eraseflash = EraseFlashWindow(self.ui, self, self.devhandler, self.devhandler.da_handler, self.sendToLog)
+        self.ui.eraseselectallpartitionscheckbox.clicked.connect(self.eraseflash.selectAll)
+        self.ui.erasepartitionsbtn.clicked.connect(self.on_erasepartflash)
+        self.ui.eraserpmbbtn.clicked.connect(self.on_eraserpmb)
+        self.ui.erasepreloaderbtn.clicked.connect(self.on_erasepreloader)
+        self.ui.eraseboot2btn.clicked.connect(self.on_eraseboot2)
+
+    def initwrite(self):
+        self.writeflash = WriteFlashWindow(self.ui, self, self.devhandler, self.devhandler.da_handler, self.sendToLog)
+        self.ui.writeselectfromdir.clicked.connect(self.writeflash.selectFiles)
+        self.ui.writeflashbtn.clicked.connect(self.on_writefullflash)
+        self.ui.writepartbtn.clicked.connect(self.on_writepartflash)
+        self.ui.writeboot2btn.clicked.connect(self.on_writeboot2)
+        self.ui.writepreloaderbtn.clicked.connect(self.on_writepreloader)
+        self.ui.writerpmbbtn.clicked.connect(self.on_writerpmb)
+
+    def disablebuttons(self):
+        self.ui.readpreloaderbtn.setEnabled(False)
+        self.ui.readpartitionsbtn.setEnabled(False)
+        self.ui.readboot2btn.setEnabled(False)
+        self.ui.readrpmbbtn.setEnabled(False)
+        self.ui.readflashbtn.setEnabled(False)
+
+        self.ui.writeflashbtn.setEnabled(False)
+        self.ui.writepartbtn.setEnabled(False)
+        self.ui.writepreloaderbtn.setEnabled(False)
+        self.ui.writeboot2btn.setEnabled(False)
+        self.ui.writerpmbbtn.setEnabled(False)
+
+        self.ui.eraseboot2btn.setEnabled(False)
+        self.ui.erasepreloaderbtn.setEnabled(False)
+        self.ui.eraserpmbbtn.setEnabled(False)
+
+    def enablebuttons(self):
+        self.ui.readpreloaderbtn.setEnabled(True)
+        self.ui.readpartitionsbtn.setEnabled(True)
+        self.ui.readboot2btn.setEnabled(True)
+        self.ui.readrpmbbtn.setEnabled(True)
+        self.ui.readflashbtn.setEnabled(True)
+
+        self.ui.writeflashbtn.setEnabled(True)
+        self.ui.writepartbtn.setEnabled(True)
+        self.ui.writepreloaderbtn.setEnabled(True)
+        self.ui.writeboot2btn.setEnabled(True)
+        self.ui.writerpmbbtn.setEnabled(True)
+
+        self.ui.eraseboot2btn.setEnabled(True)
+        self.ui.erasepreloaderbtn.setEnabled(True)
+        self.ui.eraserpmbbtn.setEnabled(True)
+
+    def getpartitions(self):
+        data, guid_gpt = self.devhandler.mtkClass.daloader.get_gpt()
+        if guid_gpt is None:
+            print("Error reading gpt")
+            self.ui.readtitle.setText(QCoreApplication.translate("main","Error reading gpt"))
+        else:
+            self.ui.readtitle.setText(QCoreApplication.translate("main","Select partitions to dump"))
+
+        readpartitionListWidgetVBox = QVBoxLayout()
+        readpartitionListWidget = QWidget(self)
+        readpartitionListWidget.setLayout(readpartitionListWidgetVBox)
+        self.ui.readpartitionList.setWidget(readpartitionListWidget)
+        self.ui.readpartitionList.setWidgetResizable(True)
+        #self.ui.readpartitionList.setGeometry(10,40,380,320)
+        self.ui.readpartitionList.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.ui.readpartitionList.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+        self.readpartitionCheckboxes = {}
+        for partition in guid_gpt.partentries:
+            self.readpartitionCheckboxes[partition.name] = {}
+            self.readpartitionCheckboxes[partition.name]['size'] = (partition.sectors * guid_gpt.sectorsize)
+            self.readpartitionCheckboxes[partition.name]['box'] = QCheckBox()
+            self.readpartitionCheckboxes[partition.name]['box'].setText(partition.name + " (" +
+                                                                    convert_size(
+                                                                        partition.sectors * guid_gpt.sectorsize) + ")")
+            readpartitionListWidgetVBox.addWidget(self.readpartitionCheckboxes[partition.name]['box'])
+
+        writepartitionListWidgetVBox = QVBoxLayout()
+        writepartitionListWidget = QWidget(self)
+        writepartitionListWidget.setLayout(writepartitionListWidgetVBox)
+        self.ui.writepartitionList.setWidget(writepartitionListWidget)
+        self.ui.writepartitionList.setWidgetResizable(True)
+        #self.ui.writepartitionList.setGeometry(10,40,380,320)
+        self.ui.writepartitionList.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.ui.writepartitionList.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.writepartitionCheckboxes = {}
+        for partition in guid_gpt.partentries:
+            self.writepartitionCheckboxes[partition.name] = {}
+            self.writepartitionCheckboxes[partition.name]['size'] = (partition.sectors * guid_gpt.sectorsize)
+            vb = QVBoxLayout()
+            qc=CheckBox()
+            qc.setReadOnly(True)
+            qc.setText(partition.name + " (" + convert_size(partition.sectors * guid_gpt.sectorsize) + ")")
+            hc=QHBoxLayout()
+            ll=QLineEdit()
+            lb=QPushButton(QCoreApplication.translate("main","Set"))
+            lb.clicked.connect(partial(self.selectWriteFile,partition.name,qc,ll))
+            hc.addWidget(ll)
+            hc.addWidget(lb)
+            vb.addWidget(qc)
+            vb.addLayout(hc)
+            ll.setDisabled(True)
+            self.writepartitionCheckboxes[partition.name]['box'] = [qc,ll,lb]
+            writepartitionListWidgetVBox.addLayout(vb)
+
+        erasepartitionListWidgetVBox = QVBoxLayout()
+        erasepartitionListWidget = QWidget(self)
+        erasepartitionListWidget.setLayout(erasepartitionListWidgetVBox)
+        self.ui.erasepartitionList.setWidget(erasepartitionListWidget)
+        self.ui.erasepartitionList.setWidgetResizable(True)
+        #self.ui.erasepartitionList.setGeometry(10,40,380,320)
+        self.ui.erasepartitionList.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.ui.erasepartitionList.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.erasepartitionCheckboxes = {}
+        for partition in guid_gpt.partentries:
+            self.erasepartitionCheckboxes[partition.name] = {}
+            self.erasepartitionCheckboxes[partition.name]['size'] = (partition.sectors * guid_gpt.sectorsize)
+            self.erasepartitionCheckboxes[partition.name]['box'] = QCheckBox()
+            self.erasepartitionCheckboxes[partition.name]['box'].setText(partition.name + " (" +
+                    convert_size(partition.sectors * guid_gpt.sectorsize)+")")
+            erasepartitionListWidgetVBox.addWidget(self.erasepartitionCheckboxes[partition.name]['box'])
+
+    def selectWriteFile(self, partition, checkbox, lineedit):
+        fname=self.fdialog.open(partition+".img")
+        if fname is None:
+            checkbox.setChecked(False)
+            lineedit.setText("")
+            lineedit.setDisabled(True)
+            return ""
+        checkbox.setChecked(True)
+        lineedit.setText(fname)
+        lineedit.setDisabled(False)
+        return fname
 
     def on_writefullflash(self):
-        readFlashWindowVal = WriteFullFlashWindow(self, devhandler, devhandler.da_handler, self.sendToLog,
-                                                 parttype="user")
+        self.writeflash.writeFlash("user")
         return
 
     def on_writepreloader(self):
-        readFlashWindowVal = WriteFullFlashWindow(self, devhandler, devhandler.da_handler, self.sendToLog,
-                                                 parttype="boot1")
+        self.writeflash.writeFlash("boot1")
         return
 
     def on_writeboot2(self):
-        readFlashWindowVal = WriteFullFlashWindow(self, devhandler, devhandler.da_handler, self.sendToLog,
-                                                 parttype="boot2")
-        return
-
-    def on_writepartflash(self):
-        writeFlashWindowVal = WriteFlashWindow(self, devhandler, devhandler.da_handler, self.sendToLog)
-        return
-
-    def on_writeflashoffset(self):
-        return
-
-    def on_readrpmb(self):
-        readFlashWindowVal = ReadFullFlashWindow(self, devhandler, devhandler.da_handler, self.sendToLog,
-                                                 parttype="rpmb")
+        self.writeflash.writeFlash("boot2")
         return
 
     def on_writerpmb(self):
-        readFlashWindowVal = WriteFullFlashWindow(self, devhandler, devhandler.da_handler, self.sendToLog,
-                                                 parttype="rpmb")
+        self.writeflash.writeFlash("rpmb")
         return
 
-
-    def on_eraseoffset(self):
+    def on_writepartflash(self):
+        self.writeflash.writePartition()
         return
 
     def on_erasepartflash(self):
-        eraseFlashWindowVal = EraseFlashWindow(self, devhandler, devhandler.da_handler, self.sendToLog)
+        self.eraseflash.erasePartition()
         return
 
+    def on_eraseboot2(self):
+        self.eraseflash.eraseBoot2()
+
+    def on_erasepreloader(self):
+        self.eraseflash.erasePreloader()
+
+    def on_eraserpmb(self):
+        self.eraseflash.eraseRpmb()
+
     def on_generatekeys(self):
-        readFlashWindowVal = generateKeysMenu(self, devhandler, devhandler.da_handler, self.sendToLog)
+        self.genkeys.generateKeys()
         return
 
     def on_readpreloader(self):
-        readFlashWindowVal = ReadFullFlashWindow(self, devhandler, devhandler.da_handler, self.sendToLog,
-                                             parttype="boot1")
+        self.readflash.dumpFlash("boot1")
         return
 
     def on_readboot2(self):
-        readFlashWindowVal = ReadFullFlashWindow(self, devhandler, devhandler.da_handler, self.sendToLog,
-                                             parttype="boot2")
+        self.readflash.dumpFlash("boot2")
         return
 
-    def on_readpartflash(self):
-        readFlashWindowVal = ReadFlashWindow(self, devhandler, devhandler.da_handler, self.sendToLog)
-
     def on_readfullflash(self):
-        readFlashWindowVal = ReadFullFlashWindow(self, devhandler, devhandler.da_handler, self.sendToLog,
-                                                 parttype="user")
+        self.readflash.dumpFlash("user")
+
+    def on_readrpmb(self):
+        self.readflash.dumpFlash("rpmb")
+        return
 
     def sendToLog(self, info):
         t = time.localtime()
@@ -230,21 +401,27 @@ class MainWindow(QMainWindow):
     def updateGui(self):
         global phoneInfo
         if phoneInfo['cdcInit'] and phoneInfo['bootMode'] == "":
-            self.ui.phoneInfoTextbox.setText("Phone detected:\nReading model info...")
+            self.ui.phoneInfoTextbox.setText(QCoreApplication.translate("main","Phone detected:\nReading model info..."))
         else:
-            self.ui.phoneInfoTextbox.setText(
-                "Phone detected:\n" + phoneInfo['chipset'] + "\n" + phoneInfo['bootMode'])
-        self.ui.status.setText("Device detected, please wait.\nThis can take a while...")
+            self.ui.phoneInfoTextbox.setText(QCoreApplication.translate("main",
+                "Phone detected:\n" + phoneInfo['chipset'] + "\n" + phoneInfo['bootMode']))
+        self.ui.status.setText(QCoreApplication.translate("main","Device detected, please wait.\nThis can take a while..."))
         if phoneInfo['daInit']:
-            self.ui.status.setText("Device connected :)")
+            self.ui.status.setText(QCoreApplication.translate("main","Device connected :)"))
             self.ui.menubar.setEnabled(True)
             self.pixmap = QPixmap(path.get_images_path("phone_connected.png"))
             self.ui.pic.setPixmap(self.pixmap)
             self.spinnerAnim.stop()
             self.ui.spinner_pic.setHidden(True)
+            self.initread()
+            self.initkeys()
+            self.initerase()
+            self.initwrite()
+            self.getpartitions()
+
         else:
             if 'cantConnect' in phoneInfo:
-                self.ui.status.setText("Error initialising. Did you install the drivers?")
+                self.ui.status.setText(QCoreApplication.translate("main","Error initialising. Did you install the drivers?"))
             self.spinnerAnim.start()
             self.ui.spinner_pic.setHidden(False)
 
@@ -252,15 +429,15 @@ class MainWindow(QMainWindow):
         trans = QTransform()
         dimension = self.pixmap.width() / math.sqrt(2)
         newPixmap = self.pixmap.transformed(QTransform().rotate(angle), Qt.SmoothTransformation)
-        xoffset = (newPixmap.width() - self.pixmap.width())/2
-        yoffset = (newPixmap.height() - self.pixmap.height())/2
+        xoffset = (newPixmap.width() - self.pixmap.width()) / 2
+        yoffset = (newPixmap.height() - self.pixmap.height()) / 2
         rotated = newPixmap.copy(xoffset, yoffset, self.pixmap.width(), self.pixmap.height())
         self.ui.spinner_pic.setPixmap(rotated)
 
     def initpixmap(self):
         # phone spinner
         self.pixmap = QPixmap(path.get_images_path("phone_loading.png")).scaled(96, 96, Qt.KeepAspectRatio,
-                                                                           Qt.SmoothTransformation)
+                                                                                Qt.SmoothTransformation)
         self.pixmap.setDevicePixelRatio(2)
         self.ui.spinner_pic.setPixmap(self.pixmap)
         self.ui.spinner_pic.show()
@@ -270,7 +447,6 @@ class MainWindow(QMainWindow):
 
         logo = QPixmap(path.get_images_path("logo_256.png"))
         self.ui.logoPic.setPixmap(logo)
-        self.ui.logBox.setHidden(True)
 
         self.spinnerAnim = QVariantAnimation()
         self.spinnerAnim.setDuration(3000)
@@ -280,17 +456,6 @@ class MainWindow(QMainWindow):
         self.spinnerAnim.valueChanged.connect(self.spinnerAnimRot)
 
         self.ui.spinner_pic.setHidden(True)
-
-
-    def showDebugInfo(self):
-        if self.ui.logBox.isHidden():
-            self.ui.logBox.setHidden(False)
-            #win.setFixedSize(746, 600 + addTopMargin)
-            self.ui.debugBtn.setText(u"Hide debug info")
-        else:
-            self.ui.logBox.setHidden(True)
-            #win.setFixedSize(746, 400 + addTopMargin)
-            self.ui.debugBtn.setText(u"Show debug info")
 
 
 if __name__ == '__main__':
@@ -325,22 +490,22 @@ if __name__ == '__main__':
     # lay = QVBoxLayout(self)
 
     win.show()
-    #win.setFixedSize(746, 400 + addTopMargin)
+    # win.setFixedSize(746, 400 + addTopMargin)
 
     # Device setup
     loglevel = logging.INFO
-    devhandler = DeviceHandler(parent=app,preloader=None,loglevel=loglevel)
+    devhandler = DeviceHandler(parent=app, preloader=None, loglevel=loglevel)
     devhandler.sendToLogSignal.connect(win.sendToLog)
-
     # Get the device info
-    thread = asyncThread(parent=app, n=0, function=getDevInfo, parameters=[loglevel,phoneInfo,devhandler])
+    thread = asyncThread(parent=app, n=0, function=getDevInfo, parameters=[loglevel, phoneInfo, devhandler])
     thread.sendToLogSignal.connect(win.sendToLog)
     thread.sendUpdateSignal.connect(win.updateGui)
     thread.sendToProgressSignal.connect(win.sendToProgress)
     thread.start()
+    win.setdevhandler(devhandler)
 
     # Run loop the app
-    app.exec_()
+    app.exec()
     # Prevent thread from not being closed and call error end codes
     thread.terminate()
     thread.wait()
