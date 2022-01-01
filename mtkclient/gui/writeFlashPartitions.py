@@ -43,7 +43,7 @@ class WriteFlashWindow(QObject):
         thread.start()
 
     def openFile(self, partition, checkbox, lineedit):
-        fname = self.fdialog.open(partition+".img")
+        fname = self.fdialog.open(partition+".bin")
         if fname is None:
             checkbox.setChecked(False)
             lineedit.setText("")

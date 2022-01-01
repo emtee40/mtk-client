@@ -133,7 +133,8 @@ regval = {
     "GCPU_REG_MEM_P14": 0xC3C,
     "GCPU_REG_MEM_Slot": 0xC40
 }
-
+CKSYS_BASE = 0x10000000
+CLR_CLK_GATING_CTRL2 = (CKSYS_BASE + 0x09C)
 
 class GCpuReg:
     def __init__(self, setup):
@@ -238,11 +239,19 @@ class GCpu(metaclass=LogBase):
         self.reg.GCPU_REG_MEM_DATA = data
 
     def acquire(self):
-        if self.hwcode in [0x8172, 0x8127, None]:
+        if self.hwcode == 0x8167:
+            self.write32(CLR_CLK_GATING_CTRL2, self.read32(CLR_CLK_GATING_CTRL2) | 0x8000000)
+        if self.hwcode in [0x8172, 0x8127]:
             self.release()
             self.reg.GCPU_REG_MSC = self.reg.GCPU_REG_MSC & 0xFFFFDFFF
         else:
-            self.reg.GCPU_REG_CTL = [0x1F, 0x12000]
+            self.reg.GCPU_REG_CTL &= 0xFFFFFFF0
+            self.reg.GCPU_REG_CTL |= 0xF
+            self.reg.GCPU_REG_MSC |= 0x10000
+            self.reg.GCPU_REG_CTL &= 0xFFFFFFE0
+            self.reg.GCPU_REG_MSC |= 0x10000
+            self.reg.GCPU_REG_CTL |= 0x1F
+            self.reg.GCPU_REG_MSC |= 0x2000
 
     def release(self):
         if self.hwcode in [0x8172, 0x8127, None]:

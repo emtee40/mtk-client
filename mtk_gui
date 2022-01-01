@@ -343,7 +343,7 @@ class MainWindow(QMainWindow):
             erasepartitionListWidgetVBox.addWidget(self.erasepartitionCheckboxes[partition.name]['box'])
 
     def selectWriteFile(self, partition, checkbox, lineedit):
-        fname=self.fdialog.open(partition+".img")
+        fname=self.fdialog.open(partition+".bin")
         if fname is None:
             checkbox.setChecked(False)
             lineedit.setText("")

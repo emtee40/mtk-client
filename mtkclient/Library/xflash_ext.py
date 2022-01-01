@@ -469,6 +469,7 @@ class xflashext(metaclass=LogBase):
         setup.read32 = self.readmem
         setup.write32 = self.writeregister
         setup.writemem = self.writemem
+        setup.hwcode = self.config.hwcode
         return hwcrypto(setup, self.loglevel, self.config.gui)
 
     def seccfg(self, lockflag):
@@ -516,10 +517,13 @@ class xflashext(metaclass=LogBase):
             return True, "Successfully wrote seccfg."
         return False, "Error on writing seccfg config to flash."
 
+    def decrypt_tee(self, filename="tee1.bin", offset=0xF864):
+        hwc = self.cryptosetup()
+        rdata=hwc.mtee(filename=filename,offset=offset)
+        open("tee1.dec","wb").write(rdata)
+
     def generate_keys(self):
         hwc = self.cryptosetup()
-        #rdata=hwc.mtee(filename = "tee1.bin",offset = 0xF860)
-        #open("tee1.dec","wb").write(rdata)
         meid = self.config.get_meid()
         socid = self.config.get_socid()
         retval = {}

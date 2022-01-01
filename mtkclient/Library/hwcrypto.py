@@ -57,15 +57,6 @@ class hwcrypto(metaclass=LogBase):
             data = rf.read(length)
             self.gcpu.init()
             self.gcpu.acquire()
-            self.write32(0x1000009C, self.read32(0x1000009C) | 0x8000000)
-            self.write32(0x1020D000, self.read32(0x1020D000) & 0xFFFFFFF0)
-            self.write32(0x1020D000, self.read32(0x1020D000) | 0xF)
-            res = self.read32(0x1020D004) | 0x10000
-            self.write32(0x1020D000, self.read32(0x1020D000) & 0xFFFFFFE0)
-            self.write32(0x1020D004, self.read32(0x1020D004) | 0x10000)
-            self.write32(0x1020D000, self.read32(0x1020D000) | 0x1F)
-            self.write32(0x1020D004, self.read32(0x1020D004) | 0x2000)
-
             return self.gcpu.mtk_gcpu_decrypt_mtee_img(data, seed)
 
     def aes_hwcrypt(self, data=b"", iv=None, encrypt=True, otp=None, mode="cbc", btype="sej"):
