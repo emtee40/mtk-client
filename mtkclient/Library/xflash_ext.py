@@ -473,16 +473,14 @@ class xflashext(metaclass=LogBase):
 
     def seccfg(self, lockflag):
         if lockflag not in ["unlock", "lock"]:
-            print("Valid flags are: unlock, lock")
-            return False
+            return False, "Valid flags are: unlock, lock"
         hwc = self.cryptosetup()
         sc_org = seccfg(hwc)
         data, guid_gpt = self.xflash.partition.get_gpt(self.mtk.config.gpt_settings, "user")
         seccfg_data = None
         partition = None
         if guid_gpt is None:
-            self.error("Error getting the partition table.")
-            return False
+            return False, "Error getting the partition table."
         for rpartition in guid_gpt.partentries:
             if rpartition.name == "seccfg":
                 partition = rpartition
@@ -492,14 +490,12 @@ class xflashext(metaclass=LogBase):
                     filename="", parttype="user", display=False)
                 break
         if seccfg_data is None:
-            self.error("Couldn't detect existing seccfg partition. Aborting unlock.")
-            return False
+            return False, "Couldn't detect existing seccfg partition. Aborting unlock."
         if seccfg_data[:4] != pack("<I", 0x4D4D4D4D):
-            self.error("Unknown seccfg partition header. Aborting unlock.")
-            return False
+            return False, "Unknown seccfg partition header. Aborting unlock."
 
         if not sc_org.parse(seccfg_data):
-            return False
+            return False, "Error on parsing seccfg"
         sc_new = seccfg(hwc)
         self.setotp(hwc)
         hwtype = "hw"
@@ -512,16 +508,13 @@ class xflashext(metaclass=LogBase):
             hwtype = "sw"
             sc_new.create(sc_org=sc_org, hwtype=hwtype)
             if sc_org.hash != sc_new.hash:
-                self.error("Device has is either already unlocked or algo is unknown. Aborting.")
-                return False
+                return False, "Device has is either already unlocked or algo is unknown. Aborting."
         writedata = sc_new.create(sc_org=None, hwtype=hwtype, lockflag=lockflag, V3=V3)
         if self.xflash.writeflash(addr=partition.sector * self.mtk.daloader.daconfig.pagesize,
                                   length=len(writedata),
                                   filename=None, wdata=writedata, parttype="user", display=True):
-            self.info("Successfully wrote seccfg.")
-            return True
-        self.error("Error on writing seccfg config to flash.")
-        return False
+            return True, "Successfully wrote seccfg."
+        return False, "Error on writing seccfg config to flash."
 
     def generate_keys(self):
         hwc = self.cryptosetup()

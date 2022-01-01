@@ -303,6 +303,19 @@
     </message>
 </context>
 <context>
+    <name>UnlockMenu</name>
+    <message>
+        <location filename="../toolsMenu.py" line="22"/>
+        <source>Generating...</source>
+        <translation>Générer ...</translation>
+    </message>
+    <message>
+        <location filename="../toolsMenu.py" line="31"/>
+        <source>Bootloader: </source>
+        <translation></translation>
+    </message>
+</context>
+<context>
     <name>UnlockWindow</name>
     <message>
         <location filename="../unlock_gui.ui" line="14"/>
@@ -344,22 +357,22 @@
 <context>
     <name>generateKeysMenu</name>
     <message>
-        <location filename="../toolsMenu.py" line="30"/>
+        <location filename="../toolsMenu.py" line="64"/>
         <source>Keys generated!</source>
         <translation>Les clés ont été générées!</translation>
     </message>
     <message>
-        <location filename="../toolsMenu.py" line="34"/>
+        <location filename="../toolsMenu.py" line="68"/>
         <source>Generating...</source>
         <translation>Générer ...</translation>
     </message>
     <message>
-        <location filename="../toolsMenu.py" line="35"/>
+        <location filename="../toolsMenu.py" line="69"/>
         <source>Select output directory</source>
         <translation>Sélectionnez l&apos;emplacement de stockage pour les fichiers</translation>
     </message>
     <message>
-        <location filename="../toolsMenu.py" line="50"/>
+        <location filename="../toolsMenu.py" line="84"/>
         <source>Generating keys</source>
         <translation>Générer des clés</translation>
     </message>
@@ -367,47 +380,47 @@
 <context>
     <name>main</name>
     <message>
-        <location filename="../../../mtk_gui" line="154"/>
-        <location filename="../../../mtk_gui" line="160"/>
+        <location filename="../../../mtk_gui" line="157"/>
+        <location filename="../../../mtk_gui" line="163"/>
         <source> left</source>
         <translation> restant</translation>
     </message>
     <message>
-        <location filename="../../../mtk_gui" line="261"/>
+        <location filename="../../../mtk_gui" line="277"/>
         <source>Error reading gpt</source>
         <translation>Erreur de lecture GPT</translation>
     </message>
     <message>
-        <location filename="../../../mtk_gui" line="263"/>
+        <location filename="../../../mtk_gui" line="279"/>
         <source>Select partitions to dump</source>
         <translation>Sélectionnez les partitions à lire</translation>
     </message>
     <message>
-        <location filename="../../../mtk_gui" line="302"/>
+        <location filename="../../../mtk_gui" line="318"/>
         <source>Set</source>
         <translation>Choisir</translation>
     </message>
     <message>
-        <location filename="../../../mtk_gui" line="404"/>
+        <location filename="../../../mtk_gui" line="426"/>
         <source>Phone detected:
 Reading model info...</source>
         <translation>Téléphone détecté :
 Lecture des informations sur le modèle...</translation>
     </message>
     <message>
-        <location filename="../../../mtk_gui" line="408"/>
+        <location filename="../../../mtk_gui" line="430"/>
         <source>Device detected, please wait.
 This can take a while...</source>
         <translation>Appareil détecté, veuillez patienter.
 Cela peut prendre du temps...</translation>
     </message>
     <message>
-        <location filename="../../../mtk_gui" line="410"/>
+        <location filename="../../../mtk_gui" line="432"/>
         <source>Device connected :)</source>
         <translation>Appareil connecté :)</translation>
     </message>
     <message>
-        <location filename="../../../mtk_gui" line="424"/>
+        <location filename="../../../mtk_gui" line="447"/>
         <source>Error initialising. Did you install the drivers?</source>
         <translation>Erreur d&apos;initialisation. As-tu installé les pilotes ?</translation>
     </message>

@@ -649,7 +649,11 @@ class DA_handler(metaclass=LogBase):
             elif subcmd == "generatekeys":
                 mtk.daloader.keys()
             elif subcmd == "seccfg":
-                mtk.daloader.seccfg(args.flag)
+                v=mtk.daloader.seccfg(args.flag)
+                if v[0]:
+                    self.info(v[1])
+                else:
+                    self.error(v[1])
             elif subcmd == "rpmb":
                 rpmb_subcmd = args.rpmb_subcmd
                 if rpmb_subcmd is None:
