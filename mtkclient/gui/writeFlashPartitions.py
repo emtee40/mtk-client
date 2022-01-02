@@ -73,7 +73,8 @@ class WriteFlashWindow(QObject):
         for partition in self.parent.writepartitionCheckboxes:
             checkbox, lineedit, button = self.parent.writepartitionCheckboxes[partition]['box']
             if checkbox.isChecked():
-                self.parent.Status["allPartitions"][partition] = {"size": self.parent.writepartitionCheckboxes[partition]['size'],
+                size = min(self.parent.writepartitionCheckboxes[partition]['size'], os.stat(lineedit.text()).st_size)
+                self.parent.Status["allPartitions"][partition] = {"size": size,
                                                                "done": False}
         for partition in self.parent.writepartitionCheckboxes:
             checkbox, lineedit, button = self.parent.writepartitionCheckboxes[partition]['box']
@@ -82,7 +83,8 @@ class WriteFlashWindow(QObject):
                 variables.partitionname = partition
                 variables.filename = lineedit.text()
                 variables.parttype = "user"
-                self.parent.Status["currentPartitionSize"] = self.parent.writepartitionCheckboxes[partition]['size']
+                size = min(self.parent.writepartitionCheckboxes[partition]['size'],os.stat(variables.filename).st_size)
+                self.parent.Status["currentPartitionSize"] = size
                 self.parent.Status["currentPartition"] = partition
                 self.parent.Status["currentPartitionFile"] = variables.filename
                 self.da_handler.close = self.writePartDone  # Ignore the normally used sys.exit
