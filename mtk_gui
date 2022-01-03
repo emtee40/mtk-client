@@ -128,6 +128,12 @@ class MainWindow(QMainWindow):
         self.timeEstTotal = TimeEstim()
         self.ui.logBox.setWordWrapMode(QTextOption.NoWrap)
         self.ui.menubar.setEnabled(False)
+        self.ui.tabWidget.setHidden(True)
+        self.ui.partProgress.setHidden(True)
+        self.ui.fullProgress.setHidden(True)
+        self.ui.connectInfo.setMinimumSize(200, 500);
+        self.ui.connectInfo.setMaximumSize(9900, 500);
+
         self.devhandler = None
         self.readflash = None
 
@@ -427,14 +433,19 @@ class MainWindow(QMainWindow):
         else:
             self.ui.phoneInfoTextbox.setText(QCoreApplication.translate("main",
                 "Phone detected:\n" + phoneInfo['chipset'] + "\n" + phoneInfo['bootMode']))
-        self.ui.status.setText(QCoreApplication.translate("main","Device detected, please wait.\nThis can take a while..."))
+        #Disabled due to graphical steps. Maybe this should come back somewhere else.
+        #self.ui.status.setText(QCoreApplication.translate("main","Device detected, please wait.\nThis can take a while..."))
         if phoneInfo['daInit']:
-            self.ui.status.setText(QCoreApplication.translate("main","Device connected :)"))
+            #self.ui.status.setText(QCoreApplication.translate("main","Device connected :)"))
             self.ui.menubar.setEnabled(True)
             self.pixmap = QPixmap(path.get_images_path("phone_connected.png"))
             self.ui.pic.setPixmap(self.pixmap)
             self.spinnerAnim.stop()
             self.ui.spinner_pic.setHidden(True)
+            self.ui.connectInfo.setHidden(True)
+            self.ui.partProgress.setHidden(False)
+            self.ui.fullProgress.setHidden(False)
+            self.ui.tabWidget.setHidden(False)
             self.initread()
             self.initkeys()
             self.initunlock()
@@ -470,6 +481,9 @@ class MainWindow(QMainWindow):
 
         logo = QPixmap(path.get_images_path("logo_256.png"))
         self.ui.logoPic.setPixmap(logo)
+
+        initSteps = QPixmap(path.get_images_path("initsteps.png"))
+        self.ui.initStepsImage.setPixmap(initSteps)
 
         self.spinnerAnim = QVariantAnimation()
         self.spinnerAnim.setDuration(3000)
