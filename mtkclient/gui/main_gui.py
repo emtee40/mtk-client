@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'main_gui.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.2.2
+## Created by: Qt User Interface Compiler version 6.2.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -108,6 +108,8 @@ class Ui_MainWindow(object):
 
         self.gridLayout_8.addWidget(self.fullProgress, 11, 0, 1, 1)
 
+        self.horizontalLayout_2 = QHBoxLayout()
+        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
         self.verticalLayout = QVBoxLayout()
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.title = QLabel(self.centralwidget)
@@ -157,6 +159,12 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout.addWidget(self.copyrightInfo)
 
+
+        self.verticalLayout.addLayout(self.horizontalLayout)
+
+
+        self.horizontalLayout_2.addLayout(self.verticalLayout)
+
         self.phoneInfoTextbox = QLabel(self.centralwidget)
         self.phoneInfoTextbox.setObjectName(u"phoneInfoTextbox")
         sizePolicy3.setHeightForWidth(self.phoneInfoTextbox.sizePolicy().hasHeightForWidth())
@@ -164,16 +172,16 @@ class Ui_MainWindow(object):
         self.phoneInfoTextbox.setAlignment(Qt.AlignRight|Qt.AlignTop|Qt.AlignTrailing)
         self.phoneInfoTextbox.setWordWrap(True)
 
-        self.horizontalLayout.addWidget(self.phoneInfoTextbox)
+        self.horizontalLayout_2.addWidget(self.phoneInfoTextbox)
 
         self.widget_3 = QWidget(self.centralwidget)
         self.widget_3.setObjectName(u"widget_3")
         sizePolicy2.setHeightForWidth(self.widget_3.sizePolicy().hasHeightForWidth())
         self.widget_3.setSizePolicy(sizePolicy2)
-        self.widget_3.setMinimumSize(QSize(70, 128))
+        self.widget_3.setMinimumSize(QSize(87, 166))
         self.pic = QLabel(self.widget_3)
         self.pic.setObjectName(u"pic")
-        self.pic.setGeometry(QRect(0, 0, 71, 128))
+        self.pic.setGeometry(QRect(0, 0, 87, 128))
         sizePolicy1.setHeightForWidth(self.pic.sizePolicy().hasHeightForWidth())
         self.pic.setSizePolicy(sizePolicy1)
         self.pic.setMinimumSize(QSize(50, 128))
@@ -184,20 +192,17 @@ class Ui_MainWindow(object):
         self.pic.setWordWrap(False)
         self.spinner_pic = QLabel(self.widget_3)
         self.spinner_pic.setObjectName(u"spinner_pic")
-        self.spinner_pic.setGeometry(QRect(10, 40, 51, 51))
+        self.spinner_pic.setGeometry(QRect(18, 40, 51, 51))
         sizePolicy2.setHeightForWidth(self.spinner_pic.sizePolicy().hasHeightForWidth())
         self.spinner_pic.setSizePolicy(sizePolicy2)
         self.spinner_pic.setPixmap(QPixmap(u"images/phone_loading.png"))
         self.spinner_pic.setScaledContents(True)
         self.spinner_pic.setAlignment(Qt.AlignCenter)
 
-        self.horizontalLayout.addWidget(self.widget_3)
+        self.horizontalLayout_2.addWidget(self.widget_3)
 
 
-        self.verticalLayout.addLayout(self.horizontalLayout)
-
-
-        self.gridLayout_8.addLayout(self.verticalLayout, 0, 0, 1, 1)
+        self.gridLayout_8.addLayout(self.horizontalLayout_2, 0, 0, 1, 1)
 
         self.line = QFrame(self.centralwidget)
         self.line.setObjectName(u"line")
@@ -252,7 +257,7 @@ class Ui_MainWindow(object):
         self.readpartitionList.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 564, 278))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 566, 278))
         self.readpartitionList.setWidget(self.scrollAreaWidgetContents)
 
         self.gridLayout_7.addWidget(self.readpartitionList, 1, 0, 1, 1)
@@ -302,7 +307,7 @@ class Ui_MainWindow(object):
         self.writepartitionList.setWidgetResizable(True)
         self.scrollAreaWidgetContents_2 = QWidget()
         self.scrollAreaWidgetContents_2.setObjectName(u"scrollAreaWidgetContents_2")
-        self.scrollAreaWidgetContents_2.setGeometry(QRect(0, 0, 567, 283))
+        self.scrollAreaWidgetContents_2.setGeometry(QRect(0, 0, 540, 307))
         self.writepartitionList.setWidget(self.scrollAreaWidgetContents_2)
 
         self.gridLayout_6.addWidget(self.writepartitionList, 1, 0, 2, 1)
@@ -342,7 +347,7 @@ class Ui_MainWindow(object):
         self.erasepartitionList.setWidgetResizable(True)
         self.scrollAreaWidgetContents_3 = QWidget()
         self.scrollAreaWidgetContents_3.setObjectName(u"scrollAreaWidgetContents_3")
-        self.scrollAreaWidgetContents_3.setGeometry(QRect(0, 0, 564, 283))
+        self.scrollAreaWidgetContents_3.setGeometry(QRect(0, 0, 563, 307))
         self.erasepartitionList.setWidget(self.scrollAreaWidgetContents_3)
 
         self.gridLayout_5.addWidget(self.erasepartitionList, 1, 0, 2, 1)
@@ -546,7 +551,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
-        self.menubar.setGeometry(QRect(0, 0, 768, 22))
+        self.menubar.setGeometry(QRect(0, 0, 768, 24))
         self.menuFile = QMenu(self.menubar)
         self.menuFile.setObjectName(u"menuFile")
         MainWindow.setMenuBar(self.menubar)
