@@ -169,7 +169,7 @@ class legacyext(metaclass=LogBase):
         meid = self.config.get_meid()
         socid = self.config.get_socid()
         if meid is not None:
-            self.info("MEID        : " + hexlify(meid).decode('utf-8')
+            self.info("MEID        : " + hexlify(meid).decode('utf-8'))
         else:
             try:
                 if self.config.chipconfig.meid_addr is not None:
