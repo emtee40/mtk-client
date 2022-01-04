@@ -166,11 +166,10 @@ class legacyext(metaclass=LogBase):
         hwc = self.cryptosetup()
         meid = b""
         retval = {}
-        meidv = self.config.get_meid()
-        socidv = self.config.get_socid()
-        if meidv is not None:
-            meid = bytes.fromhex(meidv)
-            self.info("MEID        : " + meidv)
+        meid = self.config.get_meid()
+        socid = self.config.get_socid()
+        if meid is not None:
+            self.info("MEID        : " + hexlify(meid).decode('utf-8')
         else:
             try:
                 if self.config.chipconfig.meid_addr is not None:
@@ -180,9 +179,8 @@ class legacyext(metaclass=LogBase):
                     retval["meid"] = hexlify(meid).decode('utf-8')
             except Exception as err:
                 pass
-        if socidv is not None:
-            socid = bytes.fromhex(socidv)
-            self.info("SOCID        : " + socidv)
+        if socid is not None:
+            self.info("SOCID        : " + hexlify(socid).decode('utf-8'))
             retval["socid"] = socid
         else:
             try:
