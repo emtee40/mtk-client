@@ -2,13 +2,17 @@ import os
 import sys
 import mock
 import time
-from PySide6.QtCore import Slot, QObject
+from PySide6.QtCore import Slot, QObject, Signal
 from mtkclient.gui.toolkit import convert_size, FDialog, trap_exc_during_debug, asyncThread
 
 sys.excepthook = trap_exc_during_debug
 
 class ReadFlashWindow(QObject):
+    enableButtonsSignal = Signal()
+    disableButtonsSignal = Signal()
+
     def __init__(self, ui, parent, devhandler, da_handler, sendToLog):  # def __init__(self, *args, **kwargs):
+        super(ReadFlashWindow, self).__init__(parent)
         self.mtkClass = devhandler.mtkClass
         self.parent = parent
         self.sendToLog = sendToLog
@@ -16,8 +20,6 @@ class ReadFlashWindow(QObject):
         self.fdialog = FDialog(parent)
         self.da_handler = da_handler
         self.ui = parent.ui
-
-    # Partition
 
     def dumpPartDone(self):
         self.sendToLogSignal.emit("dump done!")
@@ -37,14 +39,11 @@ class ReadFlashWindow(QObject):
         self.ui.readrpmbbtn.setEnabled(False)
         self.dumpFolder = self.fdialog.opendir(self.tr("Select output directory"))
         if self.dumpFolder:
-            self.parent.disablebuttons()
             thread = asyncThread(parent=self.parent, n=0, function=self.dumpPartitionAsync,parameters=[])
             thread.sendToLogSignal.connect(self.sendToLog)
             thread.sendUpdateSignal.connect(self.parent.updateState)
             thread.sendToProgressSignal.connect(self.parent.updateProgress)
             thread.start()
-        else:
-            self.parent.enablebuttons()
 
     def dumpPartitionAsync(self, toolkit, parameters):
         self.parent.timeEst.init()
@@ -56,6 +55,7 @@ class ReadFlashWindow(QObject):
         thread.sendUpdateSignal.connect(self.parent.updateState)
         thread.sendToProgressSignal.connect(self.parent.updateProgress)
         thread.start()
+        self.disableButtonsSignal.emit()
         # calculate total bytes
         self.parent.Status["allPartitions"] = {}
         for partition in self.parent.readpartitionCheckboxes:
@@ -88,11 +88,11 @@ class ReadFlashWindow(QObject):
             self.parent.Status["allPartitions"]["GPT"]['done'] = True
         self.parent.Status["done"] = True
         thread.wait()
+        self.enableButtonsSignal.emit()
 
 
     def dumpFlash(self, parttype):
         self.parttype=parttype
-        self.parent.disablebuttons()
         if self.parttype == "user":
             self.flashsize = self.mtkClass.daloader.daconfig.flashsize
         elif self.parttype == "rpmb":
@@ -111,7 +111,7 @@ class ReadFlashWindow(QObject):
             thread.sendUpdateSignal.connect(self.parent.updateState)
             thread.start()
         else:
-            self.parent.enablebuttons()
+            self.enableButtonsSignal.emit()
 
     def dumpFlashAsync(self, toolkit, parameters):
         self.parent.timeEst.init()
@@ -121,6 +121,7 @@ class ReadFlashWindow(QObject):
         thread = asyncThread(self.parent, 0, self.parent.updateStateAsync, [])
         #thread.sendUpdateSignal.connect(self.updateDumpState)
         thread.start()
+        self.disableButtonsSignal.emit()
         variables = mock.Mock()
         variables.filename = self.dumpFile
         variables.parttype = None
@@ -145,3 +146,4 @@ class ReadFlashWindow(QObject):
             self.da_handler.handle_da_cmds(self.mtkClass, "gpt", variables)
         self.parent.Status["done"] = True
         thread.wait()
+        self.enableButtonsSignal.emit()

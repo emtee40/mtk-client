@@ -1,12 +1,15 @@
 import sys
 import mock
-from PySide6.QtCore import QObject
+from PySide6.QtCore import QObject, Signal
 from mtkclient.gui.toolkit import FDialog
 from mtkclient.gui.toolkit import trap_exc_during_debug, asyncThread
 
 sys.excepthook = trap_exc_during_debug
 
 class EraseFlashWindow(QObject):
+    enableButtonsSignal = Signal()
+    disableButtonsSignal = Signal()
+
     def __init__(self, ui, parent, devhandler, da_handler, sendToLog):  # def __init__(self, *args, **kwargs):
         super(EraseFlashWindow, self).__init__(parent)
         self.mtkClass = devhandler.mtkClass
@@ -59,6 +62,7 @@ class EraseFlashWindow(QObject):
         thread.sendUpdateSignal.connect(self.parent.updateState)
         thread.sendToProgressSignal.connect(self.parent.updateProgress)
         thread.start()
+        self.disableButtonsSignal.emit()
         variables = mock.Mock()
         variables.parttype = None
         self.parent.Status["writeFile"] = variables.filename
@@ -77,6 +81,7 @@ class EraseFlashWindow(QObject):
             self.da_handler.handle_da_cmds(self.mtkClass, "ef", variables)
         self.parent.Status["done"] = True
         thread.wait()
+        self.enableButtonsSignal.emit()
 
     def eraseBoot2(self):
         self.eraseFlash("boot2")
@@ -100,6 +105,7 @@ class EraseFlashWindow(QObject):
         thread.sendUpdateSignal.connect(self.parent.updateState)
         thread.sendToProgressSignal.connect(self.parent.updateProgress)
         thread.start()
+        self.disableButtonsSignal.emit()
         # calculate total bytes
         self.parent.Status["allPartitions"] = {}
         for partition in self.parent.erasepartitionCheckboxes:
@@ -119,3 +125,4 @@ class EraseFlashWindow(QObject):
                 # MtkTool.cmd_stage(mtkClass, None, None, None, False)
         self.parent.Status["done"] = True
         thread.wait()
+        self.enableButtonsSignal.emit()

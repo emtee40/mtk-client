@@ -2,12 +2,15 @@ import os
 import sys
 import time
 import mock
-from PySide6.QtCore import QObject
+from PySide6.QtCore import QObject, Signal
 from mtkclient.gui.toolkit import trap_exc_during_debug, asyncThread, convert_size, FDialog, CheckBox, TimeEstim
 
 sys.excepthook = trap_exc_during_debug
 
 class WriteFlashWindow(QObject):
+    enableButtonsSignal = Signal()
+    disableButtonsSignal = Signal()
+
     def __init__(self, ui, parent, devhandler, da_handler, sendToLog):  # def __init__(self, *args, **kwargs):
         super(WriteFlashWindow, self).__init__(parent)
         self.mtkClass = devhandler.mtkClass
@@ -35,7 +38,7 @@ class WriteFlashWindow(QObject):
                     break
 
     def writePartition(self):
-        self.parent.disablebuttons()
+        self.disableButtonsSignal.emit()
         thread = asyncThread(parent=self, n=0, function=self.writePartitionAsync,parameters=[])
         thread.sendToLogSignal.connect(self.sendToLog)
         thread.sendUpdateSignal.connect(self.parent.updateState)
@@ -68,6 +71,7 @@ class WriteFlashWindow(QObject):
         thread.sendUpdateSignal.connect(self.parent.updateState)
         thread.sendToProgressSignal.connect(self.parent.updateProgress)
         thread.start()
+        self.disableButtonsSignal.emit()
         # calculate total bytes
         self.parent.Status["allPartitions"] = {}
         for partition in self.parent.writepartitionCheckboxes:
@@ -105,14 +109,14 @@ class WriteFlashWindow(QObject):
         elif parttype == "boot2":
             self.flashsize = self.mtkClass.daloader.daconfig.boot2size
         self.parttype = parttype
-        self.parent.disablebuttons()
+        self.disableButtonsSignal.emit()
         if self.writeFile:
             thread = asyncThread(parent=self, n=0, function=self.writeFlashAsync, parameters=[parttype])
             thread.sendToLogSignal.connect(self.sendToLog)
             thread.sendUpdateSignal.connect(self.parent.updateState)
             thread.start()
         else:
-            self.parent.enablebuttons()
+            self.enableButtonsSignal.emit()
 
     def writeFlashAsync(self, toolkit, parameters):
         self.parent.timeEst.init()
@@ -141,5 +145,6 @@ class WriteFlashWindow(QObject):
             self.da_handler.handle_da_cmds(self.mtkClass, "wf", variables)
         self.parent.Status["done"] = True
         thread.wait()
+        self.enableButtonsSignal.emit()
 
 

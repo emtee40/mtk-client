@@ -201,6 +201,9 @@ class MainWindow(QMainWindow):
 
     def initread(self):
         self.readflash=ReadFlashWindow(self.ui, self, self.devhandler, self.devhandler.da_handler, self.sendToLog)
+        thread.sendUpdateSignal.connect(win.updateGui)
+        self.readflash.enableButtonsSignal.connect(self.enablebuttons)
+        self.readflash.disableButtonsSignal.connect(self.disablebuttons)
         self.ui.readpartitionsbtn.clicked.connect(self.readflash.dumpPartition)
         self.ui.readselectallcheckbox.clicked.connect(self.readflash.selectAll)
         self.ui.readpreloaderbtn.clicked.connect(self.on_readpreloader)
@@ -211,14 +214,20 @@ class MainWindow(QMainWindow):
     def initkeys(self):
         self.genkeys = generateKeysMenu(self.ui, self, self.devhandler, self.devhandler.da_handler, self.sendToLog)
         self.ui.generatekeybtn.clicked.connect(self.on_generatekeys)
+        self.genkeys.enableButtonsSignal.connect(self.enablebuttons)
+        self.genkeys.disableButtonsSignal.connect(self.disablebuttons)
 
     def initunlock(self):
         self.unlock = UnlockMenu(self.ui, self, self.devhandler, self.devhandler.da_handler, self.sendToLog)
         self.ui.unlockbutton.clicked.connect(self.on_unlock)
         self.ui.lockbutton.clicked.connect(self.on_lock)
+        self.unlock.enableButtonsSignal.connect(self.enablebuttons)
+        self.unlock.disableButtonsSignal.connect(self.disablebuttons)
 
     def initerase(self):
         self.eraseflash = EraseFlashWindow(self.ui, self, self.devhandler, self.devhandler.da_handler, self.sendToLog)
+        self.eraseflash.enableButtonsSignal.connect(self.enablebuttons)
+        self.eraseflash.disableButtonsSignal.connect(self.disablebuttons)
         self.ui.eraseselectallpartitionscheckbox.clicked.connect(self.eraseflash.selectAll)
         self.ui.erasepartitionsbtn.clicked.connect(self.on_erasepartflash)
         self.ui.eraserpmbbtn.clicked.connect(self.on_eraserpmb)
@@ -227,6 +236,8 @@ class MainWindow(QMainWindow):
 
     def initwrite(self):
         self.writeflash = WriteFlashWindow(self.ui, self, self.devhandler, self.devhandler.da_handler, self.sendToLog)
+        self.writeflash.enableButtonsSignal.connect(self.enablebuttons)
+        self.writeflash.disableButtonsSignal.connect(self.disablebuttons)
         self.ui.writeselectfromdir.clicked.connect(self.writeflash.selectFiles)
         self.ui.writeflashbtn.clicked.connect(self.on_writefullflash)
         self.ui.writepartbtn.clicked.connect(self.on_writepartflash)
@@ -234,6 +245,7 @@ class MainWindow(QMainWindow):
         self.ui.writepreloaderbtn.clicked.connect(self.on_writepreloader)
         self.ui.writerpmbbtn.clicked.connect(self.on_writerpmb)
 
+    @Slot()
     def disablebuttons(self):
         self.ui.readpreloaderbtn.setEnabled(False)
         self.ui.readpartitionsbtn.setEnabled(False)
@@ -255,6 +267,7 @@ class MainWindow(QMainWindow):
         self.ui.unlockbutton.setEnabled(False)
         self.ui.lockbutton.setEnabled(False)
 
+    @Slot()
     def enablebuttons(self):
         self.ui.readpreloaderbtn.setEnabled(True)
         self.ui.readpartitionsbtn.setEnabled(True)

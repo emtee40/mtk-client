@@ -1,2 +1,2 @@
 #!/bin/bash
-lrelease *.ts
+pyside6-lrelease *.ts
