@@ -9,3 +9,6 @@ __pycache__
 /*.egg-info
 /*.egg
 
+# Pyinstaller stuff
+build
+dist
