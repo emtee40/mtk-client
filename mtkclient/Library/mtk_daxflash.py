@@ -823,7 +823,11 @@ class DAXFlash(metaclass=LogBase):
                             self.usbwrite(data)
                             bytestoread -= len(resdata)
                             if display:
-                                self.progress.show_progress("Read", length - bytestoread, length, display)
+                                if length>bytestoread:
+                                    rpos = length - bytestoread
+                                else:
+                                    rpos = 0
+                                self.progress.show_progress("Read", rpos, length, display)
                         elif slength == 4:
                             if unpack("<I", resdata)[0] != 0:
                                 break
@@ -843,7 +847,11 @@ class DAXFlash(metaclass=LogBase):
                     if self.ack() != 0:
                         break
                     if display:
-                        self.progress.show_progress("Read", length - bytestoread, length, display)
+                        if length > bytestoread:
+                            rpos = length - bytestoread
+                        else:
+                            rpos = 0
+                        self.progress.show_progress("Read", rpos, length, display)
                     length -= len(tmp)
                 return buffer
         return False
@@ -907,7 +915,11 @@ class DAXFlash(metaclass=LogBase):
                 pos = 0
                 while bytestowrite > 0:
                     if display:
-                        self.progress.show_progress("Write", length - bytestowrite, length, display)
+                        if length > bytestowrite:
+                            rpos = length - bytestowrite
+                        else:
+                            rpos = 0
+                        self.progress.show_progress("Write", rpos, length, display)
                     dsize = min(write_packet_size, bytestowrite)
                     if fh:
                         data = bytearray(fh.read(dsize))

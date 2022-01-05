@@ -1361,7 +1361,11 @@ class DALegacy(metaclass=LogBase):
                     checksum = unpack(">H", self.usbread(1) + self.usbread(1))[0]
                     self.debug("Checksum: %04X" % checksum)
                     self.usbwrite(self.Rsp.ACK)
-                    self.progress.show_progress("Read", length - bytestoread, length, display)
+                    if length > bytestoread:
+                        rpos = length - bytestoread
+                    else:
+                        rpos = 0
+                    self.progress.show_progress("Read", rpos, length, display)
                 self.progress.show_progress("Read", 100, 100, display)
                 return True
         else:
@@ -1376,6 +1380,10 @@ class DALegacy(metaclass=LogBase):
                 checksum = unpack(">H", self.usbread(2))[0]
                 self.debug("Checksum: %04X" % checksum)
                 self.usbwrite(self.Rsp.ACK)
-                self.progress.show_progress("Read", length - bytestoread, length, display)
+                if length > bytestoread:
+                    rpos = length - bytestoread
+                else:
+                    rpos = 0
+                self.progress.show_progress("Read", rpos, length, display)
             self.progress.show_progress("Read", 100, 100, display)
             return buffer

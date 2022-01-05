@@ -91,6 +91,8 @@ class progress:
         self.progpos = 0
 
     def show_progress(self, prefix, pos, total, display=True):
+        if pos < 0:
+            return
         if pos != 0:
             prog = round(float(pos) / float(total) * float(100), 1)
         else:
@@ -101,7 +103,7 @@ class progress:
             self.progtime = time.time()
             self.progpos = pos
             if self.guiprogress is not None:
-                self.guiprogress(pos)
+                self.guiprogress(int(pos))
             print_progress(prog, 100, prefix='Done',
                            suffix=prefix + ' (Sector 0x%X of 0x%X) %0.2f MB/s' %
                                   (pos // self.pagesize,
@@ -110,7 +112,7 @@ class progress:
 
         if prog > self.prog:
             if self.guiprogress is not None:
-                self.guiprogress(pos)
+                self.guiprogress(int(pos))
             if display:
                 t0 = time.time()
                 tdiff = t0 - self.progtime
