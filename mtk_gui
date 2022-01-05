@@ -144,14 +144,12 @@ class MainWindow(QMainWindow):
         if "allPartitions" in self.Status:
             for partition in self.Status["allPartitions"]:
                 totalBytes = totalBytes + self.Status["allPartitions"][partition]['size']
-                if (self.Status["allPartitions"][partition]['done'] and partition != self.Status[
-                    "currentPartition"]):
+                if self.Status["allPartitions"][partition]['done'] and partition != self.Status[
+                    "currentPartition"]:
                     doneBytes = doneBytes + self.Status["allPartitions"][partition]['size']
-        else:
-            if "currentPartitionSize" in self.Status:
-                totalBytes = self.Status["currentPartitionSize"]
 
         if "currentPartitionSize" in self.Status:
+            totalBytes = self.Status["currentPartitionSize"]
             doneBytes = doneBytes + self.Status["currentPartitionSizeDone"]
             percentageDone = (self.Status["currentPartitionSizeDone"] / self.Status["currentPartitionSize"]) * 100
             fullPercentageDone = (doneBytes / totalBytes) * 100
@@ -192,7 +190,7 @@ class MainWindow(QMainWindow):
 
     @Slot(int)
     def updateProgress(self, progress):
-        self.Status["currentPartitionSizeDone"] = progress
+        self.Status["currentPartitionSizeDone"] = progress * self.devhandler.mtkClass.config.pagesize
         self.updateState()
 
     def setdevhandler(self, devhandler):

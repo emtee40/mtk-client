@@ -806,8 +806,10 @@ class DAXFlash(metaclass=LogBase):
         self.progress.clear()
         storage, parttype, length = partinfo
         plen = self.get_packet_length()
+        bytesread = 0
         if self.cmd_read_data(addr=addr, size=length, storage=storage, parttype=parttype):
             bytestoread = length
+            total = length
             if filename != "":
                 with open(filename, "wb") as wf:
                     while bytestoread > 0:
@@ -822,12 +824,9 @@ class DAXFlash(metaclass=LogBase):
                             self.usbwrite(stmp)
                             self.usbwrite(data)
                             bytestoread -= len(resdata)
+                            bytesread += len(resdata)
                             if display:
-                                if length>bytestoread:
-                                    rpos = length - bytestoread
-                                else:
-                                    rpos = 0
-                                self.progress.show_progress("Read", rpos, length, display)
+                                self.progress.show_progress("Read", bytesread, total, display)
                         elif slength == 4:
                             if unpack("<I", resdata)[0] != 0:
                                 break
@@ -847,12 +846,9 @@ class DAXFlash(metaclass=LogBase):
                     if self.ack() != 0:
                         break
                     if display:
-                        if length > bytestoread:
-                            rpos = length - bytestoread
-                        else:
-                            rpos = 0
-                        self.progress.show_progress("Read", rpos, length, display)
+                        self.progress.show_progress("Read", bytesread, total, display)
                     length -= len(tmp)
+                    bytesread += len(tmp)
                 return buffer
         return False
 
