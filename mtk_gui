@@ -149,22 +149,21 @@ class MainWindow(QMainWindow):
                     doneBytes = doneBytes + self.Status["allPartitions"][partition]['size']
 
         if "currentPartitionSize" in self.Status:
-            totalBytes = self.Status["currentPartitionSize"]
             doneBytes = doneBytes + self.Status["currentPartitionSizeDone"]
             percentageDone = (self.Status["currentPartitionSizeDone"] / self.Status["currentPartitionSize"]) * 100
-            fullPercentageDone = (doneBytes / totalBytes) * 100
+            fullPercentageDone = ((doneBytes) / totalBytes) * 100
             self.ui.partProgress.setValue(percentageDone)
-            timeinfo = self.timeEst.update(doneBytes, totalBytes)
-            txt="Current partition: " + self.Status["currentPartition"] + " (" + \
+            timeinfo = self.timeEst.update(doneBytes, self.Status["currentPartitionSize"])
+            txt="<table width='100%'><tr><td><b>Current partition:</b> " + self.Status["currentPartition"] + " (" + \
                                              convert_size(self.Status["currentPartitionSizeDone"]) + " / " + \
-                                             convert_size(self.Status["currentPartitionSize"])+") "+ \
-                                             timeinfo+QCoreApplication.translate("main"," left")
+                                             convert_size(self.Status["currentPartitionSize"])+") </td><td align='right'>"+ \
+                                             timeinfo+QCoreApplication.translate("main"," left")+"</td></tr></table>"
             self.ui.partProgressText.setText(txt)
 
             self.ui.fullProgress.setValue(fullPercentageDone)
             timeinfototal = self.timeEstTotal.update(fullPercentageDone, 100)
-            self.ui.fullProgressText.setText("Total: (" + convert_size(doneBytes) + " / " + convert_size(totalBytes)+") "+
-                                             timeinfototal + QCoreApplication.translate("main"," left"))
+            self.ui.fullProgressText.setText("<table width='100%'><tr><td><b>Total:</b> " + convert_size(doneBytes) + " / " + convert_size(totalBytes)+"</td><td align='right'>"+
+                                             timeinfototal + QCoreApplication.translate("main"," left")+"</td></tr></table>")
 
     def updateStateAsync(self, toolkit, parameters):
         while not self.Status["done"]:
