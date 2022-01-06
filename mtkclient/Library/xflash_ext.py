@@ -8,7 +8,8 @@ from mtkclient.Library.utils import LogBase, progress, logsetup, find_binary
 from mtkclient.Library.seccfg import seccfg
 from binascii import hexlify
 import hashlib
-
+from mtkclient.Library.utils import mtktee
+import json
 
 class XCmd:
     CUSTOM_ACK = 0x0F0000
@@ -517,10 +518,19 @@ class xflashext(metaclass=LogBase):
             return True, "Successfully wrote seccfg."
         return False, "Error on writing seccfg config to flash."
 
-    def decrypt_tee(self, filename="tee1.bin", offset=0xF864):
+    def decrypt_tee(self, filename="tee1.bin", aeskey1:bytes=None, aeskey2:bytes=None):
         hwc = self.cryptosetup()
-        rdata=hwc.mtee(filename=filename,offset=offset)
-        open("tee1.dec","wb").write(rdata)
+        with open(filename, "rb") as rf:
+            data=rf.read()
+            idx=0
+            while idx!=-1:
+                idx=data.find(b"EET KTM ",idx+1)
+                if idx!=-1:
+                    mt = mtktee()
+                    mt.parse(data[idx:])
+                    rdata=hwc.mtee(data=mt.data, keyseed=mt.keyseed, ivseed=mt.ivseed,
+                                   aeskey1=aeskey1, aeskey2=aeskey2)
+                    open("tee_"+hex(idx)+".dec","wb").write(rdata)
 
     def generate_keys(self):
         hwc = self.cryptosetup()
@@ -552,7 +562,6 @@ class xflashext(metaclass=LogBase):
                 pass
 
         if self.config.chipconfig.dxcc_base is not None:
-            # hwc.aes_hwcrypt(btype="gcpu", mode="mtee")
             self.info("Generating dxcc rpmbkey...")
             rpmbkey = hwc.aes_hwcrypt(btype="dxcc", mode="rpmb")
             self.info("Generating dxcc fdekey...")
@@ -594,6 +603,9 @@ class xflashext(metaclass=LogBase):
             """
             return retval
         elif self.config.chipconfig.sej_base is not None:
+            if os.path.exists("tee.json"):
+                val=json.loads(open("tee.json","r").read())
+                self.decrypt_tee(val["filename"],bytes.fromhex(val["data"]),bytes.fromhex(val["data2"]))
             if meid == b"":
                 if self.config.chipconfig.meid_addr:
                     meid = self.custom_read(self.config.chipconfig.meid_addr, 16)

@@ -332,24 +332,24 @@ class sej(metaclass=LogBase):
             acon_setting |= self.HACC_AES_DEC
 
         # clear key
-        self.reg.HACC_AKEY0 = 0
+        self.reg.HACC_AKEY0 = 0 # 0x20
         self.reg.HACC_AKEY1 = 0
         self.reg.HACC_AKEY2 = 0
         self.reg.HACC_AKEY3 = 0
         self.reg.HACC_AKEY4 = 0
         self.reg.HACC_AKEY5 = 0
         self.reg.HACC_AKEY6 = 0
-        self.reg.HACC_AKEY7 = 0
+        self.reg.HACC_AKEY7 = 0 # 0x3C
 
-        # Generate META Key
+        # Generate META Key # 0x04
         self.reg.HACC_ACON = self.HACC_AES_CHG_BO_OFF | self.HACC_AES_CBC | self.HACC_AES_128 | self.HACC_AES_DEC
 
         # init ACONK, bind HUID/HUK to HACC, this may differ
         # enable R2K, so that output data is feedback to key by HACC internal algorithm
-        self.reg.HACC_ACONK = self.HACC_AES_BK2C | self.HACC_AES_R2K
+        self.reg.HACC_ACONK = self.HACC_AES_BK2C | self.HACC_AES_R2K # 0x0C
 
         # clear HACC_ASRC/HACC_ACFG/HACC_AOUT
-        self.reg.HACC_ACON2 = self.HACC_AES_CLR
+        self.reg.HACC_ACON2 = self.HACC_AES_CLR  # 0x08
         self.reg.HACC_UNK = 1
         self.reg.HACC_ACFG0 = iv[0]  # g_AC_CFG
         self.reg.HACC_ACFG1 = iv[1]
