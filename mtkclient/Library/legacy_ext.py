@@ -6,7 +6,9 @@ from mtkclient.Library.hwcrypto import crypto_setup, hwcrypto
 from mtkclient.Library.utils import LogBase, progress, logsetup, find_binary
 from mtkclient.Library.seccfg import seccfg
 from binascii import hexlify
+from mtkclient.Library.utils import mtktee
 import hashlib
+import json
 
 class LCmd:
     CUSTOM_READ = b"\x29"
@@ -80,10 +82,14 @@ class legacyext(metaclass=LogBase):
         if isinstance(dwords, int):
             dwords = [dwords]
         pos = 0
-        for val in dwords:
-            if not self.legacy.write_reg32(addr + pos, val):
-                return False
-            pos += 4
+        if len(dwords) < 0x20:
+            for val in dwords:
+                if not self.legacy.write_reg32(addr + pos, val):
+                    return False
+                pos += 4
+        else:
+            dat = b"".join([pack("<I", val) for val in dwords])
+            self.custom_write(addr, dat)
         return True
 
     def writemem(self, addr, data):
@@ -162,6 +168,20 @@ class legacyext(metaclass=LogBase):
             return True, "Successfully wrote seccfg."
         return False, "Error on writing seccfg config to flash."
 
+    def decrypt_tee(self, filename="tee1.bin", aeskey1:bytes=None, aeskey2:bytes=None):
+        hwc = self.cryptosetup()
+        with open(filename, "rb") as rf:
+            data=rf.read()
+            idx=0
+            while idx!=-1:
+                idx=data.find(b"EET KTM ",idx+1)
+                if idx!=-1:
+                    mt = mtktee()
+                    mt.parse(data[idx:])
+                    rdata=hwc.mtee(data=mt.data, keyseed=mt.keyseed, ivseed=mt.ivseed,
+                                   aeskey1=aeskey1, aeskey2=aeskey2)
+                    open("tee_"+hex(idx)+".dec","wb").write(rdata)
+
     def generate_keys(self):
         hwc = self.cryptosetup()
         meid = b""
@@ -233,6 +253,9 @@ class legacyext(metaclass=LogBase):
             """
             return retval
         elif self.config.chipconfig.sej_base is not None:
+            if os.path.exists("tee.json"):
+                val=json.loads(open("tee.json","r").read())
+                self.decrypt_tee(val["filename"],bytes.fromhex(val["data"]),bytes.fromhex(val["data2"]))
             if meid == b"":
                 if self.config.chipconfig.meid_addr:
                     meid = self.custom_read(self.config.chipconfig.meid_addr,16)
