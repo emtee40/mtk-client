@@ -103,6 +103,8 @@ def load_translations(application):
     translator = QTranslator(application)
     directory = os.path.dirname(__file__)
     lang = 'mtkclient/gui/i18n/' + locale.name()
+    if locale.name() == "en_NL":
+        lang = lang.replace("en_NL", "nl_NL")
     # lang = 'mtkclient/gui/i18n/fr_FR'
     # lang = 'mtkclient/gui/i18n/de_DE'
     # lang = 'mtkclient/gui/i18n/en_GB'

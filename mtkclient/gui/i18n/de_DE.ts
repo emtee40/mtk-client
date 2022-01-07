@@ -397,28 +397,28 @@
 <context>
     <name>main</name>
     <message>
-        <location filename="../../../mtk_gui" line="163"/>
-        <location filename="../../../mtk_gui" line="169"/>
+        <location filename="../../../mtk_gui" line="160"/>
+        <location filename="../../../mtk_gui" line="166"/>
         <source> left</source>
         <translation> übrig</translation>
     </message>
     <message>
-        <location filename="../../../mtk_gui" line="296"/>
+        <location filename="../../../mtk_gui" line="293"/>
         <source>Error reading gpt</source>
         <translation>Fehler beim Lesen der GPT</translation>
     </message>
     <message>
-        <location filename="../../../mtk_gui" line="298"/>
+        <location filename="../../../mtk_gui" line="295"/>
         <source>Select partitions to dump</source>
         <translation>Partitionen zum Lesen auswählen</translation>
     </message>
     <message>
-        <location filename="../../../mtk_gui" line="337"/>
+        <location filename="../../../mtk_gui" line="334"/>
         <source>Set</source>
         <translation>Auswählen</translation>
     </message>
     <message>
-        <location filename="../../../mtk_gui" line="445"/>
+        <location filename="../../../mtk_gui" line="442"/>
         <source>Phone detected:
 Reading model info...</source>
         <translation>Gerät erkannt
@@ -435,7 +435,7 @@ Dies kann eine Weile dauern...</translation>
         <translation type="vanished">Gerät verbunden :)</translation>
     </message>
     <message>
-        <location filename="../../../mtk_gui" line="471"/>
+        <location filename="../../../mtk_gui" line="468"/>
         <source>Error initialising. Did you install the drivers?</source>
         <translation>Fehler beim Initialisieren. Sind alle Treiber installiert?</translation>
     </message>
