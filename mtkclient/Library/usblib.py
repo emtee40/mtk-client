@@ -283,24 +283,27 @@ class usb_class(metaclass=LogBase):
         if self.configuration is None:
             self.error("Couldn't get device configuration.")
             return False
-        if self.interface == -1:
-            for interfacenum in range(0, self.configuration.bNumInterfaces):
-                itf = usb.util.find_descriptor(self.configuration, bInterfaceNumber=interfacenum)
-                if self.devclass != -1:
-                    if itf.bInterfaceClass == self.devclass:  # MassStorage
-                        self.interface = interfacenum
-                        break
-                else:
-                    self.interface = interfacenum
-                    break
-
-        self.debug(self.configuration)
         if self.interface > self.configuration.bNumInterfaces:
             print("Invalid interface, max number is %d" % self.configuration.bNumInterfaces)
             return False
+        for itf in self.configuration:
+            if self.devclass == -1:
+                self.devclass = 2
+            if itf.bInterfaceClass == self.devclass:
+                if self.interface == -1 or self.interface == itf.bInterfaceNumber:
+                    self.interface = itf
+                    self.EP_OUT = EP_OUT
+                    self.EP_IN = EP_IN
+                    for ep in itf:
+                        edir = usb.util.endpoint_direction(ep.bEndpointAddress)
+                        if edir == usb.util.ENDPOINT_OUT and self.EP_OUT == -1:
+                            self.EP_OUT = ep
+                        elif edir == usb.util.ENDPOINT_IN and self.EP_IN == -1:
+                            self.EP_IN = ep
+                    break
 
-        if self.interface != -1:
-            itf = usb.util.find_descriptor(self.configuration, bInterfaceNumber=self.interface)
+        if self.EP_OUT != -1 and self.EP_IN !=-1:
+            self.debug(self.configuration)
             try:
                 if self.device.is_kernel_driver_active(0):
                     self.debug("Detaching kernel driver")
@@ -324,26 +327,11 @@ class usb_class(metaclass=LogBase):
             except:
                 pass
 
-            self.EP_OUT = EP_OUT
-            self.EP_IN = EP_IN
-            if EP_OUT == -1:
-                self.EP_OUT = usb.util.find_descriptor(itf,
-                                                       # match the first OUT endpoint
-                                                       custom_match=lambda e: \
-                                                           usb.util.endpoint_direction(e.bEndpointAddress) ==
-                                                           usb.util.ENDPOINT_OUT)
-            if EP_IN == -1:
-                self.EP_IN = usb.util.find_descriptor(itf,
-                                                      # match the first OUT endpoint
-                                                      custom_match=lambda e: \
-                                                          usb.util.endpoint_direction(e.bEndpointAddress) ==
-                                                          usb.util.ENDPOINT_IN)
             self.connected = True
             return True
-        else:
-            print("Couldn't find MassStorage interface. Aborting.")
-            self.connected = False
-            return False
+        print("Couldn't find CDC interface. Aborting.")
+        self.connected = False
+        return False
 
     def close(self, reset=False):
         if self.connected:
