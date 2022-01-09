@@ -254,24 +254,22 @@ class usb_class(metaclass=LogBase):
         if self.connected:
             self.close()
             self.connected = False
-        for usbid in self.portconfig:
-            vid = usbid[0]
-            pid = usbid[1]
-            interface = usbid[2]
-            self.device = usb.core.find(idVendor=vid, idProduct=pid, backend=self.backend)
+        self.device = None
+        devices = usb.core.find(find_all=True, bDeviceClass=0x2, backend=self.backend)
+        for dev in devices:
+            for usbid in self.portconfig:
+                if dev.idProduct == usbid[1] and dev.idVendor == usbid[0]:
+                    self.device = dev
+                    self.vid = dev.idVendor
+                    self.pid = dev.idProduct
+                    self.interface = usbid[2]
+                    break
             if self.device is not None:
-                self.vid = vid
-                self.pid = pid
-                self.interface = interface
                 break
 
         if self.device is None:
             self.debug("Couldn't detect the device. Is it connected ?")
             return False
-        # try:
-        #    self.device.set_configuration()
-        # except:
-        #    pass
 
         try:
             self.configuration = self.device.get_active_configuration()
@@ -326,23 +324,20 @@ class usb_class(metaclass=LogBase):
             except:
                 pass
 
+            self.EP_OUT = EP_OUT
+            self.EP_IN = EP_IN
             if EP_OUT == -1:
                 self.EP_OUT = usb.util.find_descriptor(itf,
                                                        # match the first OUT endpoint
                                                        custom_match=lambda e: \
                                                            usb.util.endpoint_direction(e.bEndpointAddress) ==
                                                            usb.util.ENDPOINT_OUT)
-            else:
-                self.EP_OUT = EP_OUT
             if EP_IN == -1:
                 self.EP_IN = usb.util.find_descriptor(itf,
                                                       # match the first OUT endpoint
                                                       custom_match=lambda e: \
                                                           usb.util.endpoint_direction(e.bEndpointAddress) ==
                                                           usb.util.ENDPOINT_IN)
-            else:
-                self.EP_IN = EP_IN
-
             self.connected = True
             return True
         else:
