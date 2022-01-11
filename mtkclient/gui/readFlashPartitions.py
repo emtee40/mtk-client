@@ -11,9 +11,9 @@ class ReadFlashWindow(QObject):
     enableButtonsSignal = Signal()
     disableButtonsSignal = Signal()
 
-    def __init__(self, ui, parent, devhandler, da_handler, sendToLog):  # def __init__(self, *args, **kwargs):
+    def __init__(self, ui, parent, da_handler, sendToLog):  # def __init__(self, *args, **kwargs):
         super(ReadFlashWindow, self).__init__(parent)
-        self.mtkClass = devhandler.mtkClass
+        self.mtkClass = da_handler.mtk
         self.parent = parent
         self.sendToLog = sendToLog
         self.Status = {}
@@ -37,6 +37,7 @@ class ReadFlashWindow(QObject):
         self.ui.readpartitionsbtn.setEnabled(False)
         self.ui.readboot2btn.setEnabled(False)
         self.ui.readrpmbbtn.setEnabled(False)
+        self.parent.Status["rpmb"] = False
         self.dumpFolder = self.fdialog.opendir(self.tr("Select output directory"))
         if self.dumpFolder:
             thread = asyncThread(parent=self.parent, n=0, function=self.dumpPartitionAsync,parameters=[])
@@ -50,20 +51,21 @@ class ReadFlashWindow(QObject):
         self.parent.timeEst.init()
         self.parent.timeEstTotal.init()
         self.sendToLogSignal = toolkit.sendToLogSignal
-        toolkit.sendToLogSignal.emit("test")
         self.parent.Status["done"] = False
         thread = asyncThread(self.parent.parent(), 0, self.parent.updateStateAsync, [])
         thread.update_status_text.connect(self.parent.update_status_text)
         thread.sendUpdateSignal.connect(self.parent.updateState)
         thread.sendToProgressSignal.connect(self.parent.updateProgress)
         thread.start()
-        self.disableButtonsSignal.emit()
         # calculate total bytes
         self.parent.Status["allPartitions"] = {}
+        self.disableButtonsSignal.emit()
+        totalsize = 0
         for partition in self.parent.readpartitionCheckboxes:
             if self.parent.readpartitionCheckboxes[partition]['box'].isChecked():
-                self.parent.Status["allPartitions"][partition] = {"size": self.parent.readpartitionCheckboxes[partition]['size'],
-                                                               "done": False}
+                totalsize += self.parent.readpartitionCheckboxes[partition]['size']
+        self.parent.Status["totalsize"] = totalsize
+
         for partition in self.parent.readpartitionCheckboxes:
             if self.parent.readpartitionCheckboxes[partition]['box'].isChecked():
                 variables = mock.Mock()
@@ -73,6 +75,9 @@ class ReadFlashWindow(QObject):
                 self.parent.Status["currentPartitionSize"] = self.parent.readpartitionCheckboxes[partition]['size']
                 self.parent.Status["currentPartition"] = partition
                 self.parent.Status["currentPartitionFile"] = variables.filename
+                self.parent.Status["allPartitions"][partition] = {
+                    "size": self.parent.readpartitionCheckboxes[partition]['size'],
+                    "done": False}
                 self.da_handler.close = self.dumpPartDone  # Ignore the normally used sys.exit
                 self.da_handler.handle_da_cmds(self.mtkClass, "r", variables)
                 self.parent.Status["allPartitions"][partition]['done'] = True
@@ -92,17 +97,22 @@ class ReadFlashWindow(QObject):
         thread.wait()
         self.enableButtonsSignal.emit()
 
-
     def dumpFlash(self, parttype):
-        self.parttype=parttype
+        self.parttype = parttype
+        self.parent.Status["rpmb"] = False
         if self.parttype == "user":
-            self.flashsize = self.mtkClass.daloader.daconfig.flashsize
+            self.flashsize = self.mtkClass.daloader.daconfig.flashsize[0]
         elif self.parttype == "rpmb":
-            self.flashsize = self.mtkClass.daloader.daconfig.rpmbsize
+            self.parent.Status["rpmb"] = True
+            if self.mtkClass.daloader.daconfig.flashtype == "ufs":
+                self.flashsize = self.mtkClass.daloader.daconfig.rpmbsize * 8
+            else:
+                self.flashsize = self.mtkClass.daloader.daconfig.rpmbsize
         elif self.parttype == "boot1":
             self.flashsize = self.mtkClass.daloader.daconfig.boot1size
         elif self.parttype == "boot2":
             self.flashsize = self.mtkClass.daloader.daconfig.boot2size
+        self.parent.Status["totalsize"] = self.flashsize
         self.parent.Status["currentPartitionSize"] = self.flashsize
         self.parent.Status["currentPartition"] = parttype
         self.ui.partProgressText.setText(self.tr("Ready to dump ") + convert_size(self.flashsize))

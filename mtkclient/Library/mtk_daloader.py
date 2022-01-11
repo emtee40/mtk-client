@@ -5,7 +5,7 @@ import json
 import logging
 import os
 import hashlib
-from mtkclient.Library.utils import LogBase, logsetup
+from mtkclient.Library.utils import LogBase, logsetup, progress
 from mtkclient.Library.error import ErrorHandler
 from mtkclient.Library.daconfig import DAconfig
 from mtkclient.Library.mtk_dalegacy import DALegacy, norinfo, emmcinfo, sdcinfo, nandinfo64
@@ -32,6 +32,7 @@ class DAloader(metaclass=LogBase):
         self.daconfig = DAconfig(mtk=self.mtk, loader=self.mtk.config.loader,
                                  preloader=self.mtk.config.preloader, loglevel=loglevel)
         self.hwparam = hwparam(mtk.config.meid)
+        self.progress = progress(self.daconfig.pagesize, self.mtk.config.guiprogress)
         self.xft = None
         self.lft = None
         self.da = None

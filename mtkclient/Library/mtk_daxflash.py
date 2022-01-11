@@ -150,7 +150,6 @@ class DAXFlash(metaclass=LogBase):
         self.rword = self.mtk.port.rword
         self.daconfig = daconfig
         self.partition = Partition(self.mtk, self.readflash, self.read_pmt, loglevel)
-        self.progress = progress(self.daconfig.pagesize, mtk.config.guiprogress)
         self.pathconfig = pathconfig()
         self.patch = False
         self.generatekeys = self.mtk.config.generatekeys
@@ -447,13 +446,13 @@ class DAXFlash(metaclass=LogBase):
 
     def formatflash(self, addr, length, storage=None,
                     parttype=None, display=False):
-        self.progress.clear()
+        self.mtk.daloader.progress.clear()
         part_info = self.getstorage(parttype, length)
         if not part_info:
             return False
         storage, parttype, length = part_info
         self.info(f"Formatting addr {hex(addr)} with length {hex(length)}, please standby....")
-        self.progress.show_progress("Erasing", 0, length, True)
+        self.mtk.daloader.progress.show_progress("Erasing", 0, length, True)
         if self.xsend(self.Cmd.FORMAT):
             status = self.status()
             if status == 0:
@@ -471,7 +470,7 @@ class DAXFlash(metaclass=LogBase):
                         time.sleep(self.status() / 1000.0)
                         status = self.ack()
                     if status == 0x40040005:  # STATUS_COMPLETE
-                        self.progress.show_progress("Erasing", length, length, True)
+                        self.mtk.daloader.progress.show_progress("Erasing", length, length, True)
                         self.info(f"Successsfully formatted addr {hex(addr)} with length {length}.")
                         return True
 
@@ -803,7 +802,7 @@ class DAXFlash(metaclass=LogBase):
         partinfo = self.getstorage(parttype, length)
         if not partinfo:
             return None
-        self.progress.clear()
+        self.mtk.daloader.progress.clear()
         storage, parttype, length = partinfo
         plen = self.get_packet_length()
         bytesread = 0
@@ -826,7 +825,7 @@ class DAXFlash(metaclass=LogBase):
                             bytestoread -= len(resdata)
                             bytesread += len(resdata)
                             if display:
-                                self.progress.show_progress("Read", bytesread, total, display)
+                                self.mtk.daloader.progress.show_progress("Read", bytesread, total, display)
                         elif slength == 4:
                             if unpack("<I", resdata)[0] != 0:
                                 break
@@ -836,6 +835,8 @@ class DAXFlash(metaclass=LogBase):
                         resdata = self.usbread(slength)
                         if slength == 4:
                             if unpack("<I", resdata)[0] == 0:
+                                if display:
+                                    self.mtk.daloader.progress.show_progress("Read", total, total, display)
                                 return True
                 return False
             else:
@@ -846,9 +847,11 @@ class DAXFlash(metaclass=LogBase):
                     if self.ack() != 0:
                         break
                     if display:
-                        self.progress.show_progress("Read", bytesread, total, display)
+                        self.mtk.daloader.progress.show_progress("Read", bytesread, total, display)
                     length -= len(tmp)
                     bytesread += len(tmp)
+                if display:
+                    self.mtk.daloader.progress.show_progress("Read", total, total, display)
                 return buffer
         return False
 
@@ -881,7 +884,7 @@ class DAXFlash(metaclass=LogBase):
         return part_info
 
     def writeflash(self, addr, length, filename, offset=0, parttype=None, wdata=None, display=True):
-        self.progress.clear()
+        self.mtk.daloader.progress.clear()
         fh = None
         fill = 0
         if filename is not None:
@@ -915,7 +918,7 @@ class DAXFlash(metaclass=LogBase):
                             rpos = length - bytestowrite
                         else:
                             rpos = 0
-                        self.progress.show_progress("Write", rpos, length, display)
+                        self.mtk.daloader.progress.show_progress("Write", rpos, length, display)
                     dsize = min(write_packet_size, bytestowrite)
                     if fh:
                         data = bytearray(fh.read(dsize))
@@ -933,7 +936,7 @@ class DAXFlash(metaclass=LogBase):
                 status = self.status()
                 if status == 0x0:
                     self.send_devctrl(self.Cmd.CC_OPTIONAL_DOWNLOAD_ACT)
-                    self.progress.show_progress("Write", length, length, display)
+                    self.mtk.daloader.progress.show_progress("Write", length, length, display)
                     if fh:
                         fh.close()
                     return True

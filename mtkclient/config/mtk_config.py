@@ -45,7 +45,6 @@ class Mtk_Config(metaclass=LogBase):
         self.pagesize = 512
         self.SECTOR_SIZE_IN_BYTES = 4096  # fixme
         self.baudrate = 115200
-        self.flash = "emmc"
         self.cpu = ""
         self.hwcode = None
         self.meid = None
@@ -89,7 +88,7 @@ class Mtk_Config(metaclass=LogBase):
     def set_hwparam_path(self, path):
         if path is None:
             path = "logs"
-        self.hwparam.hwparampath = path
+        self.hwparam_path = path
 
     def default_values(self, hwcode):
         if self.chipconfig.var1 is None:
@@ -161,7 +160,7 @@ class Mtk_Config(metaclass=LogBase):
         bmtblockcount = 0
         bmtpartsize = 0
         if hwcode in [0x6592, 0x6582, 0x8127, 0x6571]:
-            if self.flash == "emmc":
+            if self.da.daconfig.flashtype == "emmc":
                 bmtflag = 1
                 bmtblockcount = 0xA8
                 bmtpartsize = 0x1500000
@@ -169,33 +168,33 @@ class Mtk_Config(metaclass=LogBase):
             bmtflag = 1
             bmtpartsize = 0
         elif hwcode in [0x6571]:
-            if self.flash == "nand":
+            if self.da.daconfig.flashtype == "nand":
                 bmtflag = 0
                 bmtblockcount = 0x38
                 bmtpartsize = 0xE00000
-            elif self.flash == "emmc":
+            elif self.da.daconfig.flashtype == "emmc":
                 bmtflag = 1
                 bmtblockcount = 0xA8
                 bmtpartsize = 0x1500000
         elif hwcode in [0x6575]:
-            if self.flash == "nand":
+            if self.da.daconfig.flashtype == "nand":
                 bmtflag = 0
                 bmtblockcount = 0x50
-            elif self.flash == "emmc":
+            elif self.da.daconfig.flashtype == "emmc":
                 bmtflag = 1
                 bmtblockcount = 0xA8
                 bmtpartsize = 0x1500000
         elif hwcode in [0x6572]:
-            if self.flash == "nand":
+            if self.da.daconfig.flashtype == "nand":
                 bmtflag = 0
                 bmtpartsize = 0xA00000
                 bmtblockcount = 0x50
-            elif self.flash == "emmc":
+            elif self.da.daconfig.flashtype == "emmc":
                 bmtflag = 0
                 bmtpartsize = 0xA8
                 bmtblockcount = 0x50
         elif hwcode in [0x6577, 0x6583, 0x6589]:
-            if self.flash == "nand":
+            if self.da.daconfig.flashtype == "nand":
                 bmtflag = 0
                 bmtpartsize = 0xA00000
                 bmtblockcount = 0xA8

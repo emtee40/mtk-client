@@ -139,12 +139,12 @@ class FDialog():
         self.fdialog.selectFile(fname)
         ret = self.fdialog.getOpenFileName(self.parent, self.parent.tr("Select input file"),
                                    fname, "Binary dump (*.bin)")
-        ret = os.path.normpath(ret)  # fixes backslash problem on windows
         if ret:
-            fname = ret[0]
-            if fname != "":
-                self.lastpath = os.path.dirname(fname)
-                return fname
+            if isinstance(ret, tuple):
+                fname = os.path.normpath(ret[0])  # fixes backslash problem on windows
+                if ret[0] != "":
+                    self.lastpath = os.path.dirname(fname)
+                    return fname
         return None
 
     def opendir(self,caption):

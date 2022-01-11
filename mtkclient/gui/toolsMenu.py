@@ -11,12 +11,12 @@ class UnlockMenu(QObject):
     enableButtonsSignal = Signal()
     disableButtonsSignal = Signal()
 
-    def __init__(self, ui, parent, devhandler, da_handler: DA_handler, sendToLog):  # def __init__(self, *args, **kwargs):
+    def __init__(self, ui, parent, da_handler: DA_handler, sendToLog):  # def __init__(self, *args, **kwargs):
         super(UnlockMenu, self).__init__(parent)
         self.parent = parent
         self.ui = ui
         self.fdialog = FDialog(parent)
-        self.mtkClass = devhandler.mtkClass
+        self.mtkClass = da_handler.mtk
         self.sendToLog = sendToLog
         self.da_handler = da_handler
 
@@ -50,12 +50,12 @@ class generateKeysMenu(QObject):
     enableButtonsSignal = Signal()
     disableButtonsSignal = Signal()
 
-    def __init__(self, ui, parent, devhandler, da_handler: DA_handler, sendToLog):  # def __init__(self, *args, **kwargs):
+    def __init__(self, ui, parent, da_handler: DA_handler, sendToLog):  # def __init__(self, *args, **kwargs):
         super(generateKeysMenu, self).__init__(parent)
         self.parent = parent
         self.ui = ui
         self.fdialog = FDialog(parent)
-        self.mtkClass = devhandler.mtkClass
+        self.mtkClass = da_handler.mtk
         self.sendToLog = sendToLog
         self.da_handler = da_handler
 
@@ -80,7 +80,7 @@ class generateKeysMenu(QObject):
     def generateKeys(self):
         self.ui.keystatuslabel.setText(self.tr("Generating..."))
         hwparamFolder = self.fdialog.opendir(self.tr("Select output directory"))
-        if hwparamFolder == "" or hwparamFolder == None:
+        if hwparamFolder == "" or hwparamFolder is None:
             self.parent.enablebuttons()
             return
         else:

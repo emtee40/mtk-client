@@ -4,6 +4,7 @@
 import sys
 import time
 import mock
+import threading
 import traceback
 import math
 import logging
@@ -29,6 +30,8 @@ from mtkclient.config.payloads import pathconfig
 from mtkclient.gui.main_gui import Ui_MainWindow
 import os
 
+lock = threading.Lock()
+
 os.environ['QT_MAC_WANTS_LAYER'] = '1'  # This fixes a bug in pyside2 on MacOS Big Sur
 # TO do Move all GUI modifications to signals!
 # install exception hook: without this, uncaught exception would cause application to exit
@@ -51,7 +54,6 @@ class DeviceHandler(QObject):
     sendToLogSignal = Signal(str)
     update_status_text = Signal(str)
     sendToProgressSignal = Signal(int)
-    mtkClass = None
     da_handler = None
 
     def __init__(self, parent, preloader: str = None, loglevel=logging.INFO, *args, **kwargs):
@@ -60,9 +62,8 @@ class DeviceHandler(QObject):
                             update_status_text=self.update_status_text)
         config.gpt_settings = gpt_settings(gpt_num_part_entries='0', gpt_part_entry_size='0',
                                            gpt_part_entry_start_lba='0')  # This actually sets the right GPT settings..
-        self.mtkClass = Mtk(config=config, loglevel=logging.INFO)
         self.loglevel = logging.DEBUG
-        self.da_handler = DA_handler(self.mtkClass, loglevel)
+        self.da_handler = DA_handler(Mtk(config=config, loglevel=logging.INFO), loglevel)
 
 
 
@@ -71,7 +72,7 @@ def getDevInfo(self, parameters):
     phoneInfo = parameters[1]
     devhandler = parameters[2]
 
-    mtkClass = devhandler.mtkClass
+    mtkClass = devhandler.da_handler.mtk
     da_handler = devhandler.da_handler
     try:
         if not mtkClass.port.cdc.connect():
@@ -127,7 +128,7 @@ class MainWindow(QMainWindow):
         self.ui.setupUi(self)
         self.fdialog = FDialog(self)
         self.initpixmap()
-        self.Status={}
+        self.Status = {}
         self.timeEst = TimeEstim()
         self.timeEstTotal = TimeEstim()
         self.ui.logBox.setWordWrapMode(QTextOption.NoWrap)
@@ -135,9 +136,9 @@ class MainWindow(QMainWindow):
         self.ui.tabWidget.setHidden(True)
         self.ui.partProgress.setHidden(True)
         self.ui.fullProgress.setHidden(True)
-        self.ui.connectInfo.setMinimumSize(200, 500);
-        self.ui.connectInfo.setMaximumSize(9900, 500);
-        self.ui.showdebugbtn.clicked.connect(self.showDebugInfo);
+        self.ui.connectInfo.setMinimumSize(200, 500)
+        self.ui.connectInfo.setMaximumSize(9900, 500)
+        self.ui.showdebugbtn.clicked.connect(self.showDebugInfo)
 
         self.devhandler = None
         self.readflash = None
@@ -149,31 +150,49 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def updateState(self):
-        totalBytes = 0
+        global lock
+        lock.acquire()
         doneBytes = 0
+        if "currentPartitionSizeDone" in self.Status:
+            curpartBytes = self.Status["currentPartitionSizeDone"]
+        else:
+            curpartBytes = self.Status["currentPartitionSize"]
+
         if "allPartitions" in self.Status:
             for partition in self.Status["allPartitions"]:
-                totalBytes = totalBytes + self.Status["allPartitions"][partition]['size']
-                if self.Status["allPartitions"][partition]['done'] and partition != self.Status[
-                    "currentPartition"]:
+                if self.Status["allPartitions"][partition]['done'] and partition != self.Status["currentPartition"]:
                     doneBytes = doneBytes + self.Status["allPartitions"][partition]['size']
-
-        if "currentPartitionSize" in self.Status:
-            doneBytes = doneBytes + self.Status["currentPartitionSizeDone"]
-            percentageDone = (self.Status["currentPartitionSizeDone"] / self.Status["currentPartitionSize"]) * 100
-            fullPercentageDone = ((doneBytes) / totalBytes) * 100
-            self.ui.partProgress.setValue(percentageDone)
-            timeinfo = self.timeEst.update(doneBytes, self.Status["currentPartitionSize"])
-            txt="<table width='100%'><tr><td><b>Current partition:</b> " + self.Status["currentPartition"] + " (" + \
-                                             convert_size(self.Status["currentPartitionSizeDone"]) + " / " + \
-                                             convert_size(self.Status["currentPartitionSize"])+") </td><td align='right'>"+ \
-                                             timeinfo+QCoreApplication.translate("main"," left")+"</td></tr></table>"
-            self.ui.partProgressText.setText(txt)
-
+            doneBytes = curpartBytes + doneBytes
+            totalBytes = self.Status["totalsize"]
+            fullPercentageDone = int((doneBytes / totalBytes) * 100)
             self.ui.fullProgress.setValue(fullPercentageDone)
             timeinfototal = self.timeEstTotal.update(fullPercentageDone, 100)
-            self.ui.fullProgressText.setText("<table width='100%'><tr><td><b>Total:</b> " + convert_size(doneBytes) + " / " + convert_size(totalBytes)+"</td><td align='right'>"+
-                                             timeinfototal + QCoreApplication.translate("main"," left")+"</td></tr></table>")
+            self.ui.fullProgressText.setText("<table width='100%'><tr><td><b>Total:</b> " +
+                    convert_size(doneBytes) + " / " + convert_size(totalBytes) +
+                    "</td><td align='right'>" + timeinfototal + QCoreApplication.translate("main"," left") +
+                                             "</td></tr></table>")
+        else:
+            partBytes = self.Status["currentPartitionSize"]
+            doneBytes = self.Status["currentPartitionSizeDone"]
+            fullPercentageDone = int((doneBytes / partBytes) * 100)
+            self.ui.fullProgress.setValue(fullPercentageDone)
+            timeinfototal = self.timeEstTotal.update(fullPercentageDone, 100)
+            self.ui.fullProgressText.setText("<table width='100%'><tr><td><b>Total:</b> " +
+                convert_size(doneBytes) + " / " + convert_size(partBytes) + "</td><td align='right'>" +
+                timeinfototal + QCoreApplication.translate("main"," left") + "</td></tr></table>")
+
+        if "currentPartitionSize" in self.Status:
+            partBytes = self.Status["currentPartitionSize"]
+            partDone = (curpartBytes / partBytes) * 100
+            self.ui.partProgress.setValue(partDone)
+            timeinfo = self.timeEst.update(curpartBytes, partBytes)
+            txt = "<table width='100%'><tr><td><b>Current partition:</b> " + self.Status["currentPartition"] + \
+                  " (" + convert_size(curpartBytes) + " / " + convert_size(partBytes)+") </td><td align='right'>" + \
+                timeinfo + QCoreApplication.translate("main"," left")+"</td></tr></table>"
+            self.ui.partProgressText.setText(txt)
+
+
+        lock.release()
 
     def updateStateAsync(self, toolkit, parameters):
         while not self.Status["done"]:
@@ -199,7 +218,10 @@ class MainWindow(QMainWindow):
 
     @Slot(int)
     def updateProgress(self, progress):
-        self.Status["currentPartitionSizeDone"] = progress * self.devhandler.mtkClass.config.pagesize
+        if self.Status["rpmb"]:
+            self.Status["currentPartitionSizeDone"] = progress
+        else:
+            self.Status["currentPartitionSizeDone"] = progress * self.devhandler.da_handler.mtk.daloader.progress.pagesize
         self.updateState()
 
     def setdevhandler(self, devhandler):
@@ -208,7 +230,7 @@ class MainWindow(QMainWindow):
         devhandler.update_status_text.connect(self.update_status_text)
 
     def initread(self):
-        self.readflash=ReadFlashWindow(self.ui, self, self.devhandler, self.devhandler.da_handler, self.sendToLog)
+        self.readflash=ReadFlashWindow(self.ui, self, self.devhandler.da_handler, self.sendToLog)
         thread.sendUpdateSignal.connect(win.updateGui)
         self.readflash.enableButtonsSignal.connect(self.enablebuttons)
         self.readflash.disableButtonsSignal.connect(self.disablebuttons)
@@ -220,20 +242,20 @@ class MainWindow(QMainWindow):
         self.ui.readboot2btn.clicked.connect(self.on_readboot2)
 
     def initkeys(self):
-        self.genkeys = generateKeysMenu(self.ui, self, self.devhandler, self.devhandler.da_handler, self.sendToLog)
+        self.genkeys = generateKeysMenu(self.ui, self, self.devhandler.da_handler, self.sendToLog)
         self.ui.generatekeybtn.clicked.connect(self.on_generatekeys)
         self.genkeys.enableButtonsSignal.connect(self.enablebuttons)
         self.genkeys.disableButtonsSignal.connect(self.disablebuttons)
 
     def initunlock(self):
-        self.unlock = UnlockMenu(self.ui, self, self.devhandler, self.devhandler.da_handler, self.sendToLog)
+        self.unlock = UnlockMenu(self.ui, self, self.devhandler.da_handler, self.sendToLog)
         self.ui.unlockbutton.clicked.connect(self.on_unlock)
         self.ui.lockbutton.clicked.connect(self.on_lock)
         self.unlock.enableButtonsSignal.connect(self.enablebuttons)
         self.unlock.disableButtonsSignal.connect(self.disablebuttons)
 
     def initerase(self):
-        self.eraseflash = EraseFlashWindow(self.ui, self, self.devhandler, self.devhandler.da_handler, self.sendToLog)
+        self.eraseflash = EraseFlashWindow(self.ui, self, self.devhandler.da_handler, self.sendToLog)
         self.eraseflash.enableButtonsSignal.connect(self.enablebuttons)
         self.eraseflash.disableButtonsSignal.connect(self.disablebuttons)
         self.ui.eraseselectallpartitionscheckbox.clicked.connect(self.eraseflash.selectAll)
@@ -243,7 +265,7 @@ class MainWindow(QMainWindow):
         self.ui.eraseboot2btn.clicked.connect(self.on_eraseboot2)
 
     def initwrite(self):
-        self.writeflash = WriteFlashWindow(self.ui, self, self.devhandler, self.devhandler.da_handler, self.sendToLog)
+        self.writeflash = WriteFlashWindow(self.ui, self, self.devhandler.da_handler, self.sendToLog)
         self.writeflash.enableButtonsSignal.connect(self.enablebuttons)
         self.writeflash.disableButtonsSignal.connect(self.disablebuttons)
         self.ui.writeselectfromdir.clicked.connect(self.writeflash.selectFiles)
@@ -300,9 +322,14 @@ class MainWindow(QMainWindow):
         self.ui.generatekeybtn.setEnabled(True)
         self.ui.unlockbutton.setEnabled(True)
         self.ui.lockbutton.setEnabled(True)
+        self.ui.partProgress.setValue(100)
+        self.ui.fullProgress.setValue(100)
+        self.ui.fullProgressText.setText("")
+        self.ui.partProgressText.setText(self.tr("Done."))
+        self.Status = {}
 
     def getpartitions(self):
-        data, guid_gpt = self.devhandler.mtkClass.daloader.get_gpt()
+        data, guid_gpt = self.devhandler.da_handler.mtk.daloader.get_gpt()
         if guid_gpt is None:
             print("Error reading gpt")
             self.ui.readtitle.setText(QCoreApplication.translate("main","Error reading gpt"))

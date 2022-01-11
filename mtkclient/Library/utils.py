@@ -182,7 +182,7 @@ class progress:
             self.progtime = time.time()
             self.progpos = pos
             if self.guiprogress is not None:
-                self.guiprogress(pos// self.pagesize)
+                self.guiprogress(pos // self.pagesize)
             print_progress(prog, 100, prefix='Done',
                            suffix=prefix + ' (Sector 0x%X of 0x%X) %0.2f MB/s' %
                                   (pos // self.pagesize,
@@ -191,7 +191,7 @@ class progress:
 
         if prog > self.prog:
             if self.guiprogress is not None:
-                self.guiprogress(pos// self.pagesize)
+                self.guiprogress(pos // self.pagesize)
             if display:
                 t0 = time.time()
                 tdiff = t0 - self.progtime
