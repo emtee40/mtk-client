@@ -49,13 +49,15 @@ phoneInfo = {"chipset": "", "bootMode": "", "daInit": False, "cdcInit": False}
 
 class DeviceHandler(QObject):
     sendToLogSignal = Signal(str)
+    update_status_text = Signal(str)
     sendToProgressSignal = Signal(int)
     mtkClass = None
     da_handler = None
 
     def __init__(self, parent, preloader: str = None, loglevel=logging.INFO, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
-        config = Mtk_Config(loglevel=logging.INFO, gui=self.sendToLogSignal, guiprogress=self.sendToProgressSignal)
+        config = Mtk_Config(loglevel=logging.INFO, gui=self.sendToLogSignal, guiprogress=self.sendToProgressSignal,
+                            update_status_text=self.update_status_text)
         config.gpt_settings = gpt_settings(gpt_num_part_entries='0', gpt_part_entry_size='0',
                                            gpt_part_entry_start_lba='0')  # This actually sets the right GPT settings..
         self.mtkClass = Mtk(config=config, loglevel=logging.INFO)
@@ -197,6 +199,7 @@ class MainWindow(QMainWindow):
     def setdevhandler(self, devhandler):
         self.devhandler = devhandler
         devhandler.sendToProgressSignal.connect(self.updateProgress)
+        devhandler.update_status_text.connect(self.update_status_text)
 
     def initread(self):
         self.readflash=ReadFlashWindow(self.ui, self, self.devhandler, self.devhandler.da_handler, self.sendToLog)
@@ -243,6 +246,10 @@ class MainWindow(QMainWindow):
         self.ui.writeboot2btn.clicked.connect(self.on_writeboot2)
         self.ui.writepreloaderbtn.clicked.connect(self.on_writepreloader)
         self.ui.writerpmbbtn.clicked.connect(self.on_writerpmb)
+
+    @Slot(str)
+    def update_status_text(self, text):
+        self.ui.phoneInfoTextbox.setText(text)
 
     @Slot()
     def disablebuttons(self):
