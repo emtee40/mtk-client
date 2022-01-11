@@ -203,12 +203,12 @@
     <message>
         <location filename="../main_gui.ui" line="812"/>
         <source>Instructions</source>
-        <translation type="unfinished"></translation>
+        <translation>Instructies</translation>
     </message>
     <message>
         <location filename="../main_gui.ui" line="956"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Step 3:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;No connection? Try shorting the test point to ground&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Stap 3:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Geen verbinding? Verbind de test point met GND&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="../main_gui.ui" line="1079"/>
