@@ -1,5 +1,6 @@
 import math
 import os
+import sys
 import time
 import datetime as dt
 from PySide6.QtCore import Signal, QThread, Slot, Property
@@ -123,7 +124,7 @@ class FDialog():
         self.fdialog.setDirectory(self.lastpath)
         self.fdialog.selectFile(fname)
         options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
+        #options |= QFileDialog.DontUseNativeDialog
         options |= QFileDialog.DontUseCustomDirectoryIcons
         ret = self.fdialog.getSaveFileName(self.parent, self.parent.tr("Select output file"), fname,
                                           "Binary dump (*.bin)",options=options)
@@ -136,13 +137,15 @@ class FDialog():
 
     def open(self, filename=""):
         options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        options |= QFileDialog.DontUseCustomDirectoryIcons
+        if sys.platform.startswith('freebsd') or sys.platform.startswith('linux'):
+            options |= QFileDialog.DontUseNativeDialog
+            options |= QFileDialog.DontUseCustomDirectoryIcons
         fname = os.path.join(self.lastpath, filename)
         self.fdialog.setDirectory(self.lastpath)
         self.fdialog.selectFile(fname)
         ret = self.fdialog.getOpenFileName(self.parent, self.parent.tr("Select input file"),
                                    fname, "Binary dump (*.bin)",options=options)
+        ret = os.path.normpath(ret)  # fixes backslash problem on windows
         if ret:
             fname = ret[0]
             if fname != "":
@@ -152,12 +155,14 @@ class FDialog():
 
     def opendir(self,caption):
         options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        options |= QFileDialog.DontUseCustomDirectoryIcons
+        if sys.platform.startswith('freebsd') or sys.platform.startswith('linux'):
+            options |= QFileDialog.DontUseNativeDialog
+            options |= QFileDialog.DontUseCustomDirectoryIcons
         fname = os.path.join(self.lastpath)
         self.fdialog.setDirectory(self.lastpath)
         fdir=self.fdialog.getExistingDirectory(self.parent, self.parent.tr(caption), fname, options=options)
-        if fdir != "":
+        fdir = os.path.normpath(fdir) #fixes backslash problem on windows
+        if fdir != "" and fdir != ".":
             self.lastpath = fdir
             return fdir
         return None

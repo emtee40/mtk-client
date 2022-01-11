@@ -80,7 +80,7 @@ class generateKeysMenu(QObject):
     def generateKeys(self):
         self.ui.keystatuslabel.setText(self.tr("Generating..."))
         hwparamFolder = self.fdialog.opendir(self.tr("Select output directory"))
-        if hwparamFolder == "":
+        if hwparamFolder == "" or hwparamFolder == None:
             self.parent.enablebuttons()
             return
         else:
