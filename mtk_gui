@@ -135,8 +135,6 @@ class MainWindow(QMainWindow):
             self.ui.tabWidget.setTabVisible(i,False)
         self.ui.partProgress.setHidden(True)
         self.ui.fullProgress.setHidden(True)
-        self.ui.connectInfo.setMinimumSize(200, 500)
-        self.ui.connectInfo.setMaximumSize(9900, 500)
 
         self.devhandler = None
         self.readflash = None

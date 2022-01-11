@@ -50,19 +50,19 @@
         <translation>Lire la ou les partitions</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="1092"/>
+        <location filename="../main_gui.ui" line="1033"/>
         <source>Read full flash</source>
         <translation>Lire le flash complet</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="1097"/>
+        <location filename="../main_gui.ui" line="1038"/>
         <source>Read at offset</source>
         <translation>Lire à un décalage</translation>
     </message>
     <message>
         <location filename="../main_gui.ui" line="377"/>
         <location filename="../main_gui.ui" line="443"/>
-        <location filename="../main_gui.ui" line="1102"/>
+        <location filename="../main_gui.ui" line="1043"/>
         <source>Write partition(s)</source>
         <translation>Écrire la ou les partitions</translation>
     </message>
@@ -108,12 +108,12 @@
         <translation>Effacer la ou les partitions</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="888"/>
+        <location filename="../main_gui.ui" line="859"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Step 1:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Power off the phone&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Étape 1:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Éteignez l&apos;appareil&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="922"/>
+        <location filename="../main_gui.ui" line="887"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Step 2:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Connect the USB cable, hold both volume buttons if needed&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Étape 2:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Connectez le câble USB tout en maintenant les deux boutons de volume enfoncés&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
@@ -203,98 +203,98 @@
         <translation>Journal de débogage</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="812"/>
+        <location filename="../main_gui.ui" line="807"/>
         <source>Instructions</source>
         <translation>Instructions</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="956"/>
+        <location filename="../main_gui.ui" line="915"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Step 3:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;No connection? Try shorting the test point to ground&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Étape 3:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Pas de connection? Essayez de court-circuiter le point de test à la terre&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="1079"/>
+        <location filename="../main_gui.ui" line="1020"/>
         <source>&amp;File</source>
         <translation>&amp;Fichier</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="1087"/>
+        <location filename="../main_gui.ui" line="1028"/>
         <source>Quit</source>
         <translation>Finir</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="1107"/>
+        <location filename="../main_gui.ui" line="1048"/>
         <source>Write full flash</source>
         <translation>Écrire le flash complet</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="1112"/>
+        <location filename="../main_gui.ui" line="1053"/>
         <source>Write at offset</source>
         <translation>Écrire à un décalage</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="1117"/>
+        <location filename="../main_gui.ui" line="1058"/>
         <source>Erase partitions(s)</source>
         <translation>Effacer la ou les partitions</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="1122"/>
+        <location filename="../main_gui.ui" line="1063"/>
         <source>Erase at offset</source>
         <translation>Effacer à un décalage</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="1162"/>
+        <location filename="../main_gui.ui" line="1103"/>
         <source>Unlock / Lock</source>
         <translation>Démarrage / Marrage</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="1167"/>
+        <location filename="../main_gui.ui" line="1108"/>
         <source>Lock device</source>
         <translation>Marrage l&apos;appareil</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="1172"/>
+        <location filename="../main_gui.ui" line="1113"/>
         <source>&amp;Quit</source>
         <translation>&amp;Finir</translation>
     </message>
     <message>
         <location filename="../main_gui.ui" line="568"/>
-        <location filename="../main_gui.ui" line="1127"/>
+        <location filename="../main_gui.ui" line="1068"/>
         <source>Read RPMB</source>
         <translation>Lire RPMB</translation>
     </message>
     <message>
         <location filename="../main_gui.ui" line="613"/>
-        <location filename="../main_gui.ui" line="1132"/>
+        <location filename="../main_gui.ui" line="1073"/>
         <source>Write RPMB</source>
         <translation>Écrire RPMB</translation>
     </message>
     <message>
         <location filename="../main_gui.ui" line="554"/>
-        <location filename="../main_gui.ui" line="1137"/>
+        <location filename="../main_gui.ui" line="1078"/>
         <source>Read preloader</source>
         <translation>Lire preloader</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="1142"/>
+        <location filename="../main_gui.ui" line="1083"/>
         <source>Generate RPMB keys</source>
         <translation>Générer des clés RPMB</translation>
     </message>
     <message>
         <location filename="../main_gui.ui" line="561"/>
-        <location filename="../main_gui.ui" line="1147"/>
+        <location filename="../main_gui.ui" line="1088"/>
         <source>Read boot2</source>
         <translation>Lire boot2</translation>
     </message>
     <message>
         <location filename="../main_gui.ui" line="599"/>
-        <location filename="../main_gui.ui" line="1152"/>
+        <location filename="../main_gui.ui" line="1093"/>
         <source>Write preloader</source>
         <translation>Écrire preloader</translation>
     </message>
     <message>
         <location filename="../main_gui.ui" line="606"/>
-        <location filename="../main_gui.ui" line="1157"/>
+        <location filename="../main_gui.ui" line="1098"/>
         <source>Write boot2</source>
         <translation>Écrire boot2</translation>
     </message>
@@ -402,28 +402,28 @@
 <context>
     <name>main</name>
     <message>
-        <location filename="../../../mtk_gui" line="164"/>
-        <location filename="../../../mtk_gui" line="170"/>
+        <location filename="../../../mtk_gui" line="162"/>
+        <location filename="../../../mtk_gui" line="168"/>
         <source> left</source>
         <translation> restant</translation>
     </message>
     <message>
-        <location filename="../../../mtk_gui" line="297"/>
+        <location filename="../../../mtk_gui" line="295"/>
         <source>Error reading gpt</source>
         <translation>Erreur de lecture GPT</translation>
     </message>
     <message>
-        <location filename="../../../mtk_gui" line="299"/>
+        <location filename="../../../mtk_gui" line="297"/>
         <source>Select partitions to dump</source>
         <translation>Sélectionnez les partitions à lire</translation>
     </message>
     <message>
-        <location filename="../../../mtk_gui" line="338"/>
+        <location filename="../../../mtk_gui" line="336"/>
         <source>Set</source>
         <translation>Choisir</translation>
     </message>
     <message>
-        <location filename="../../../mtk_gui" line="446"/>
+        <location filename="../../../mtk_gui" line="444"/>
         <source>Phone detected:
 Reading model info...</source>
         <translation>Téléphone détecté :
@@ -440,7 +440,7 @@ Cela peut prendre du temps...</translation>
         <translation type="vanished">Appareil connecté :)</translation>
     </message>
     <message>
-        <location filename="../../../mtk_gui" line="475"/>
+        <location filename="../../../mtk_gui" line="473"/>
         <source>Error initialising. Did you install the drivers?</source>
         <translation>Erreur d&apos;initialisation. As-tu installé les pilotes ?</translation>
     </message>
