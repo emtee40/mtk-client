@@ -183,19 +183,19 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_6.addLayout(self.horizontalLayout_3)
 
-        self.horizontalLayout_31 = QHBoxLayout()
-        self.horizontalLayout_31.setObjectName(u"horizontalLayout_31")
-        self.horizontalSpacer_31 = QSpacerItem(50, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.horizontalLayout_41 = QHBoxLayout()
+        self.horizontalLayout_41.setObjectName(u"horizontalLayout_41")
+        self.horizontalSpacer_showdebug = QSpacerItem(50, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
-        self.horizontalLayout_31.addItem(self.horizontalSpacer_31)
+        self.horizontalLayout_41.addItem(self.horizontalSpacer_showdebug)
 
         self.showdebugbtn = QPushButton(self.connectInfo)
         self.showdebugbtn.setObjectName(u"showdebugbtn")
 
-        self.horizontalLayout_31.addWidget(self.showdebugbtn)
+        self.horizontalLayout_41.addWidget(self.showdebugbtn)
 
 
-        self.verticalLayout_6.addLayout(self.horizontalLayout_31)
+        self.verticalLayout_6.addLayout(self.horizontalLayout_41)
 
 
         self.gridLayout_8.addWidget(self.connectInfo, 2, 0, 1, 1)

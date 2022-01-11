@@ -341,9 +341,9 @@
         </layout>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <layout class="QHBoxLayout" name="horizontalLayout_4">
          <item>
-          <spacer name="horizontalSpacer_3">
+          <spacer name="horizontalSpacer_showdebug">
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
            </property>
