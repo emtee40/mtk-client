@@ -130,14 +130,20 @@ class MainWindow(QMainWindow):
         self.timeEstTotal = TimeEstim()
         self.ui.logBox.setWordWrapMode(QTextOption.NoWrap)
         self.ui.menubar.setEnabled(False)
-        self.ui.connectInfo.setHidden(False)
-        for i in range(5):
-            self.ui.tabWidget.setTabVisible(i,False)
+        self.ui.tabWidget.setHidden(True)
         self.ui.partProgress.setHidden(True)
         self.ui.fullProgress.setHidden(True)
+        self.ui.connectInfo.setMinimumSize(200, 500);
+        self.ui.connectInfo.setMaximumSize(9900, 500);
+        self.ui.showdebugbtn.clicked.connect(self.showDebugInfo);
 
         self.devhandler = None
         self.readflash = None
+
+    def showDebugInfo(self):
+        self.ui.connectInfo.setHidden(True)
+        self.ui.tabWidget.setCurrentWidget(self.ui.debugtab)
+        self.ui.tabWidget.setHidden(False)
 
     @Slot()
     def updateState(self):
@@ -455,12 +461,9 @@ class MainWindow(QMainWindow):
             self.spinnerAnim.stop()
             self.ui.spinner_pic.setHidden(True)
             self.ui.connectInfo.setHidden(True)
-            for i in range(5):
-                self.ui.tabWidget.setTabVisible(i, True)
-            self.ui.tabWidget.setCurrentIndex(0)
             self.ui.partProgress.setHidden(False)
             self.ui.fullProgress.setHidden(False)
-            self.ui.connectInfo.setHidden(True)
+            self.ui.tabWidget.setHidden(False)
             self.initread()
             self.initkeys()
             self.initunlock()
