@@ -84,7 +84,7 @@ class Ui_MainWindow(object):
         sizePolicy1.setVerticalStretch(0)
         sizePolicy1.setHeightForWidth(self.connectInfo.sizePolicy().hasHeightForWidth())
         self.connectInfo.setSizePolicy(sizePolicy1)
-        self.connectInfo.setMinimumSize(QSize(200, 500))
+        self.connectInfo.setMinimumSize(QSize(0, 0))
         self.connectInfo.setMaximumSize(QSize(16777215, 0))
         self.verticalLayout_6 = QVBoxLayout(self.connectInfo)
         self.verticalLayout_6.setSpacing(0)
@@ -392,7 +392,7 @@ class Ui_MainWindow(object):
         self.writepartitionList.setWidgetResizable(True)
         self.scrollAreaWidgetContents_2 = QWidget()
         self.scrollAreaWidgetContents_2.setObjectName(u"scrollAreaWidgetContents_2")
-        self.scrollAreaWidgetContents_2.setGeometry(QRect(0, 0, 547, 286))
+        self.scrollAreaWidgetContents_2.setGeometry(QRect(0, 0, 98, 278))
         self.writepartitionList.setWidget(self.scrollAreaWidgetContents_2)
 
         self.gridLayout_6.addWidget(self.writepartitionList, 1, 0, 2, 1)
@@ -432,7 +432,7 @@ class Ui_MainWindow(object):
         self.erasepartitionList.setWidgetResizable(True)
         self.scrollAreaWidgetContents_3 = QWidget()
         self.scrollAreaWidgetContents_3.setObjectName(u"scrollAreaWidgetContents_3")
-        self.scrollAreaWidgetContents_3.setGeometry(QRect(0, 0, 570, 286))
+        self.scrollAreaWidgetContents_3.setGeometry(QRect(0, 0, 98, 278))
         self.erasepartitionList.setWidget(self.scrollAreaWidgetContents_3)
 
         self.gridLayout_5.addWidget(self.erasepartitionList, 1, 0, 2, 1)
