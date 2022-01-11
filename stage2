@@ -355,6 +355,32 @@ class Stage2(metaclass=LogBase):
     def keys(self, data=b"", otp=None, mode="dxcc"):
         # self.hwcrypto.disable_range_blacklist("cqdma",self.cmd_C8)
         keyinfo=""
+        retval = {}
+        meid = self.config.get_meid()
+        socid = self.config.get_socid()
+        if meid is not None:
+            self.info("MEID        : " + hexlify(meid).decode('utf-8'))
+        else:
+            try:
+                if self.config.chipconfig.meid_addr is not None:
+                    meid = self.memread(self.config.chipconfig.meid_addr, 16)
+                    self.config.set_meid(meid)
+                    self.info("MEID        : " + hexlify(meid).decode('utf-8'))
+                    retval["meid"] = hexlify(meid).decode('utf-8')
+            except Exception as err:
+                pass
+        if socid is not None:
+            self.info("SOCID        : " + hexlify(socid).decode('utf-8'))
+            retval["socid"] = socid
+        else:
+            try:
+                if self.config.chipconfig.socid_addr is not None:
+                    socid = self.memread(self.config.chipconfig.socid_addr, 32)
+                    self.config.set_socid(socid)
+                    self.info("SOCID        : " + hexlify(socid).decode('utf-8'))
+                    retval["socid"] = hexlify(socid).decode('utf-8')
+            except Exception as err:
+                pass
         if self.setup.dxcc_base is not None and mode not in ["sej_aes_decrypt","sej_aes_encrypt","dxcc_sha256"]:
             rpmbkey = self.hwcrypto.aes_hwcrypt(btype="dxcc",mode="rpmb")
             rpmb2key = self.hwcrypto.aes_hwcrypt(btype="dxcc", mode="rpmb2")
@@ -369,27 +395,48 @@ class Stage2(metaclass=LogBase):
             keyinfo+="Platform:     " + hexlify(platkey).decode('utf-8')+"\n"
             keyinfo+="Provisioning: " + hexlify(provkey).decode('utf-8')+"\n"
             keyinfo+="\n"
-            with open(os.path.join("logs", "rpmbkey.txt"), "wb") as wf:
-                wf.write(hexlify(rpmbkey))
-            with open(os.path.join("logs", "rpmbkey2.txt"), "wb") as wf:
-                wf.write(hexlify(rpmbkey))
-            with open(os.path.join("logs", "fdekey.txt"), "wb") as wf:
-                wf.write(hexlify(fdekey))
-            with open(os.path.join("logs", "itrustee_fbe.txt"), "wb") as wf:
-                wf.write(hexlify(ikey))
-            with open(os.path.join("logs", "platkey.txt"), "wb") as wf:
-                wf.write(hexlify(platkey))
-            with open(os.path.join("logs", "provkey.txt"), "wb") as wf:
-                wf.write(hexlify(provkey))
-            return [rpmbkey, fdekey, ikey, platkey, provkey], keyinfo
+            if rpmbkey is not None:
+                self.info("RPMB        : " + hexlify(rpmbkey).decode('utf-8'))
+                self.config.hwparam.writesetting("rpmbkey",hexlify(rpmbkey).decode('utf-8'))
+                retval["rpmbkey"] = hexlify(rpmbkey).decode('utf-8')
+            if rpmb2key is not None:
+                self.info("RPMB2       : " + hexlify(rpmb2key).decode('utf-8'))
+                self.config.hwparam.writesetting("rpmb2key",hexlify(rpmb2key).decode('utf-8'))
+                retval["rpmb2key"] = hexlify(rpmb2key).decode('utf-8')
+            if fdekey is not None:
+                self.info("FDE         : " + hexlify(fdekey).decode('utf-8'))
+                self.config.hwparam.writesetting("fdekey",hexlify(fdekey).decode('utf-8'))
+                retval["fdekey"] = hexlify(fdekey).decode('utf-8')
+            if ikey is not None:
+                self.info("iTrustee    : " + hexlify(ikey).decode('utf-8'))
+                self.config.hwparam.writesetting("kmkey", hexlify(ikey).decode('utf-8'))
+                retval["kmkey"] = hexlify(ikey).decode('utf-8')
+            if self.config.chipconfig.prov_addr:
+                provkey = self.memread(self.config.chipconfig.prov_addr, 16)
+                self.info("PROV        : " + hexlify(provkey).decode('utf-8'))
+                self.config.hwparam.writesetting("provkey", hexlify(provkey).decode('utf-8'))
+                retval["provkey"] = hexlify(provkey).decode('utf-8')
+            return retval, keyinfo
         elif self.setup.sej_base is not None and mode not in ["sej_aes_decrypt","sej_aes_encrypt","dxcc_sha256"]:
-            rpmbkey = self.hwcrypto.aes_hwcrypt(mode="rpmb", data=data, otp=otp, btype="sej")
+            retval={}
+            rpmbkey = self.hwcrypto.aes_hwcrypt(mode="rpmb", data=meid, otp=otp, btype="sej")
+            if rpmbkey:
+                self.info("RPMB        : " + hexlify(rpmbkey).decode('utf-8'))
+                self.config.hwparam.writesetting("rpmbkey", hexlify(rpmbkey).decode('utf-8'))
+                retval["rpmbkey"] = hexlify(rpmbkey).decode('utf-8')
+            self.info("Generating sej mtee...")
+            mtee = self.hwcrypto.aes_hwcrypt(mode="mtee", otp=otp, btype="sej")
+            if mtee:
+                self.info("MTEE        : " + hexlify(mtee).decode('utf-8'))
+                self.config.hwparam.writesetting("mtee", hexlify(mtee).decode('utf-8'))
+                retval["mtee"] = hexlify(mtee).decode('utf-8')
             keyinfo+="\nKeys :\n-----------------------------------------\n"
             keyinfo+="RPMB: " + hexlify(rpmbkey).decode('utf-8')
             keyinfo+="\n"
-            with open(os.path.join("logs", "rpmbkey.txt"), "wb") as wf:
-                wf.write(hexlify(rpmbkey))
-            return rpmbkey, keyinfo
+            keyinfo += "MTEE: " + hexlify(mtee).decode('utf-8')
+            keyinfo += "\n"
+            retval["rpmbkey"] = hexlify(rpmbkey).decode('utf-8')
+            return retval, keyinfo
         if mode == "sej_aes_decrypt":
             dec_data = self.hwcrypto.aes_hwcrypt(mode="cbc", data=data, btype="sej", encrypt=False)
             keyinfo+="\n"
@@ -584,21 +631,6 @@ def main():
         elif cmd == "keys":
             keyinfo=""
             data=b""
-            if st2.hwcrypto.meid_addr:
-                meid = st2.memread(st2.hwcrypto.meid_addr, 16)
-                keyinfo+=f"MEID: {hexlify(meid).decode('utf-8')}\n"
-                with open(os.path.join("logs", "meid.txt"), "wb") as wf:
-                    wf.write(hexlify(meid))
-            if st2.hwcrypto.socid_addr:
-                socid = st2.memread(st2.hwcrypto.socid_addr, 32)
-                keyinfo += f"SOCID: {hexlify(socid).decode('utf-8')}\n"
-                with open(os.path.join("logs", "socid.txt"), "wb") as wf:
-                    wf.write(hexlify(socid))
-            if st2.setup.sej_base or args.mode == "sej":
-                data = meid
-                # if not args.otp:
-                #    print("Option --otp is needed")
-                #    exit(0)
             if args.mode == "sej_aes_decrypt" or args.mode == "sej_aes_encrypt":
                 if not args.data:
                     print("Option --data is needed")
@@ -608,9 +640,7 @@ def main():
             # st2.jump(0x223449)
             keys, keyinfo=st2.keys(data=data, mode=args.mode, otp=args.otp)
             print(keyinfo)
-            with open("keys.txt","w") as wf:
-                wf.write(keyinfo)
-                print("Wrote keys to keys.txt")
+            print("Wrote keys to logs/hwparam.json")
         elif cmd == "reboot":
             st2.reboot()
         elif cmd == "seccfg":
