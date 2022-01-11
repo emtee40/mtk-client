@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'main_gui.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.2.2
+## Created by: Qt User Interface Compiler version 6.2.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -183,19 +183,19 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_6.addLayout(self.horizontalLayout_3)
 
-        self.horizontalLayout_41 = QHBoxLayout()
-        self.horizontalLayout_41.setObjectName(u"horizontalLayout_41")
+        self.horizontalLayout_5 = QHBoxLayout()
+        self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
         self.horizontalSpacer_showdebug = QSpacerItem(50, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
-        self.horizontalLayout_41.addItem(self.horizontalSpacer_showdebug)
+        self.horizontalLayout_5.addItem(self.horizontalSpacer_showdebug)
 
         self.showdebugbtn = QPushButton(self.connectInfo)
         self.showdebugbtn.setObjectName(u"showdebugbtn")
 
-        self.horizontalLayout_41.addWidget(self.showdebugbtn)
+        self.horizontalLayout_5.addWidget(self.showdebugbtn)
 
 
-        self.verticalLayout_6.addLayout(self.horizontalLayout_41)
+        self.verticalLayout_6.addLayout(self.horizontalLayout_5)
 
 
         self.gridLayout_8.addWidget(self.connectInfo, 2, 0, 1, 1)
@@ -264,14 +264,47 @@ class Ui_MainWindow(object):
 
         self.topInfo.addLayout(self.verticalLayout)
 
+        self.verticalLayout_7 = QVBoxLayout()
+        self.verticalLayout_7.setSpacing(0)
+        self.verticalLayout_7.setObjectName(u"verticalLayout_7")
         self.phoneInfoTextbox = QLabel(self.centralwidget)
         self.phoneInfoTextbox.setObjectName(u"phoneInfoTextbox")
-        sizePolicy4.setHeightForWidth(self.phoneInfoTextbox.sizePolicy().hasHeightForWidth())
-        self.phoneInfoTextbox.setSizePolicy(sizePolicy4)
+        sizePolicy5 = QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Expanding)
+        sizePolicy5.setHorizontalStretch(0)
+        sizePolicy5.setVerticalStretch(0)
+        sizePolicy5.setHeightForWidth(self.phoneInfoTextbox.sizePolicy().hasHeightForWidth())
+        self.phoneInfoTextbox.setSizePolicy(sizePolicy5)
         self.phoneInfoTextbox.setAlignment(Qt.AlignRight|Qt.AlignTop|Qt.AlignTrailing)
         self.phoneInfoTextbox.setWordWrap(True)
 
-        self.topInfo.addWidget(self.phoneInfoTextbox)
+        self.verticalLayout_7.addWidget(self.phoneInfoTextbox)
+
+        self.horizontalLayout_2 = QHBoxLayout()
+        self.horizontalLayout_2.setSpacing(0)
+        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
+        self.horizontalSpacer_8 = QSpacerItem(40, 1, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
+
+        self.horizontalLayout_2.addItem(self.horizontalSpacer_8)
+
+        self.pushButton = QPushButton(self.centralwidget)
+        self.pushButton.setObjectName(u"pushButton")
+        self.pushButton.setMaximumSize(QSize(200, 16777215))
+
+        self.horizontalLayout_2.addWidget(self.pushButton)
+
+
+        self.verticalLayout_7.addLayout(self.horizontalLayout_2)
+
+        self.verticalSpacer_5 = QSpacerItem(20, 2, QSizePolicy.Minimum, QSizePolicy.Maximum)
+
+        self.verticalLayout_7.addItem(self.verticalSpacer_5)
+
+        self.verticalSpacer_6 = QSpacerItem(20, 30, QSizePolicy.Minimum, QSizePolicy.Fixed)
+
+        self.verticalLayout_7.addItem(self.verticalSpacer_6)
+
+
+        self.topInfo.addLayout(self.verticalLayout_7)
 
         self.widget_3 = QWidget(self.centralwidget)
         self.widget_3.setObjectName(u"widget_3")
@@ -281,11 +314,11 @@ class Ui_MainWindow(object):
         self.pic = QLabel(self.widget_3)
         self.pic.setObjectName(u"pic")
         self.pic.setGeometry(QRect(0, 0, 87, 128))
-        sizePolicy5 = QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
-        sizePolicy5.setHorizontalStretch(0)
-        sizePolicy5.setVerticalStretch(0)
-        sizePolicy5.setHeightForWidth(self.pic.sizePolicy().hasHeightForWidth())
-        self.pic.setSizePolicy(sizePolicy5)
+        sizePolicy6 = QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
+        sizePolicy6.setHorizontalStretch(0)
+        sizePolicy6.setVerticalStretch(0)
+        sizePolicy6.setHeightForWidth(self.pic.sizePolicy().hasHeightForWidth())
+        self.pic.setSizePolicy(sizePolicy6)
         self.pic.setMinimumSize(QSize(50, 128))
         self.pic.setMaximumSize(QSize(87, 128))
         self.pic.setPixmap(QPixmap(u"images/phone_notfound.png"))
@@ -337,11 +370,11 @@ class Ui_MainWindow(object):
 
         self.readpartitionList = QScrollArea(self.readtab)
         self.readpartitionList.setObjectName(u"readpartitionList")
-        sizePolicy6 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.MinimumExpanding)
-        sizePolicy6.setHorizontalStretch(0)
-        sizePolicy6.setVerticalStretch(0)
-        sizePolicy6.setHeightForWidth(self.readpartitionList.sizePolicy().hasHeightForWidth())
-        self.readpartitionList.setSizePolicy(sizePolicy6)
+        sizePolicy7 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.MinimumExpanding)
+        sizePolicy7.setHorizontalStretch(0)
+        sizePolicy7.setVerticalStretch(0)
+        sizePolicy7.setHeightForWidth(self.readpartitionList.sizePolicy().hasHeightForWidth())
+        self.readpartitionList.setSizePolicy(sizePolicy7)
         self.readpartitionList.setMinimumSize(QSize(0, 280))
         self.readpartitionList.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.readpartitionList.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
@@ -349,7 +382,7 @@ class Ui_MainWindow(object):
         self.readpartitionList.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 605, 278))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 573, 278))
         self.readpartitionList.setWidget(self.scrollAreaWidgetContents)
 
         self.gridLayout_7.addWidget(self.readpartitionList, 2, 0, 1, 1)
@@ -380,11 +413,8 @@ class Ui_MainWindow(object):
 
         self.writepartitionList = QScrollArea(self.writetab)
         self.writepartitionList.setObjectName(u"writepartitionList")
-        sizePolicy7 = QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Expanding)
-        sizePolicy7.setHorizontalStretch(0)
-        sizePolicy7.setVerticalStretch(0)
-        sizePolicy7.setHeightForWidth(self.writepartitionList.sizePolicy().hasHeightForWidth())
-        self.writepartitionList.setSizePolicy(sizePolicy7)
+        sizePolicy5.setHeightForWidth(self.writepartitionList.sizePolicy().hasHeightForWidth())
+        self.writepartitionList.setSizePolicy(sizePolicy5)
         self.writepartitionList.setMinimumSize(QSize(0, 280))
         self.writepartitionList.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.writepartitionList.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
@@ -392,7 +422,7 @@ class Ui_MainWindow(object):
         self.writepartitionList.setWidgetResizable(True)
         self.scrollAreaWidgetContents_2 = QWidget()
         self.scrollAreaWidgetContents_2.setObjectName(u"scrollAreaWidgetContents_2")
-        self.scrollAreaWidgetContents_2.setGeometry(QRect(0, 0, 574, 294))
+        self.scrollAreaWidgetContents_2.setGeometry(QRect(0, 0, 547, 286))
         self.writepartitionList.setWidget(self.scrollAreaWidgetContents_2)
 
         self.gridLayout_6.addWidget(self.writepartitionList, 1, 0, 2, 1)
@@ -414,8 +444,8 @@ class Ui_MainWindow(object):
         self.gridLayout_5.setObjectName(u"gridLayout_5")
         self.erasepartitionList = QScrollArea(self.erasetab)
         self.erasepartitionList.setObjectName(u"erasepartitionList")
-        sizePolicy7.setHeightForWidth(self.erasepartitionList.sizePolicy().hasHeightForWidth())
-        self.erasepartitionList.setSizePolicy(sizePolicy7)
+        sizePolicy5.setHeightForWidth(self.erasepartitionList.sizePolicy().hasHeightForWidth())
+        self.erasepartitionList.setSizePolicy(sizePolicy5)
         self.erasepartitionList.setMinimumSize(QSize(0, 280))
         self.erasepartitionList.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.erasepartitionList.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
@@ -423,7 +453,7 @@ class Ui_MainWindow(object):
         self.erasepartitionList.setWidgetResizable(True)
         self.scrollAreaWidgetContents_3 = QWidget()
         self.scrollAreaWidgetContents_3.setObjectName(u"scrollAreaWidgetContents_3")
-        self.scrollAreaWidgetContents_3.setGeometry(QRect(0, 0, 602, 278))
+        self.scrollAreaWidgetContents_3.setGeometry(QRect(0, 0, 570, 278))
         self.erasepartitionList.setWidget(self.scrollAreaWidgetContents_3)
 
         self.gridLayout_5.addWidget(self.erasepartitionList, 2, 0, 2, 1)
@@ -667,7 +697,7 @@ class Ui_MainWindow(object):
         self.connectInfo.raise_()
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
-        self.menubar.setGeometry(QRect(0, 0, 777, 22))
+        self.menubar.setGeometry(QRect(0, 0, 777, 24))
         self.menuFile = QMenu(self.menubar)
         self.menuFile.setObjectName(u"menuFile")
         MainWindow.setMenuBar(self.menubar)
@@ -712,6 +742,7 @@ class Ui_MainWindow(object):
         self.logoPic.setText("")
         self.copyrightInfo.setText(QCoreApplication.translate("MainWindow", u"<b>Made by:</b> Bjoern Kerler<br/><b>Gui by:</b> Geert-Jan Kreileman<br/><br/><b>Credits:</b><br/>kamakiri [xyzz]<br/>linecode exploit [chimera]<br/>Chaosmaster<br/>and all contributers</p>", None))
         self.phoneInfoTextbox.setText(QCoreApplication.translate("MainWindow", u"No phone detected.", None))
+        self.pushButton.setText(QCoreApplication.translate("MainWindow", u"Connection settings", None))
         self.pic.setText("")
         self.spinner_pic.setText("")
         self.readDumpGPTCheckbox.setText(QCoreApplication.translate("MainWindow", u"Dump GPT", None))
