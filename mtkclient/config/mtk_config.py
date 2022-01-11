@@ -5,11 +5,13 @@ from binascii import hexlify
 from mtkclient.Library.utils import LogBase
 from mtkclient.Library.settings import hwparam
 from mtkclient.config.brom_config import chipconfig, damodes, hwconfig
+from PySide6.QtCore import QObject
 
 class Mtk_Config(metaclass=LogBase):
-    def __init__(self, loglevel=logging.INFO, gui=None, guiprogress=None):
+    def __init__(self, loglevel=logging.INFO, gui=None, guiprogress=None, update_status_text=None):
         self.gui = gui
         self.guiprogress = guiprogress
+        self.update_status_text = update_status_text
         self.pid = -1
         self.vid = -1
         self.var1 = 0xA
@@ -23,6 +25,7 @@ class Mtk_Config(metaclass=LogBase):
         self.preloader_filename = None
         self.payloadfile = None
         self.loader = None
+        self.tr = QObject().tr
         if sys.platform.startswith('darwin'):
             self.ptype = "kamakiri"
         else:
@@ -59,6 +62,10 @@ class Mtk_Config(metaclass=LogBase):
             self.__logger.setLevel(logging.DEBUG)
         else:
             self.__logger.setLevel(logging.INFO)
+
+    def set_gui_status(self, status):
+        if self.update_status_text is not None:
+            self.update_status_text.emit(status)
 
     def set_meid(self,meid):
         self.hwparam = hwparam(meid, self.hwparam_path)

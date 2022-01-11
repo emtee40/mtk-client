@@ -1061,12 +1061,14 @@ class DAXFlash(metaclass=LogBase):
         speed = self.get_usb_speed()
         if speed == b"full-speed":
             self.info("Reconnecting to preloader")
+            self.config.set_gui_status(self.config.tr("Reconnecting to preloader"))
             self.set_usb_speed()
             self.mtk.port.close(reset=False)
             time.sleep(2)
             while not self.mtk.port.cdc.connect():
                 time.sleep(0.5)
             self.info("Connected to preloader")
+            self.config.set_gui_status(self.config.tr("Connected to preloader"))
 
     def upload_da(self):
         if self.upload():

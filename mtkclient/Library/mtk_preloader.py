@@ -135,8 +135,10 @@ class Preloader(metaclass=LogBase):
 
         if not display:
             self.info("Status: Waiting for PreLoader VCOM, please reconnect mobile to brom mode")
+            self.config.set_gui_status(self.config.tr("Status: Waiting for connection"))
         else:
             self.info("Status: Waiting for PreLoader VCOM, please connect mobile")
+            self.config.set_gui_status(self.config.tr("Status: Waiting for connection"))
         res = False
         tries = 0
         while not res and tries < 10:
@@ -144,6 +146,7 @@ class Preloader(metaclass=LogBase):
             if not res:
                 if display:
                     self.error("Status: Handshake failed, retrying...")
+                    self.config.set_gui_status(self.config.tr("Status: Handshake failed, retrying..."))
                 self.mtk.port.close()
                 tries += 1
         if tries == 10:
@@ -152,6 +155,7 @@ class Preloader(metaclass=LogBase):
         if not self.echo(self.Cmd.GET_HW_CODE.value):  # 0xFD
             if not self.echo(self.Cmd.GET_HW_CODE.value):
                 self.error("Sync error. Please power off the device and retry.")
+                self.config.set_gui_status(self.config.tr("Sync error. Please power off the device and retry."))
             return False
         else:
             val = self.rdword()
@@ -376,6 +380,7 @@ class Preloader(metaclass=LogBase):
 
     def jump_da(self, addr):
         self.info(f"Jumping to {hex(addr)}")
+        self.config.set_gui_status(self.config.tr(f"Jumping to {hex(addr)}"))
         if self.echo(self.Cmd.JUMP_DA.value):
             self.usbwrite(pack(">I", addr))
             data = b""
@@ -383,18 +388,22 @@ class Preloader(metaclass=LogBase):
                 resaddr = self.rdword()
             except Exception as e:
                 self.error(f"Jump_DA Resp2 {str(e)} ," + hexlify(data).decode('utf-8'))
+                self.config.set_gui_status(self.config.tr("DA Error"))
                 return False
             if resaddr == addr:
                 try:
                     status = self.rword()
                 except Exception as e:
                     self.error(f"Jump_DA Resp2 {str(e)} ," + hexlify(data).decode('utf-8'))
+                    self.config.set_gui_status(self.config.tr("DA Error"))
                     return False
                 if status == 0:
                     self.info(f"Jumping to {hex(addr)}: ok.")
+                    self.config.set_gui_status(self.config.tr(f"Jumping to {hex(addr)}: ok."))
                     return True
                 else:
                     self.error(f"Jump_DA status error:{self.eh.status(status)}")
+                    self.config.set_gui_status(self.config.tr("DA Error"))
 
         return False
 
@@ -578,6 +587,7 @@ class Preloader(metaclass=LogBase):
         return gen_chksum, data
 
     def upload_data(self, data, gen_chksum):
+        self.config.set_gui_status(self.config.tr(f"Uploading data."))
         bytestowrite = len(data)
         pos = 0
         while bytestowrite > 0:
@@ -601,18 +611,23 @@ class Preloader(metaclass=LogBase):
         return True
 
     def send_da(self, address, size, sig_len, dadata):
+        self.config.set_gui_status(self.config.tr("Sending DA."))
         gen_chksum, data = self.prepare_data(dadata[:-sig_len], dadata[-sig_len:], size)
         if not self.echo(self.Cmd.SEND_DA.value):  # 0xD7
             self.error(f"Error on DA_Send cmd")
+            self.config.set_gui_status(self.config.tr("Error on DA_Send cmd"))
             return False
         if not self.echo(address):
             self.error(f"Error on DA_Send address")
+            self.config.set_gui_status(self.config.tr("Error on DA_Send address"))
             return False
         if not self.echo(len(data)):
             self.error(f"Error on DA_Send size")
+            self.config.set_gui_status(self.config.tr("Error on DA_Send size"))
             return False
         if not self.echo(sig_len):
             self.error(f"Error on DA_Send sig_len")
+            self.config.set_gui_status(self.config.tr("Error on DA_Send sig_len"))
             return False
 
         status = self.rword()
@@ -623,4 +638,5 @@ class Preloader(metaclass=LogBase):
             else:
                 return True
         self.error(f"DA_Send status error:{self.eh.status(status)}")
+        self.config.set_gui_status(self.config.tr("Error on DA_Send"))
         return False

@@ -41,6 +41,7 @@ class ReadFlashWindow(QObject):
         if self.dumpFolder:
             thread = asyncThread(parent=self.parent, n=0, function=self.dumpPartitionAsync,parameters=[])
             thread.sendToLogSignal.connect(self.sendToLog)
+            thread.update_status_text.connect(self.parent.update_status_text)
             thread.sendUpdateSignal.connect(self.parent.updateState)
             thread.sendToProgressSignal.connect(self.parent.updateProgress)
             thread.start()
@@ -52,6 +53,7 @@ class ReadFlashWindow(QObject):
         toolkit.sendToLogSignal.emit("test")
         self.parent.Status["done"] = False
         thread = asyncThread(self.parent.parent(), 0, self.parent.updateStateAsync, [])
+        thread.update_status_text.connect(self.parent.update_status_text)
         thread.sendUpdateSignal.connect(self.parent.updateState)
         thread.sendToProgressSignal.connect(self.parent.updateProgress)
         thread.start()

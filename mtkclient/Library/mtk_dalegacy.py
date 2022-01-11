@@ -1092,16 +1092,19 @@ class DALegacy(metaclass=LogBase):
                 buffer = self.usbread(1)
                 if buffer != self.Rsp.ACK:
                     self.error(
-                        f"Error on sending brom stage {stage - 1} addr {hex(pos)}: " + hexlify(buffer).decode('utf-8'))
+                        f"Error on sending brom stage {stage} addr {hex(pos)}: " + hexlify(buffer).decode('utf-8'))
+                    self.config.set_gui_status(self.config.tr("Error on sending brom stage"))
                     break
             time.sleep(0.5)
             self.usbwrite(self.Rsp.ACK)
             buffer = self.usbread(1)
             if buffer == self.Rsp.ACK:
-                self.info(f"Successfully uploaded stage {stage - 1}")
+                self.info(f"Successfully uploaded stage {stage}")
+                self.config.set_gui_status(self.config.tr(f"Successfully uploaded stage {stage}"))
                 return True
         else:
-            self.error(f"Error on sending brom stage {stage - 1} : " + hexlify(buffer).decode('utf-8'))
+            self.error(f"Error on sending brom stage {stage} : " + hexlify(buffer).decode('utf-8'))
+            self.config.set_gui_status(self.config.tr("Error on sending brom stage"))
         return False
 
     def check_usb_cmd(self):

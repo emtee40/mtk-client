@@ -101,6 +101,7 @@ class asyncThread(QThread):
     sendToLogSignal = Signal(str)
     sendUpdateSignal = Signal()
     sendToProgressSignal = Signal(int)
+    update_status_text = Signal(str)
 
     def __init__(self, parent, n, function, parameters):
         super(asyncThread, self).__init__(parent)
