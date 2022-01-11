@@ -630,21 +630,36 @@
           <string>Read partition(s)</string>
          </attribute>
          <layout class="QGridLayout" name="gridLayout_7">
-          <item row="3" column="1">
+          <item row="4" column="1">
            <widget class="QCheckBox" name="readDumpGPTCheckbox">
             <property name="text">
              <string>Dump GPT</string>
             </property>
            </widget>
           </item>
-          <item row="4" column="1">
-           <widget class="QCheckBox" name="readselectallcheckbox">
+          <item row="0" column="0">
+           <widget class="QLabel" name="readtitle">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>20</height>
+             </size>
+            </property>
             <property name="text">
-             <string>Select all partitions</string>
+             <string>Select partitions to read</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
             </property>
            </widget>
           </item>
-          <item row="1" column="0">
+          <item row="2" column="0">
            <widget class="QScrollArea" name="readpartitionList">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
@@ -675,39 +690,24 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>573</width>
+               <width>605</width>
                <height>278</height>
               </rect>
              </property>
             </widget>
            </widget>
           </item>
-          <item row="0" column="0">
-           <widget class="QLabel" name="readtitle">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>20</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>Select partitions to read</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-            </property>
-           </widget>
-          </item>
           <item row="0" column="1">
            <widget class="QPushButton" name="readpartitionsbtn">
             <property name="text">
              <string>Read partition(s)</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QCheckBox" name="readselectallcheckbox">
+            <property name="text">
+             <string>Select all partitions</string>
             </property>
            </widget>
           </item>
@@ -771,8 +771,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>98</width>
-               <height>278</height>
+               <width>574</width>
+               <height>294</height>
               </rect>
              </property>
             </widget>
@@ -799,29 +799,7 @@
           <string>Erase partition(s)</string>
          </attribute>
          <layout class="QGridLayout" name="gridLayout_5">
-          <item row="0" column="0">
-           <widget class="QLabel" name="erasetitle">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>20</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>Select partitions to erase</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0" rowspan="2">
+          <item row="2" column="0" rowspan="2">
            <widget class="QScrollArea" name="erasepartitionList">
             <property name="sizePolicy">
              <sizepolicy hsizetype="MinimumExpanding" vsizetype="Expanding">
@@ -852,17 +830,32 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>98</width>
+               <width>602</width>
                <height>278</height>
               </rect>
              </property>
             </widget>
            </widget>
           </item>
-          <item row="2" column="1">
-           <widget class="QCheckBox" name="eraseselectallpartitionscheckbox">
+          <item row="0" column="0">
+           <widget class="QLabel" name="erasetitle">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>20</height>
+             </size>
+            </property>
             <property name="text">
-             <string>Select all partitions</string>
+             <string>Select partitions to erase</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
             </property>
            </widget>
           </item>
@@ -870,6 +863,13 @@
            <widget class="QPushButton" name="erasepartitionsbtn">
             <property name="text">
              <string>Erase partition(s)</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QCheckBox" name="eraseselectallpartitionscheckbox">
+            <property name="text">
+             <string>Select all partitions</string>
             </property>
            </widget>
           </item>
@@ -1033,13 +1033,6 @@
           <string>Keys</string>
          </attribute>
          <layout class="QGridLayout" name="gridLayout_2">
-          <item row="0" column="0">
-           <widget class="QPushButton" name="generatekeybtn">
-            <property name="text">
-             <string>Generate Keys</string>
-            </property>
-           </widget>
-          </item>
           <item row="1" column="0">
            <widget class="QTableWidget" name="keytable">
             <property name="enabled">
@@ -1117,6 +1110,13 @@
            <widget class="QLabel" name="keystatuslabel">
             <property name="text">
              <string>Ready.</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QPushButton" name="generatekeybtn">
+            <property name="text">
+             <string>Generate Keys</string>
             </property>
            </widget>
           </item>
@@ -1222,7 +1222,7 @@
      <x>0</x>
      <y>0</y>
      <width>777</width>
-     <height>24</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

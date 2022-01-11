@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'main_gui.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.2.1
+## Created by: Qt User Interface Compiler version 6.2.2
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -324,12 +324,16 @@ class Ui_MainWindow(object):
         self.readDumpGPTCheckbox = QCheckBox(self.readtab)
         self.readDumpGPTCheckbox.setObjectName(u"readDumpGPTCheckbox")
 
-        self.gridLayout_7.addWidget(self.readDumpGPTCheckbox, 3, 1, 1, 1)
+        self.gridLayout_7.addWidget(self.readDumpGPTCheckbox, 4, 1, 1, 1)
 
-        self.readselectallcheckbox = QCheckBox(self.readtab)
-        self.readselectallcheckbox.setObjectName(u"readselectallcheckbox")
+        self.readtitle = QLabel(self.readtab)
+        self.readtitle.setObjectName(u"readtitle")
+        sizePolicy1.setHeightForWidth(self.readtitle.sizePolicy().hasHeightForWidth())
+        self.readtitle.setSizePolicy(sizePolicy1)
+        self.readtitle.setMinimumSize(QSize(0, 20))
+        self.readtitle.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignTop)
 
-        self.gridLayout_7.addWidget(self.readselectallcheckbox, 4, 1, 1, 1)
+        self.gridLayout_7.addWidget(self.readtitle, 0, 0, 1, 1)
 
         self.readpartitionList = QScrollArea(self.readtab)
         self.readpartitionList.setObjectName(u"readpartitionList")
@@ -345,24 +349,20 @@ class Ui_MainWindow(object):
         self.readpartitionList.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 573, 278))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 605, 278))
         self.readpartitionList.setWidget(self.scrollAreaWidgetContents)
 
-        self.gridLayout_7.addWidget(self.readpartitionList, 1, 0, 1, 1)
-
-        self.readtitle = QLabel(self.readtab)
-        self.readtitle.setObjectName(u"readtitle")
-        sizePolicy1.setHeightForWidth(self.readtitle.sizePolicy().hasHeightForWidth())
-        self.readtitle.setSizePolicy(sizePolicy1)
-        self.readtitle.setMinimumSize(QSize(0, 20))
-        self.readtitle.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignTop)
-
-        self.gridLayout_7.addWidget(self.readtitle, 0, 0, 1, 1)
+        self.gridLayout_7.addWidget(self.readpartitionList, 2, 0, 1, 1)
 
         self.readpartitionsbtn = QPushButton(self.readtab)
         self.readpartitionsbtn.setObjectName(u"readpartitionsbtn")
 
         self.gridLayout_7.addWidget(self.readpartitionsbtn, 0, 1, 1, 1)
+
+        self.readselectallcheckbox = QCheckBox(self.readtab)
+        self.readselectallcheckbox.setObjectName(u"readselectallcheckbox")
+
+        self.gridLayout_7.addWidget(self.readselectallcheckbox, 1, 0, 1, 1)
 
         self.tabWidget.addTab(self.readtab, "")
         self.writetab = QWidget()
@@ -392,7 +392,7 @@ class Ui_MainWindow(object):
         self.writepartitionList.setWidgetResizable(True)
         self.scrollAreaWidgetContents_2 = QWidget()
         self.scrollAreaWidgetContents_2.setObjectName(u"scrollAreaWidgetContents_2")
-        self.scrollAreaWidgetContents_2.setGeometry(QRect(0, 0, 98, 278))
+        self.scrollAreaWidgetContents_2.setGeometry(QRect(0, 0, 574, 294))
         self.writepartitionList.setWidget(self.scrollAreaWidgetContents_2)
 
         self.gridLayout_6.addWidget(self.writepartitionList, 1, 0, 2, 1)
@@ -412,15 +412,6 @@ class Ui_MainWindow(object):
         self.erasetab.setObjectName(u"erasetab")
         self.gridLayout_5 = QGridLayout(self.erasetab)
         self.gridLayout_5.setObjectName(u"gridLayout_5")
-        self.erasetitle = QLabel(self.erasetab)
-        self.erasetitle.setObjectName(u"erasetitle")
-        sizePolicy1.setHeightForWidth(self.erasetitle.sizePolicy().hasHeightForWidth())
-        self.erasetitle.setSizePolicy(sizePolicy1)
-        self.erasetitle.setMinimumSize(QSize(0, 20))
-        self.erasetitle.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignTop)
-
-        self.gridLayout_5.addWidget(self.erasetitle, 0, 0, 1, 1)
-
         self.erasepartitionList = QScrollArea(self.erasetab)
         self.erasepartitionList.setObjectName(u"erasepartitionList")
         sizePolicy7.setHeightForWidth(self.erasepartitionList.sizePolicy().hasHeightForWidth())
@@ -432,20 +423,29 @@ class Ui_MainWindow(object):
         self.erasepartitionList.setWidgetResizable(True)
         self.scrollAreaWidgetContents_3 = QWidget()
         self.scrollAreaWidgetContents_3.setObjectName(u"scrollAreaWidgetContents_3")
-        self.scrollAreaWidgetContents_3.setGeometry(QRect(0, 0, 98, 278))
+        self.scrollAreaWidgetContents_3.setGeometry(QRect(0, 0, 602, 278))
         self.erasepartitionList.setWidget(self.scrollAreaWidgetContents_3)
 
-        self.gridLayout_5.addWidget(self.erasepartitionList, 1, 0, 2, 1)
+        self.gridLayout_5.addWidget(self.erasepartitionList, 2, 0, 2, 1)
 
-        self.eraseselectallpartitionscheckbox = QCheckBox(self.erasetab)
-        self.eraseselectallpartitionscheckbox.setObjectName(u"eraseselectallpartitionscheckbox")
+        self.erasetitle = QLabel(self.erasetab)
+        self.erasetitle.setObjectName(u"erasetitle")
+        sizePolicy1.setHeightForWidth(self.erasetitle.sizePolicy().hasHeightForWidth())
+        self.erasetitle.setSizePolicy(sizePolicy1)
+        self.erasetitle.setMinimumSize(QSize(0, 20))
+        self.erasetitle.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignTop)
 
-        self.gridLayout_5.addWidget(self.eraseselectallpartitionscheckbox, 2, 1, 1, 1)
+        self.gridLayout_5.addWidget(self.erasetitle, 0, 0, 1, 1)
 
         self.erasepartitionsbtn = QPushButton(self.erasetab)
         self.erasepartitionsbtn.setObjectName(u"erasepartitionsbtn")
 
         self.gridLayout_5.addWidget(self.erasepartitionsbtn, 0, 1, 1, 1)
+
+        self.eraseselectallpartitionscheckbox = QCheckBox(self.erasetab)
+        self.eraseselectallpartitionscheckbox.setObjectName(u"eraseselectallpartitionscheckbox")
+
+        self.gridLayout_5.addWidget(self.eraseselectallpartitionscheckbox, 1, 0, 1, 1)
 
         self.tabWidget.addTab(self.erasetab, "")
         self.tab = QWidget()
@@ -554,11 +554,6 @@ class Ui_MainWindow(object):
         self.keytab.setObjectName(u"keytab")
         self.gridLayout_2 = QGridLayout(self.keytab)
         self.gridLayout_2.setObjectName(u"gridLayout_2")
-        self.generatekeybtn = QPushButton(self.keytab)
-        self.generatekeybtn.setObjectName(u"generatekeybtn")
-
-        self.gridLayout_2.addWidget(self.generatekeybtn, 0, 0, 1, 1)
-
         self.keytable = QTableWidget(self.keytab)
         if (self.keytable.columnCount() < 2):
             self.keytable.setColumnCount(2)
@@ -598,6 +593,11 @@ class Ui_MainWindow(object):
         self.keystatuslabel.setObjectName(u"keystatuslabel")
 
         self.gridLayout_2.addWidget(self.keystatuslabel, 2, 0, 1, 1)
+
+        self.generatekeybtn = QPushButton(self.keytab)
+        self.generatekeybtn.setObjectName(u"generatekeybtn")
+
+        self.gridLayout_2.addWidget(self.generatekeybtn, 3, 0, 1, 1)
 
         self.tabWidget.addTab(self.keytab, "")
         self.debugtab = QWidget()
@@ -667,7 +667,7 @@ class Ui_MainWindow(object):
         self.connectInfo.raise_()
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
-        self.menubar.setGeometry(QRect(0, 0, 777, 24))
+        self.menubar.setGeometry(QRect(0, 0, 777, 22))
         self.menuFile = QMenu(self.menubar)
         self.menuFile.setObjectName(u"menuFile")
         MainWindow.setMenuBar(self.menubar)
@@ -715,17 +715,17 @@ class Ui_MainWindow(object):
         self.pic.setText("")
         self.spinner_pic.setText("")
         self.readDumpGPTCheckbox.setText(QCoreApplication.translate("MainWindow", u"Dump GPT", None))
-        self.readselectallcheckbox.setText(QCoreApplication.translate("MainWindow", u"Select all partitions", None))
         self.readtitle.setText(QCoreApplication.translate("MainWindow", u"Select partitions to read", None))
         self.readpartitionsbtn.setText(QCoreApplication.translate("MainWindow", u"Read partition(s)", None))
+        self.readselectallcheckbox.setText(QCoreApplication.translate("MainWindow", u"Select all partitions", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.readtab), QCoreApplication.translate("MainWindow", u"Read partition(s)", None))
         self.writetitle.setText(QCoreApplication.translate("MainWindow", u"Select partitions to write", None))
         self.writepartbtn.setText(QCoreApplication.translate("MainWindow", u"Write partition(s)", None))
         self.writeselectfromdir.setText(QCoreApplication.translate("MainWindow", u"Select from directory", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.writetab), QCoreApplication.translate("MainWindow", u"Write partition(s)", None))
         self.erasetitle.setText(QCoreApplication.translate("MainWindow", u"Select partitions to erase", None))
-        self.eraseselectallpartitionscheckbox.setText(QCoreApplication.translate("MainWindow", u"Select all partitions", None))
         self.erasepartitionsbtn.setText(QCoreApplication.translate("MainWindow", u"Erase partition(s)", None))
+        self.eraseselectallpartitionscheckbox.setText(QCoreApplication.translate("MainWindow", u"Select all partitions", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.erasetab), QCoreApplication.translate("MainWindow", u"Erase partition(s)", None))
         self.readflashbtn.setText(QCoreApplication.translate("MainWindow", u"Read flash", None))
         self.readpreloaderbtn.setText(QCoreApplication.translate("MainWindow", u"Read preloader", None))
@@ -741,7 +741,6 @@ class Ui_MainWindow(object):
         self.lockbutton.setText(QCoreApplication.translate("MainWindow", u"Lock bootloader", None))
         self.unlockbutton.setText(QCoreApplication.translate("MainWindow", u"Unlock bootloader", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), QCoreApplication.translate("MainWindow", u"Flash Tools", None))
-        self.generatekeybtn.setText(QCoreApplication.translate("MainWindow", u"Generate Keys", None))
         ___qtablewidgetitem = self.keytable.horizontalHeaderItem(0)
         ___qtablewidgetitem.setText(QCoreApplication.translate("MainWindow", u"Type", None));
         ___qtablewidgetitem1 = self.keytable.horizontalHeaderItem(1)
@@ -761,6 +760,7 @@ class Ui_MainWindow(object):
         ___qtablewidgetitem8 = self.keytable.verticalHeaderItem(6)
         ___qtablewidgetitem8.setText(QCoreApplication.translate("MainWindow", u"Neue Zeile", None));
         self.keystatuslabel.setText(QCoreApplication.translate("MainWindow", u"Ready.", None))
+        self.generatekeybtn.setText(QCoreApplication.translate("MainWindow", u"Generate Keys", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.keytab), QCoreApplication.translate("MainWindow", u"Keys", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.debugtab), QCoreApplication.translate("MainWindow", u"Debug Log", None))
         self.partProgressText.setText("")

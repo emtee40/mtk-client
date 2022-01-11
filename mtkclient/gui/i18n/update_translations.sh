@@ -1,2 +1,2 @@
 #!/bin/sh
-pyside6-lupdate ../*.py ../../../mtk_gui ../*.ui -ts *.ts
+pyside6-lupdate ../*.py ../../../mtkclient/Library/*.py ../../../mtk_gui ../*.ui -ts *.ts
