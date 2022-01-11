@@ -1171,7 +1171,7 @@ hwconfig = {
         brom_payload_addr=0x100A00,
         da_payload_addr=0x201000,
         pl_payload_addr=0x40001000,  #
-        gcpu_base=0x10210000,
+        gcpu_base=0x101E32A0,
         sej_base=0x1000A000,
         # no dxcc
         cqdma_base=0x10212C00,

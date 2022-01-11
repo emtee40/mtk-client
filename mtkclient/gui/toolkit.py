@@ -123,11 +123,8 @@ class FDialog():
         fname = os.path.join(self.lastpath, filename)
         self.fdialog.setDirectory(self.lastpath)
         self.fdialog.selectFile(fname)
-        options = QFileDialog.Options()
-        #options |= QFileDialog.DontUseNativeDialog
-        options |= QFileDialog.DontUseCustomDirectoryIcons
         ret = self.fdialog.getSaveFileName(self.parent, self.parent.tr("Select output file"), fname,
-                                          "Binary dump (*.bin)",options=options)
+                                          "Binary dump (*.bin)")
         if ret:
             fname = ret[0]
             if fname != "":
@@ -136,15 +133,11 @@ class FDialog():
         return None
 
     def open(self, filename=""):
-        options = QFileDialog.Options()
-        if sys.platform.startswith('freebsd') or sys.platform.startswith('linux'):
-            options |= QFileDialog.DontUseNativeDialog
-            options |= QFileDialog.DontUseCustomDirectoryIcons
         fname = os.path.join(self.lastpath, filename)
         self.fdialog.setDirectory(self.lastpath)
         self.fdialog.selectFile(fname)
         ret = self.fdialog.getOpenFileName(self.parent, self.parent.tr("Select input file"),
-                                   fname, "Binary dump (*.bin)",options=options)
+                                   fname, "Binary dump (*.bin)")
         ret = os.path.normpath(ret)  # fixes backslash problem on windows
         if ret:
             fname = ret[0]
