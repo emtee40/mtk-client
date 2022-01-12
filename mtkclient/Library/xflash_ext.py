@@ -537,6 +537,7 @@ class xflashext(metaclass=LogBase):
         meid = self.config.get_meid()
         socid = self.config.get_socid()
         retval = {}
+        retval["hwcode"] = hex(hwc.hwcode)
         if meid is not None:
             self.info("MEID        : " + hexlify(meid).decode('utf-8'))
         else:

@@ -733,7 +733,7 @@ hwconfig = {
         prov_addr=0x1054F4,
         damode=damodes.XFLASH,
         dacode=0x6765,
-        name="MT6765",
+        name="MT6765/MT8768t",
         description="Helio P35/G35",
         loader="mt6765_payload.bin"),
     0x707: chipconfig(
