@@ -99,6 +99,10 @@ RC4KSA = 0x88
 regval = {
     "GCPU_REG_CTL": 0,
     "GCPU_REG_MSC": 4,
+
+    "GCPU_UNK1": 0x20,
+    "GCPU_UNK2": 0x24,
+
     "GCPU_REG_PC_CTL": 0x400,
     "GCPU_REG_MEM_ADDR": 0x404,
     "GCPU_REG_MEM_DATA": 0x408,
@@ -114,6 +118,7 @@ regval = {
     "GCPU_REG_INT_SET": 0x800,
     "GCPU_REG_INT_CLR": 0x804,
     "GCPU_REG_INT_EN": 0x808,
+    "GCPU_UNK3": 0x80C,
 
     "GCPU_REG_MEM_CMD": 0xC00,
     "GCPU_REG_MEM_P0": 0xC04,
@@ -135,6 +140,7 @@ regval = {
 }
 CKSYS_BASE = 0x10000000
 CLR_CLK_GATING_CTRL2 = (CKSYS_BASE + 0x09C)
+
 
 class GCpuReg:
     def __init__(self, setup):
@@ -364,7 +370,7 @@ class GCpu(metaclass=LogBase):
             iv = "4dd12bdf0ec7d26c482490b3482a1b1f"
         if len(data) != 16:
             raise RuntimeError("data must be 16 bytes")
-        if isinstance(iv,str):
+        if isinstance(iv, str):
             iv_bytes = bytes.fromhex(iv)
         else:
             iv_bytes = iv
@@ -399,12 +405,12 @@ class GCpu(metaclass=LogBase):
         self.memptr_set(0x16, keyseed)
 
         self.reg.GCPU_REG_MEM_P0 = 1  # Decrypt
-        self.reg.GCPU_REG_MEM_P1 = 0x12 # Key
-        self.reg.GCPU_REG_MEM_P2 = 0x16 # Data
-        self.reg.GCPU_REG_MEM_P3 = 0x1A # Out (IV) # 04000010250d0058a90004cba53f0010
-        self.cmd(AESPK_D) #AESPK_D) # 0x78
-        seed=bytearray(ivseed)
-        aeskey2=bytearray(aeskey2)
+        self.reg.GCPU_REG_MEM_P1 = 0x12  # Key
+        self.reg.GCPU_REG_MEM_P2 = 0x16  # Data
+        self.reg.GCPU_REG_MEM_P3 = 0x1A  # Out (IV) # 04000010250d0058a90004cba53f0010
+        self.cmd(AESPK_D)  # AESPK_D) # 0x78
+        seed = bytearray(ivseed)
+        aeskey2 = bytearray(aeskey2)
         for i in range(0x10):
             aeskey2[i] = seed[i] ^ aeskey2[i]
 
@@ -413,10 +419,10 @@ class GCpu(metaclass=LogBase):
         self.reg.GCPU_REG_MEM_P0 = src
         self.reg.GCPU_REG_MEM_P1 = dst
         self.reg.GCPU_REG_MEM_P2 = length >> 4
-        self.reg.GCPU_REG_MEM_P4 = 0x12 # Key
-        self.reg.GCPU_REG_MEM_P5 = 0x1A # IV
-        self.reg.GCPU_REG_MEM_P6 = 0x1A # IV
-        self.cmd(AESPK_EK_DCBC) # 0x7E
+        self.reg.GCPU_REG_MEM_P4 = 0x12  # Key
+        self.reg.GCPU_REG_MEM_P5 = 0x1A  # IV
+        self.reg.GCPU_REG_MEM_P6 = 0x1A  # IV
+        self.cmd(AESPK_EK_DCBC)  # 0x7E
         rdata = self.readmem(dst, length)
         return rdata
 
@@ -443,6 +449,56 @@ class GCpu(metaclass=LogBase):
         self.reg.GCPU_REG_MEM_P6 = ivslot  # Aes IV Slot Ptr
         if self.set_mode_cmd(encrypt=encrypt, mode="cbc", encryptedkey=True) != 0:  # aes decrypt
             raise RuntimeError("failed to call the function!")
+
+    def aes_pk_init(self):
+        self.reg.GCPU_REG_CTL &= 0xFFFFFFF8
+        self.reg.GCPU_REG_CTL |= 7
+        self.reg.GCPU_REG_MSC = 0x80FF1800
+        self.reg.GCPU_UNK1 = 0x887f
+        self.reg.GCPU_UNK2 = 0
+        self.reg.GCPU_UNK3 = 0xffffffff
+        self.reg.GCPU_UNK3 = 0xffffffff
+        self.reg.GCPU_UNK3 = 0xffffffff
+        self.reg.GCPU_UNK3 = 0x2
+
+    def aes_pk_ecb(self, encrypt, src, dst, length=32):
+        self.reg.GCPU_REG_MSC |= 0x2000
+        if encrypt:
+            self.reg.GCPU_REG_MEM_CMD = 0x7B
+        else:
+            self.reg.GCPU_REG_MEM_CMD = 0x7A
+        self.reg.GCPU_REG_MEM_P0 = src
+        self.reg.GCPU_REG_MEM_P1 = dst
+        self.reg.GCPU_REG_MEM_P2 = length // 16
+
+        for pos in range(self.gcpu_base + regval["GCPU_REG_MEM_P3"], self.gcpu_base + regval["GCPU_REG_MEM_Slot"]):
+            self.write32(pos, [0])
+
+        self.reg.GCPU_REG_PC_CTL = 0
+
+        while True:
+            res = self.reg.GCPU_REG_INT_CLR
+            if res != 0:
+                break
+        self.reg.GCPU_REG_INT_CLR = res
+
+        for pos in range(self.gcpu_base + regval["GCPU_REG_MEM_CMD"], self.gcpu_base + 0xF80):
+            self.write32(pos, [0])
+
+        self.reg.GCPU_REG_INT_EN = 0x0
+        self.reg.GCPU_REG_MSC = 0x80fe1800
+
+    def mtk_gcpu_mtee_6735(self):
+        src = 0x43001000
+        dst = 0x43001080
+        label = b"www.mediatek.com0123456789ABCDEF"
+        self.write32(src, to_dwords(label))
+        self.aes_pk_ecb(encrypt=True, src=src, dst=dst, length=32)
+        res = self.read32(dst, 8)
+        data = b""
+        for word in res:
+            data += pack("<I", word)
+        return data
 
     def aes_decrypt_ecb(self, key_offset, data_offset, out_offset):
         self.reg.GCPU_REG_MEM_P0 = 1
