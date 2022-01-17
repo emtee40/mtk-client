@@ -186,7 +186,7 @@ class legacyext(metaclass=LogBase):
         hwc = self.cryptosetup()
         meid = b""
         retval = {}
-        retval["hwcode"] = hex(hwc.hwcode)
+        retval["hwcode"] = hex(self.config.hwcode)
         meid = self.config.get_meid()
         socid = self.config.get_socid()
         if meid is not None:
