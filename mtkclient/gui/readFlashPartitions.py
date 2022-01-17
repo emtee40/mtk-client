@@ -130,7 +130,7 @@ class ReadFlashWindow(QObject):
         self.parent.timeEstTotal.init()
         self.sendToLogSignal = toolkit.sendToLogSignal
         self.parent.Status["done"] = False
-        thread = asyncThread(self.parent, 0, self.parent.updateStateAsync, [])
+        thread = asyncThread(self.parent.parent(), 0, self.parent.updateStateAsync, [])
         #thread.sendUpdateSignal.connect(self.updateDumpState)
         thread.start()
         self.disableButtonsSignal.emit()
