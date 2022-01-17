@@ -218,11 +218,15 @@ class MainWindow(QMainWindow):
 
     @Slot(int)
     def updateProgress(self, progress):
-        if self.Status["rpmb"]:
-            self.Status["currentPartitionSizeDone"] = progress
-        else:
-            self.Status["currentPartitionSizeDone"] = progress * self.devhandler.da_handler.mtk.daloader.progress.pagesize
-        self.updateState()
+        try:
+            if self.Status["rpmb"]:
+                self.Status["currentPartitionSizeDone"] = progress
+            else:
+                self.Status["currentPartitionSizeDone"] = progress * self.devhandler.da_handler.mtk.daloader.progress.pagesize
+
+            self.updateState()
+        except:
+            pass
 
     def setdevhandler(self, devhandler):
         self.devhandler = devhandler
@@ -277,7 +281,7 @@ class MainWindow(QMainWindow):
 
     @Slot(str)
     def update_status_text(self, text):
-        self.ui.phoneInfoTextbox.setText(text)
+        self.ui.phoneDebugInfoTextbox.setText(text)
 
     @Slot()
     def disablebuttons(self):
@@ -480,6 +484,7 @@ class MainWindow(QMainWindow):
 
     def updateGui(self):
         global phoneInfo
+        phoneInfo['chipset'] = phoneInfo['chipset'].replace("()", "")
         if phoneInfo['cdcInit'] and phoneInfo['bootMode'] == "":
             self.ui.phoneInfoTextbox.setText(QCoreApplication.translate("main","Phone detected:\nReading model info..."))
         else:
@@ -491,6 +496,7 @@ class MainWindow(QMainWindow):
             #self.ui.status.setText(QCoreApplication.translate("main","Device connected :)"))
             self.ui.menubar.setEnabled(True)
             self.pixmap = QPixmap(path.get_images_path("phone_connected.png"))
+            self.ui.phoneDebugInfoTextbox.setText("")
             self.ui.pic.setPixmap(self.pixmap)
             self.spinnerAnim.stop()
             self.ui.spinner_pic.setHidden(True)
