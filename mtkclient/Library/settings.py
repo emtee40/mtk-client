@@ -20,7 +20,8 @@ class hwparam:
                     self.paramsetting = {}
         else:
             self.paramsetting = {}
-            self.paramsetting["meid"] = meid
+            if meid is not None:
+                self.paramsetting["meid"] = meid
             if not os.path.exists(self.hwparampath):
                 os.mkdir(self.hwparampath)
             open(os.path.join(self.hwparampath,self.paramfile), "w").write(json.dumps(self.paramsetting))
