@@ -511,6 +511,22 @@
          </widget>
         </item>
         <item>
+         <widget class="QLabel" name="phoneDebugInfoTextbox">
+          <property name="styleSheet">
+           <string notr="true">color:#888;</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
          <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="0,0">
           <property name="spacing">
            <number>0</number>
@@ -846,8 +862,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>547</width>
-               <height>286</height>
+               <width>98</width>
+               <height>278</height>
               </rect>
              </property>
             </widget>
@@ -905,7 +921,7 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>570</width>
+               <width>98</width>
                <height>278</height>
               </rect>
              </property>

@@ -279,6 +279,14 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_7.addWidget(self.phoneInfoTextbox)
 
+        self.phoneDebugInfoTextbox = QLabel(self.centralwidget)
+        self.phoneDebugInfoTextbox.setObjectName(u"phoneDebugInfoTextbox")
+        self.phoneDebugInfoTextbox.setStyleSheet(u"color:#888;")
+        self.phoneDebugInfoTextbox.setTextFormat(Qt.PlainText)
+        self.phoneDebugInfoTextbox.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+
+        self.verticalLayout_7.addWidget(self.phoneDebugInfoTextbox)
+
         self.horizontalLayout_2 = QHBoxLayout()
         self.horizontalLayout_2.setSpacing(0)
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
@@ -286,11 +294,11 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_2.addItem(self.horizontalSpacer_8)
 
-        self.pushButton = QPushButton(self.centralwidget)
-        self.pushButton.setObjectName(u"pushButton")
-        self.pushButton.setMaximumSize(QSize(200, 16777215))
+        self.consettingsbtn = QPushButton(self.centralwidget)
+        self.consettingsbtn.setObjectName(u"consettingsbtn")
+        self.consettingsbtn.setMaximumSize(QSize(200, 16777215))
 
-        self.horizontalLayout_2.addWidget(self.pushButton)
+        self.horizontalLayout_2.addWidget(self.consettingsbtn)
 
 
         self.verticalLayout_7.addLayout(self.horizontalLayout_2)
@@ -422,7 +430,7 @@ class Ui_MainWindow(object):
         self.writepartitionList.setWidgetResizable(True)
         self.scrollAreaWidgetContents_2 = QWidget()
         self.scrollAreaWidgetContents_2.setObjectName(u"scrollAreaWidgetContents_2")
-        self.scrollAreaWidgetContents_2.setGeometry(QRect(0, 0, 547, 286))
+        self.scrollAreaWidgetContents_2.setGeometry(QRect(0, 0, 98, 278))
         self.writepartitionList.setWidget(self.scrollAreaWidgetContents_2)
 
         self.gridLayout_6.addWidget(self.writepartitionList, 1, 0, 2, 1)
@@ -453,7 +461,7 @@ class Ui_MainWindow(object):
         self.erasepartitionList.setWidgetResizable(True)
         self.scrollAreaWidgetContents_3 = QWidget()
         self.scrollAreaWidgetContents_3.setObjectName(u"scrollAreaWidgetContents_3")
-        self.scrollAreaWidgetContents_3.setGeometry(QRect(0, 0, 570, 278))
+        self.scrollAreaWidgetContents_3.setGeometry(QRect(0, 0, 98, 278))
         self.erasepartitionList.setWidget(self.scrollAreaWidgetContents_3)
 
         self.gridLayout_5.addWidget(self.erasepartitionList, 2, 0, 2, 1)
@@ -742,7 +750,8 @@ class Ui_MainWindow(object):
         self.logoPic.setText("")
         self.copyrightInfo.setText(QCoreApplication.translate("MainWindow", u"<b>Made by:</b> Bjoern Kerler<br/><b>Gui by:</b> Geert-Jan Kreileman<br/><br/><b>Credits:</b><br/>kamakiri [xyzz]<br/>linecode exploit [chimera]<br/>Chaosmaster<br/>and all contributers</p>", None))
         self.phoneInfoTextbox.setText(QCoreApplication.translate("MainWindow", u"No phone detected.", None))
-        self.pushButton.setText(QCoreApplication.translate("MainWindow", u"Connection settings", None))
+        self.phoneDebugInfoTextbox.setText("")
+        self.consettingsbtn.setText(QCoreApplication.translate("MainWindow", u"Connection settings", None))
         self.pic.setText("")
         self.spinner_pic.setText("")
         self.readDumpGPTCheckbox.setText(QCoreApplication.translate("MainWindow", u"Dump GPT", None))
