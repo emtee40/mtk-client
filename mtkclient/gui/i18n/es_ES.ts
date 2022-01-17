@@ -10,7 +10,7 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="498"/>
+        <location filename="../main_gui.ui" line="503"/>
         <source>No phone detected.</source>
         <translation>Ningún dispositivo detectado.</translation>
     </message>
@@ -44,25 +44,25 @@
         <translation type="vanished">&amp;Herramientas</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="630"/>
-        <location filename="../main_gui.ui" line="703"/>
+        <location filename="../main_gui.ui" line="721"/>
+        <location filename="../main_gui.ui" line="794"/>
         <source>Read partition(s)</source>
         <translation>Leer particion(es)</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="1243"/>
+        <location filename="../main_gui.ui" line="1334"/>
         <source>Read full flash</source>
         <translation>Leer el flash completo</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="1248"/>
+        <location filename="../main_gui.ui" line="1339"/>
         <source>Read at offset</source>
         <translation>Leer en un offset</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="718"/>
-        <location filename="../main_gui.ui" line="784"/>
-        <location filename="../main_gui.ui" line="1253"/>
+        <location filename="../main_gui.ui" line="809"/>
+        <location filename="../main_gui.ui" line="875"/>
+        <location filename="../main_gui.ui" line="1344"/>
         <source>Write partition(s)</source>
         <translation>Escribir la(s) particion(es)</translation>
     </message>
@@ -71,39 +71,39 @@
         <translation type="vanished">Preparado para empezar...</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="636"/>
+        <location filename="../main_gui.ui" line="727"/>
         <source>Dump GPT</source>
         <translation>Leer GPT</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="710"/>
-        <location filename="../main_gui.ui" line="872"/>
+        <location filename="../main_gui.ui" line="801"/>
+        <location filename="../main_gui.ui" line="963"/>
         <source>Select all partitions</source>
         <translation>Seleccione todas las particiones</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="655"/>
+        <location filename="../main_gui.ui" line="746"/>
         <source>Select partitions to read</source>
         <translation>Seleccione las particiones para leer</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="736"/>
+        <location filename="../main_gui.ui" line="827"/>
         <source>Select partitions to write</source>
         <translation>Seleccionar particiones para escribir</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="791"/>
+        <location filename="../main_gui.ui" line="882"/>
         <source>Select from directory</source>
         <translation>Seleccionar archivos de un directorio</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="855"/>
+        <location filename="../main_gui.ui" line="946"/>
         <source>Select partitions to erase</source>
         <translation>Seleccionar particiones para borrar</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="799"/>
-        <location filename="../main_gui.ui" line="865"/>
+        <location filename="../main_gui.ui" line="890"/>
+        <location filename="../main_gui.ui" line="956"/>
         <source>Erase partition(s)</source>
         <translation>Borrar la(s) particion(es)</translation>
     </message>
@@ -128,83 +128,88 @@
         <translation>Mostrar registro de depuración</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="880"/>
+        <location filename="../main_gui.ui" line="559"/>
+        <source>Connection settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../main_gui.ui" line="971"/>
         <source>Flash Tools</source>
         <translation>Herramientas flash</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="888"/>
+        <location filename="../main_gui.ui" line="979"/>
         <source>Read flash</source>
         <translation>Leer Flash</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="933"/>
+        <location filename="../main_gui.ui" line="1024"/>
         <source>Write flash</source>
         <translation>Escribir Flash</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="978"/>
+        <location filename="../main_gui.ui" line="1069"/>
         <source>Erase preloader</source>
         <translation>Borrar preloader</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="985"/>
+        <location filename="../main_gui.ui" line="1076"/>
         <source>Erase boot2</source>
         <translation>Borrar boot2</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="992"/>
+        <location filename="../main_gui.ui" line="1083"/>
         <source>Erase RPMB</source>
         <translation>Borrar RPMB</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="1016"/>
+        <location filename="../main_gui.ui" line="1107"/>
         <source>Lock bootloader</source>
         <translation>Bloquear</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="1023"/>
+        <location filename="../main_gui.ui" line="1114"/>
         <source>Unlock bootloader</source>
         <translation>Desbloquear</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="1033"/>
+        <location filename="../main_gui.ui" line="1124"/>
         <source>Keys</source>
         <translation>Llaves</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="1119"/>
+        <location filename="../main_gui.ui" line="1210"/>
         <source>Generate Keys</source>
         <translation>Generar las claves</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="1064"/>
-        <location filename="../main_gui.ui" line="1069"/>
-        <location filename="../main_gui.ui" line="1074"/>
-        <location filename="../main_gui.ui" line="1079"/>
-        <location filename="../main_gui.ui" line="1084"/>
-        <location filename="../main_gui.ui" line="1089"/>
-        <location filename="../main_gui.ui" line="1094"/>
+        <location filename="../main_gui.ui" line="1155"/>
+        <location filename="../main_gui.ui" line="1160"/>
+        <location filename="../main_gui.ui" line="1165"/>
+        <location filename="../main_gui.ui" line="1170"/>
+        <location filename="../main_gui.ui" line="1175"/>
+        <location filename="../main_gui.ui" line="1180"/>
+        <location filename="../main_gui.ui" line="1185"/>
         <source>Neue Zeile</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="1099"/>
+        <location filename="../main_gui.ui" line="1190"/>
         <source>Type</source>
         <translation>Tipo</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="1104"/>
+        <location filename="../main_gui.ui" line="1195"/>
         <source>Value</source>
         <translation>Valor</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="1112"/>
+        <location filename="../main_gui.ui" line="1203"/>
         <source>Ready.</source>
         <translation>Preparando.</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="1127"/>
+        <location filename="../main_gui.ui" line="1218"/>
         <source>Debug Log</source>
         <translation>Registro de depuración</translation>
     </message>
@@ -217,88 +222,88 @@
         <translation type="vanished">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Paso 3:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Sin conexión? Intente acortar el punto de prueba a tierra&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="1230"/>
+        <location filename="../main_gui.ui" line="1321"/>
         <source>&amp;File</source>
         <translation>&amp;Archivo</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="1238"/>
+        <location filename="../main_gui.ui" line="1329"/>
         <source>Quit</source>
         <translation>Fin</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="1258"/>
+        <location filename="../main_gui.ui" line="1349"/>
         <source>Write full flash</source>
         <translation>Escribir el flash entero</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="1263"/>
+        <location filename="../main_gui.ui" line="1354"/>
         <source>Write at offset</source>
         <translation>Escribir en un offset</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="1268"/>
+        <location filename="../main_gui.ui" line="1359"/>
         <source>Erase partitions(s)</source>
         <translation>Borrar la(s) particion(es)</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="1273"/>
+        <location filename="../main_gui.ui" line="1364"/>
         <source>Erase at offset</source>
         <translation>Borrar en un offset</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="1313"/>
+        <location filename="../main_gui.ui" line="1404"/>
         <source>Unlock / Lock</source>
         <translation>Desbloquear / Bloquear</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="1318"/>
+        <location filename="../main_gui.ui" line="1409"/>
         <source>Lock device</source>
         <translation>Bloquear dispositivo</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="1323"/>
+        <location filename="../main_gui.ui" line="1414"/>
         <source>&amp;Quit</source>
         <translation>&amp;Fin</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="909"/>
-        <location filename="../main_gui.ui" line="1278"/>
+        <location filename="../main_gui.ui" line="1000"/>
+        <location filename="../main_gui.ui" line="1369"/>
         <source>Read RPMB</source>
         <translation>Leer RPMB</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="954"/>
-        <location filename="../main_gui.ui" line="1283"/>
+        <location filename="../main_gui.ui" line="1045"/>
+        <location filename="../main_gui.ui" line="1374"/>
         <source>Write RPMB</source>
         <translation>Escribir RPMB</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="895"/>
-        <location filename="../main_gui.ui" line="1288"/>
+        <location filename="../main_gui.ui" line="986"/>
+        <location filename="../main_gui.ui" line="1379"/>
         <source>Read preloader</source>
         <translation>Leer preloader</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="1293"/>
+        <location filename="../main_gui.ui" line="1384"/>
         <source>Generate RPMB keys</source>
         <translation>Generar las claves RPMB</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="902"/>
-        <location filename="../main_gui.ui" line="1298"/>
+        <location filename="../main_gui.ui" line="993"/>
+        <location filename="../main_gui.ui" line="1389"/>
         <source>Read boot2</source>
         <translation>Leer boot2</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="940"/>
-        <location filename="../main_gui.ui" line="1303"/>
+        <location filename="../main_gui.ui" line="1031"/>
+        <location filename="../main_gui.ui" line="1394"/>
         <source>Write preloader</source>
         <translation>Escribrir preloader</translation>
     </message>
     <message>
-        <location filename="../main_gui.ui" line="947"/>
-        <location filename="../main_gui.ui" line="1308"/>
+        <location filename="../main_gui.ui" line="1038"/>
+        <location filename="../main_gui.ui" line="1399"/>
         <source>Write boot2</source>
         <translation>Escribrir boot2</translation>
     </message>
@@ -310,12 +315,12 @@
         <translation type="vanished"> restante</translation>
     </message>
     <message>
-        <location filename="../readFlashPartitions.py" line="40"/>
+        <location filename="../readFlashPartitions.py" line="41"/>
         <source>Select output directory</source>
         <translation>Seleccionar el directorio para los archivos de salida</translation>
     </message>
     <message>
-        <location filename="../readFlashPartitions.py" line="108"/>
+        <location filename="../readFlashPartitions.py" line="118"/>
         <source>Ready to dump </source>
         <translation>Listo para leer </translation>
     </message>
@@ -371,7 +376,7 @@
         <translation type="vanished"> restante</translation>
     </message>
     <message>
-        <location filename="../writeFlashPartitions.py" line="27"/>
+        <location filename="../writeFlashPartitions.py" line="28"/>
         <source>Select input directory</source>
         <translation>Seleccionar directorio</translation>
     </message>
@@ -406,28 +411,29 @@
 <context>
     <name>main</name>
     <message>
-        <location filename="../../../mtk_gui" line="170"/>
-        <location filename="../../../mtk_gui" line="176"/>
+        <location filename="../../../mtk_gui" line="172"/>
+        <location filename="../../../mtk_gui" line="182"/>
+        <location filename="../../../mtk_gui" line="191"/>
         <source> left</source>
         <translation> restante</translation>
     </message>
     <message>
-        <location filename="../../../mtk_gui" line="308"/>
+        <location filename="../../../mtk_gui" line="339"/>
         <source>Error reading gpt</source>
         <translation>Error al leer GPT</translation>
     </message>
     <message>
-        <location filename="../../../mtk_gui" line="310"/>
+        <location filename="../../../mtk_gui" line="341"/>
         <source>Select partitions to dump</source>
         <translation>Seleccione las particiones para leer</translation>
     </message>
     <message>
-        <location filename="../../../mtk_gui" line="349"/>
+        <location filename="../../../mtk_gui" line="380"/>
         <source>Set</source>
         <translation>Escoger</translation>
     </message>
     <message>
-        <location filename="../../../mtk_gui" line="457"/>
+        <location filename="../../../mtk_gui" line="489"/>
         <source>Phone detected:
 Reading model info...</source>
         <translation>Teléfono detectado:
@@ -444,7 +450,7 @@ Esto puede tomar un tiempo...</translation>
         <translation type="vanished">Dispositivo conectado :)</translation>
     </message>
     <message>
-        <location filename="../../../mtk_gui" line="483"/>
+        <location filename="../../../mtk_gui" line="516"/>
         <source>Error initialising. Did you install the drivers?</source>
         <translation>Error al inicializar. Instalaste los controladores?</translation>
     </message>
@@ -452,18 +458,18 @@ Esto puede tomar un tiempo...</translation>
 <context>
     <name>self.config</name>
     <message>
-        <location filename="../../Library/mtk_dalegacy.py" line="1096"/>
-        <location filename="../../Library/mtk_dalegacy.py" line="1107"/>
+        <location filename="../../Library/mtk_dalegacy.py" line="1094"/>
+        <location filename="../../Library/mtk_dalegacy.py" line="1105"/>
         <source>Error on sending brom stage</source>
         <translation>Error al enviar el Brom Stage</translation>
     </message>
     <message>
-        <location filename="../../Library/mtk_daxflash.py" line="1064"/>
+        <location filename="../../Library/mtk_daxflash.py" line="1067"/>
         <source>Reconnecting to preloader</source>
         <translation>Conéctese al precargador</translation>
     </message>
     <message>
-        <location filename="../../Library/mtk_daxflash.py" line="1071"/>
+        <location filename="../../Library/mtk_daxflash.py" line="1074"/>
         <source>Connected to preloader</source>
         <translation>Conectado al precargador</translation>
     </message>
