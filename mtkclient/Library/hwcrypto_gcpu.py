@@ -250,6 +250,9 @@ class GCpu(metaclass=LogBase):
         if self.hwcode in [0x8172, 0x8127]:
             self.release()
             self.reg.GCPU_REG_MSC = self.reg.GCPU_REG_MSC & 0xFFFFDFFF
+        elif self.hwcode == 0x335:
+            self.reg.GCPU_REG_CTL = self.reg.GCPU_REG_MSC & 0xFFFFDFFF
+            self.reg.GCPU_REG_CTL |= 7
         else:
             self.reg.GCPU_REG_CTL &= 0xFFFFFFF0
             self.reg.GCPU_REG_CTL |= 0xF
@@ -462,6 +465,16 @@ class GCpu(metaclass=LogBase):
         self.reg.GCPU_UNK3 = 0x2
 
     def aes_pk_ecb(self, encrypt, src, dst, length=32):
+        self.reg.GCPU_REG_CTL = self.reg.GCPU_REG_CTL & 0xFFFFFFF8
+        self.reg.GCPU_REG_CTL |= 7
+        self.reg.GCPU_REG_MSC = 0x80FF1800
+        self.reg.GCPU_UNK1 = 0x887f
+        self.reg.GCPU_UNK2 = 0
+        self.reg.GCPU_UNK3 = 0xFFFFFFFF
+        self.reg.GCPU_UNK3 = 0xFFFFFFFF
+        self.reg.GCPU_UNK3 = 0xFFFFFFFF
+        self.reg.GCPU_UNK3 = 2
+
         self.reg.GCPU_REG_MSC |= 0x2000
         if encrypt:
             self.reg.GCPU_REG_MEM_CMD = 0x7B
@@ -470,10 +483,26 @@ class GCpu(metaclass=LogBase):
         self.reg.GCPU_REG_MEM_P0 = src
         self.reg.GCPU_REG_MEM_P1 = dst
         self.reg.GCPU_REG_MEM_P2 = length // 16
-
+        self.write32(self.gcpu_base + regval["GCPU_REG_MEM_P3"], 0xB * [0])
+        """
+        self.reg.GCPU_REG_MEM_P3 = 0
+        self.reg.GCPU_REG_MEM_P4 = 0
+        self.reg.GCPU_REG_MEM_P5 = 0
+        self.reg.GCPU_REG_MEM_P6 = 0
+        self.reg.GCPU_REG_MEM_P7 = 0
+        self.reg.GCPU_REG_MEM_P8 = 0
+        self.reg.GCPU_REG_MEM_P9 = 0
+        self.reg.GCPU_REG_MEM_P10 = 0
+        self.reg.GCPU_REG_MEM_P11 = 0
+        self.reg.GCPU_REG_MEM_P12 = 0
+        self.reg.GCPU_REG_MEM_P13 = 0
+        self.reg.GCPU_REG_MEM_P14 = 0
+        """
+        """
         for pos in range(self.gcpu_base + regval["GCPU_REG_MEM_P3"], self.gcpu_base + regval["GCPU_REG_MEM_Slot"]):
-            self.write32(pos, [0])
-
+            if not self.write32(self.gcpu_base + regval["GCPU_REG_MEM_P3"], 0xC*[0]):
+                return False
+        """
         self.reg.GCPU_REG_PC_CTL = 0
 
         while True:
@@ -482,13 +511,13 @@ class GCpu(metaclass=LogBase):
                 break
         self.reg.GCPU_REG_INT_CLR = res
 
-        for pos in range(self.gcpu_base + regval["GCPU_REG_MEM_CMD"], self.gcpu_base + 0xF80):
-            self.write32(pos, [0])
+        self.write32(self.gcpu_base + regval["GCPU_REG_MEM_CMD"], 0xE0*[0])
 
         self.reg.GCPU_REG_INT_EN = 0x0
         self.reg.GCPU_REG_MSC = 0x80fe1800
 
     def mtk_gcpu_mtee_6735(self):
+        #self.acquire()
         src = 0x43001000
         dst = 0x43001080
         label = b"www.mediatek.com0123456789ABCDEF"

@@ -118,6 +118,7 @@ class legacyext(metaclass=LogBase):
         setup.blacklist = self.config.chipconfig.blacklist
         setup.gcpu_base = self.config.chipconfig.gcpu_base
         setup.dxcc_base = self.config.chipconfig.dxcc_base
+        setup.hwcode = self.config.hwcode
         setup.da_payload_addr = self.config.chipconfig.da_payload_addr
         setup.sej_base = self.config.chipconfig.sej_base
         setup.read32 = self.readmem
