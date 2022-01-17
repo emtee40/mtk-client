@@ -13,15 +13,17 @@ class hwparam:
             meid=hexlify(meid).decode('utf-8')
         if meid is None:
             self.paramsetting = None
-        if os.path.exists(self.paramfile):
-            self.paramsetting = json.loads(open(self.paramfile, "r").read())
+        if os.path.exists(os.path.join(path,self.paramfile)):
+            self.paramsetting = json.loads(open(os.path.join(path,self.paramfile), "r").read())
             if "meid" in self.paramsetting:
                 if meid!=self.paramsetting["meid"]:
                     self.paramsetting = {}
         else:
             self.paramsetting = {}
             self.paramsetting["meid"] = meid
-            open(self.paramfile, "w").write(json.dumps(self.paramsetting))
+            if not os.path.exists(self.hwparampath):
+                os.mkdir(self.hwparampath)
+            open(os.path.join(self.hwparampath,self.paramfile), "w").write(json.dumps(self.paramsetting))
 
     def loadsetting(self,key:str):
         if self.paramsetting is not None:
