@@ -101,7 +101,7 @@ class ReadFlashWindow(QObject):
         self.parttype = parttype
         self.parent.Status["rpmb"] = False
         if self.parttype == "user":
-            self.flashsize = self.mtkClass.daloader.daconfig.flashsize[0]
+            self.flashsize = self.mtkClass.daloader.daconfig.flashsize
         elif self.parttype == "rpmb":
             self.parent.Status["rpmb"] = True
             if self.mtkClass.daloader.daconfig.flashtype == "ufs":

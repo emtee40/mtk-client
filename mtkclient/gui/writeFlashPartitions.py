@@ -112,7 +112,7 @@ class WriteFlashWindow(QObject):
         self.writeFile = self.fdialog.open(parttype+".bin")
         self.parent.Status["rpmb"] = False
         if parttype == "user":
-            self.flashsize = self.mtkClass.daloader.daconfig.flashsize[0]
+            self.flashsize = self.mtkClass.daloader.daconfig.flashsize
         elif parttype == "rpmb":
             self.parent.Status["rpmb"] = True
             if self.mtkClass.daloader.daconfig.flashtype == "ufs":
