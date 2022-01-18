@@ -352,7 +352,7 @@ class Main(metaclass=LogBase):
                 rmtk = mtk.crasher()
                 if rmtk is None:
                     sys.exit(0)
-                if rmtk.port.cdc.vid != 0xE8D and rmtk.port.cdc.pid != 0x0003:
+                if rmtk.port.cdc.vid != 0xE8D or rmtk.port.cdc.pid != 0x0003:
                     self.warning("We couldn't enter preloader.")
                 plt = PLTools(rmtk, self.__logger.level)
                 data, filename = plt.run_dump_preloader(self.args.ptype)
@@ -512,7 +512,8 @@ class Main(metaclass=LogBase):
                 preloader = None
             da_handler = DA_handler(mtk, loglevel)
             mtk = da_handler.configure_da(mtk, preloader)
-            da_handler.handle_da_cmds(mtk, cmd, self.args)
+            if mtk is not None:
+                da_handler.handle_da_cmds(mtk, cmd, self.args)
 
 
     def cmd_log(self, mtk, filename):

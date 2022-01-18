@@ -983,12 +983,15 @@ class DALegacy(metaclass=LogBase):
             bootldr.seek(da2offset)
             da2 = bootldr.read(self.daconfig.da.region[2].m_len)
 
-            hashaddr, hashmode, hashlen = self.mtk.daloader.compute_hash_pos(da1, da2, da2sig_len)
-            if hashaddr is not None:
-                da2 = self.lft.patch_da2(da2)
-                da1 = self.mtk.daloader.fix_hash(da1, da2, hashaddr, hashmode, hashlen)
-                self.patch = True
-                self.daconfig.da2 = da2[:hashlen]
+            if self.mtk.config.is_brom or not self.mtk.config.target_config["sbc"]:
+                hashaddr, hashmode, hashlen = self.mtk.daloader.compute_hash_pos(da1, da2, da2sig_len)
+                if hashaddr is not None:
+                    da2 = self.lft.patch_da2(da2)
+                    da1 = self.mtk.daloader.fix_hash(da1, da2, hashaddr, hashmode, hashlen)
+                    self.patch = True
+                    self.daconfig.da2 = da2[:hashlen]
+                else:
+                    self.daconfig.da2 = da2[:-da2sig_len]
             else:
                 self.daconfig.da2 = da2[:-da2sig_len]
 

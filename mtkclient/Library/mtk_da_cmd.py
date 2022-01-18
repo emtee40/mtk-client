@@ -90,6 +90,7 @@ class DA_handler(metaclass=LogBase):
         else:
             self.info("Device is unprotected.")
             if mtk.config.is_brom:
+                self.info("Device is in BROM-Mode. Bypassing security.")
                 mtk = mtk.bypass_security()  # Needed for dumping preloader
                 if mtk is not None:
                     self.mtk = mtk
@@ -99,6 +100,8 @@ class DA_handler(metaclass=LogBase):
                         preloader = self.dump_preloader_ram()
                         if preloader is None:
                             self.error("Failed to dump preloader from ram.")
+            else:
+                self.info("Device is in Preloader-Mode :(")
         if not mtk.daloader.upload_da(preloader=preloader):
             self.error("Error uploading da")
             return None
@@ -513,6 +516,9 @@ class DA_handler(metaclass=LogBase):
             self.info(f"Successfully wrote data to {hex(addr)}, length {hex(len(data))}")
 
     def handle_da_cmds(self, mtk, cmd: str, args):
+        if mtk is None or mtk.daloader is None:
+            self.error("Error on running da, aborting :(")
+            sys.exit(1)
         if cmd == "gpt":
             directory = args.directory
             self.da_gpt(directory=directory)

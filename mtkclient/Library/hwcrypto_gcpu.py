@@ -518,8 +518,8 @@ class GCpu(metaclass=LogBase):
 
     def mtk_gcpu_mtee_6735(self):
         #self.acquire()
-        src = 0x43001000
-        dst = 0x43001080
+        src = 0x5019A180
+        dst = 0x5019A200
         label = b"www.mediatek.com0123456789ABCDEF"
         self.write32(src, to_dwords(label))
         self.aes_pk_ecb(encrypt=True, src=src, dst=dst, length=32)

@@ -233,7 +233,7 @@ class DAconfig(metaclass=LogBase):
             for loader in loaders:
                 if loader.hw_version <= self.config.hwver:
                     if loader.sw_version <= self.config.swver:
-                        if self.loader is None:
+                        if self.da is None:
                             self.da = loader
                             self.loader = loader.loader
 

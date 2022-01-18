@@ -119,7 +119,8 @@ class Mtk(metaclass=LogBase):
                     rmtk = Mtk(config=self.config, loglevel=self.__logger.level)
                     rmtk.preloader.display = display
                     if rmtk.preloader.init(maxtries=20):
-                        break
+                        if rmtk.config.is_brom:
+                            break
             else:
                 try:
                     plt.crash(mode)
