@@ -14,7 +14,11 @@ class hwparam:
         if meid is None:
             self.paramsetting = None
         if os.path.exists(os.path.join(path,self.paramfile)):
-            self.paramsetting = json.loads(open(os.path.join(path,self.paramfile), "r").read())
+            try:
+                self.paramsetting = json.loads(open(os.path.join(path,self.paramfile), "r").read())
+            except:
+                #json file invalid, load nothing.
+                self.paramsetting = {}
             if "meid" in self.paramsetting:
                 if meid!=self.paramsetting["meid"]:
                     self.paramsetting = {}
