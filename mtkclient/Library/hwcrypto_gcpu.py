@@ -253,6 +253,9 @@ class GCpu(metaclass=LogBase):
         elif self.hwcode == 0x335:
             self.reg.GCPU_REG_CTL = self.reg.GCPU_REG_MSC & 0xFFFFDFFF
             self.reg.GCPU_REG_CTL |= 7
+            self.reg.GCPU_REG_MSC = 0x80FF1800
+            self.reg.GCPU_UNK1 = 0x887F
+            self.reg.GCPU_UNK2 = 0
         else:
             self.reg.GCPU_REG_CTL &= 0xFFFFFFF0
             self.reg.GCPU_REG_CTL |= 0xF
@@ -480,10 +483,12 @@ class GCpu(metaclass=LogBase):
             self.reg.GCPU_REG_MEM_CMD = 0x7B
         else:
             self.reg.GCPU_REG_MEM_CMD = 0x7A
-        self.reg.GCPU_REG_MEM_P0 = src
-        self.reg.GCPU_REG_MEM_P1 = dst
-        self.reg.GCPU_REG_MEM_P2 = length // 16
-        self.write32(self.gcpu_base + regval["GCPU_REG_MEM_P3"], 0xB * [0])
+        self.reg.GCPU_REG_MEM_P0 = src           # u4InBufStart
+        self.reg.GCPU_REG_MEM_P1 = dst           # u4OutBufStart
+        self.reg.GCPU_REG_MEM_P2 = length // 16  # u4BufSize / 16
+        self.reg.GCPU_REG_MEM_P3 = 0
+        self.reg.GCPU_REG_MEM_P4 = 0             # AES_MTD_SECURE_KEY_PTR
+        self.write32(self.gcpu_base + regval["GCPU_REG_MEM_P5"], 0x9 * [0])
         """
         self.reg.GCPU_REG_MEM_P3 = 0
         self.reg.GCPU_REG_MEM_P4 = 0
@@ -517,7 +522,7 @@ class GCpu(metaclass=LogBase):
         self.reg.GCPU_REG_MSC = 0x80fe1800
 
     def mtk_gcpu_mtee_6735(self):
-        #self.acquire()
+        self.acquire()
         src = 0x5019A180
         dst = 0x5019A200
         label = b"www.mediatek.com0123456789ABCDEF"

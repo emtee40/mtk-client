@@ -4,7 +4,7 @@ from mtkclient.gui.toolkit import trap_exc_during_debug, asyncThread, FDialog
 from mtkclient.Library.mtk_da_cmd import DA_handler
 import os
 import sys
-
+import json
 sys.excepthook = trap_exc_during_debug
 
 class UnlockMenu(QObject):
@@ -86,19 +86,21 @@ class generateKeysMenu(QObject):
         else:
             self.mtkClass.config.set_hwparam_path(hwparamFolder)
         self.hwparamFolder = hwparamFolder
-        thread = asyncThread(self.parent, 0, self.generateKeysAsync, [self.hwparamFolder])
+        thread = asyncThread(self.parent, 0, self.generateKeysAsync, [hwparamFolder])
         thread.sendToLogSignal.connect(self.sendToLog)
         thread.sendUpdateSignal.connect(self.updateKeys)
         thread.start()
         self.disableButtonsSignal.emit()
 
-
     def generateKeysAsync(self, toolkit, parameters):
         self.sendToLogSignal = toolkit.sendToLogSignal
         self.sendUpdateSignal = toolkit.sendUpdateSignal
         toolkit.sendToLogSignal.emit(self.tr("Generating keys"))
-        self.parent.Status["result"] = self.mtkClass.daloader.keys()
-        # MtkTool.cmd_stage(mtkClass, None, None, None, False)
+        res = self.mtkClass.daloader.keys()
+        with open(os.path.join(parameters[0],"hwparam.json"),"w") as wf:
+            wf.write(json.dumps(res))
+        self.parent.Status["result"] = res
         self.parent.Status["done"] = True
         self.sendUpdateSignal.emit()
+
 

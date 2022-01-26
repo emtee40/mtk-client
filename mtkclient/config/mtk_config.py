@@ -86,9 +86,8 @@ class Mtk_Config(metaclass=LogBase):
         return self.socid
 
     def set_hwparam_path(self, path):
-        if path is None:
-            path = "logs"
-        self.hwparam_path = path
+        if path is not None:
+            self.hwparam_path = path
 
     def default_values(self, hwcode):
         if self.chipconfig.var1 is None:
