@@ -285,4 +285,5 @@ class legacyext(metaclass=LogBase):
                     self.info("MTEE2       : " + hexlify(mtee2).decode('utf-8'))
                     self.config.hwparam.writesetting("mtee2", hexlify(mtee2).decode('utf-8'))
                     retval["mtee2"] = hexlify(mtee2).decode('utf-8')
+        self.config.hwparam.writesetting("hwcode", retval["hwcode"])
         return retval
