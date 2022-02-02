@@ -163,10 +163,10 @@ class Main(metaclass=LogBase):
             if mtk.port.cdc.pid == 0x0003:
                 plt = PLTools(mtk, self.__logger.level)
                 self.info("Uploading stage 1")
-                self.config.set_gui_status(self.config.tr("Uploading stage 1"))
+                mtk.config.set_gui_status(mtk.config.tr("Uploading stage 1"))
                 if plt.runpayload(filename=stage1file):
                     self.info("Successfully uploaded stage 1, sending stage 2")
-                    self.config.set_gui_status(self.config.tr("Successfully uploaded stage 1, sending stage 2"))
+                    mtk.config.set_gui_status(mtk.config.tr("Successfully uploaded stage 1, sending stage 2"))
                     with open(stage2file, "rb") as rr:
                         stage2data = rr.read()
                         while len(stage2data) % 0x200:
@@ -198,7 +198,7 @@ class Main(metaclass=LogBase):
                     if flag != 0xD0D0D0D0:
                         self.error(f"Error on sending stage2, size {hex(len(stage2data))}.")
                     self.info(f"Done sending stage2, size {hex(len(stage2data))}.")
-                    self.config.set_gui_status(self.config.tr("Done sending stage 2"))
+                    mtk.config.set_gui_status(mtk.config.tr("Done sending stage 2"))
                     if verifystage2:
                         self.info("Verifying stage2 data")
                         rdata = b""
@@ -220,7 +220,7 @@ class Main(metaclass=LogBase):
                                 wf.write(rdata)
                         else:
                             self.info("Stage2 verification passed.")
-                            self.config.set_gui_status(self.config.tr("Stage2 verification passed."))
+                            mtk.config.set_gui_status(mtk.config.tr("Stage2 verification passed."))
 
                     # ####### Kick Watchdog
                     # magic
@@ -236,7 +236,7 @@ class Main(metaclass=LogBase):
                     # address
                     mtk.port.usbwrite(pack(">I", stage2addr))
                     self.info("Done jumping stage2 at %08X" % stage2addr)
-                    self.config.set_gui_status(self.config.tr("Done jumping stage2 at %08X" % stage2addr))
+                    mtk.config.set_gui_status(mtk.config.tr("Done jumping stage2 at %08X" % stage2addr))
                     ack = unpack(">I", mtk.port.usbread(4))[0]
                     if ack == 0xB1B2B3B4:
                         self.info("Successfully loaded stage2")
