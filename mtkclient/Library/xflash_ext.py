@@ -346,7 +346,7 @@ class xflashext(metaclass=LogBase):
     def custom_rpmb_init(self):
         hwc = self.cryptosetup()
         if self.config.chipconfig.meid_addr:
-            meid = self.custom_read(self.config.chipconfig.meid_addr, 16)
+            meid = self.custom_read(0x1008ec, 16)
             if meid != b"":
                 self.config.set_meid(meid)
                 self.info("Generating sej rpmbkey...")
@@ -542,11 +542,10 @@ class xflashext(metaclass=LogBase):
             self.info("MEID        : " + hexlify(meid).decode('utf-8'))
         else:
             try:
-                if self.config.chipconfig.meid_addr is not None:
-                    meid = b"".join([pack("<I", val) for val in self.readmem(self.config.chipconfig.meid_addr, 4)])
-                    self.config.set_meid(meid)
-                    self.info("MEID        : " + hexlify(meid).decode('utf-8'))
-                    retval["meid"]=hexlify(meid).decode('utf-8')
+                meid = b"".join([pack("<I", val) for val in self.readmem(0x1008ec, 4)])
+                self.config.set_meid(meid)
+                self.info("MEID        : " + hexlify(meid).decode('utf-8'))
+                retval["meid"]=hexlify(meid).decode('utf-8')
             except Exception as err:
                 pass
         if socid is not None:
@@ -554,11 +553,10 @@ class xflashext(metaclass=LogBase):
             retval["socid"] = hexlify(socid).decode('utf-8')
         else:
             try:
-                if self.config.chipconfig.socid_addr is not None:
-                    socid = b"".join([pack("<I", val) for val in self.readmem(self.config.chipconfig.socid_addr, 8)])
-                    self.config.set_socid(socid)
-                    self.info("SOCID        : " + hexlify(socid).decode('utf-8'))
-                    retval["socid"] = hexlify(socid).decode('utf-8')
+                socid = b"".join([pack("<I", val) for val in self.readmem(0x100934, 8)])
+                self.config.set_socid(socid)
+                self.info("SOCID        : " + hexlify(socid).decode('utf-8'))
+                retval["socid"] = hexlify(socid).decode('utf-8')
             except Exception as err:
                 pass
 
@@ -608,8 +606,7 @@ class xflashext(metaclass=LogBase):
                 val=json.loads(open("tee.json","r").read())
                 self.decrypt_tee(val["filename"],bytes.fromhex(val["data"]),bytes.fromhex(val["data2"]))
             if meid == b"":
-                if self.config.chipconfig.meid_addr:
-                    meid = self.custom_read(self.config.chipconfig.meid_addr, 16)
+                meid = self.custom_read(0x1008ec, 16)
             if meid != b"":
                 self.config.set_meid(meid)
                 self.info("Generating sej rpmbkey...")

@@ -74,6 +74,8 @@ class Mtk_Config(metaclass=LogBase):
     def get_meid(self):
         if self.meid is None and self.hwparam is not None:
             self.meid = self.hwparam.loadsetting("meid")
+        elif self.meid is not None:
+            self.hwparam.writesetting("meid",hexlify(self.meid).decode('utf-8'))
         return self.meid
 
     def set_socid(self,socid):
@@ -181,6 +183,11 @@ class Mtk_Config(metaclass=LogBase):
                 bmtblockcount = 0x50
             elif self.da.daconfig.flashtype == "emmc":
                 bmtflag = 1
+                bmtblockcount = 0xA8
+                bmtpartsize = 0x1500000
+        elif hwcode in [0x6582]:
+            if self.da.daconfig.flashtype == "emmc":
+                bmtflag = 2
                 bmtblockcount = 0xA8
                 bmtpartsize = 0x1500000
         elif hwcode in [0x6572]:

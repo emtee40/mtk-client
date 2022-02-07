@@ -291,7 +291,7 @@ class usb_class(metaclass=LogBase):
         for itf in self.configuration:
             if self.devclass == -1:
                 self.devclass = 2
-            if itf.bInterfaceClass == self.devclass:
+            if itf.bInterfaceClass in [self.devclass,0xFF]:
                 if self.interface == -1 or self.interface == itf.bInterfaceNumber:
                     self.interface = itf
                     self.EP_OUT = EP_OUT
@@ -394,7 +394,7 @@ class usb_class(metaclass=LogBase):
         self.verify_data(bytearray(command), "TX:")
         return True
 
-    def usbread(self, resplen):
+    def usbread(self, resplen, maxtimeout=10):
         if resplen <= 0:
             self.info("Warning !")
         res = bytearray()
@@ -403,6 +403,7 @@ class usb_class(metaclass=LogBase):
         epr = self.EP_IN.read
         wMaxPacketSize = self.EP_IN.wMaxPacketSize
         extend = res.extend
+
         while len(res) < resplen:
             try:
                 extend(epr(resplen))
@@ -410,7 +411,7 @@ class usb_class(metaclass=LogBase):
                 error = str(e.strerror)
                 if "timed out" in error:
                     self.debug("Timed out")
-                    if timeout == 10:
+                    if timeout == maxtimeout:
                         return b""
                     timeout += 1
                     pass

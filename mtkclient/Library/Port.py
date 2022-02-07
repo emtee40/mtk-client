@@ -132,7 +132,7 @@ class Port(metaclass=LogBase):
             data = [data]
         for val in data:
             self.usbwrite(val)
-            tmp = self.usbread(len(val))
+            tmp = self.usbread(len(val), maxtimeout=0)
             # print(hexlify(tmp))
             if val != tmp:
                 return False

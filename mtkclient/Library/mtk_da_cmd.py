@@ -7,7 +7,7 @@ from binascii import hexlify
 from mtkclient.Library.utils import LogBase, logsetup, getint
 from mtkclient.config.payloads import pathconfig
 from mtkclient.Library.error import ErrorHandler
-
+from mtkclient.Library.utils import progress
 
 class DA_handler(metaclass=LogBase):
     def __init__(self, mtk, loglevel=logging.INFO):
@@ -89,6 +89,8 @@ class DA_handler(metaclass=LogBase):
                         preloader = self.dump_preloader_ram()
         else:
             self.info("Device is unprotected.")
+            #if not mtk.config.is_brom:
+            #   self.mtk.preloader.reset_to_brom()
             if mtk.config.is_brom:
                 self.info("Device is in BROM-Mode. Bypassing security.")
                 mtk = mtk.bypass_security()  # Needed for dumping preloader
@@ -108,8 +110,6 @@ class DA_handler(metaclass=LogBase):
         else:
             mtk.daloader.writestate()
             return mtk
-
-
 
     def da_gpt(self, directory:str):
         if directory is None:
@@ -234,13 +234,13 @@ class DA_handler(metaclass=LogBase):
     def da_rf(self, filename, parttype):
         if self.mtk.daloader.daconfig.flashtype == "ufs":
             if parttype == "lu0":
-                length = self.mtk.daloader.daconfig.flashsize[0]
+                length = self.mtk.daloader.daconfig.flashsize
             elif parttype == "lu1":
-                length = self.mtk.daloader.daconfig.flashsize[1]
+                length = self.mtk.daloader.daconfig.flashsize
             elif parttype == "lu2":
-                length = self.mtk.daloader.daconfig.flashsize[2]
+                length = self.mtk.daloader.daconfig.flashsize
             else:
-                length = self.mtk.daloader.daconfig.flashsize[0]
+                length = self.mtk.daloader.daconfig.flashsize
         else:
             length = self.mtk.daloader.daconfig.flashsize
         print(f"Dumping sector 0 with flash size {hex(length)} as {filename}.")
@@ -494,14 +494,34 @@ class DA_handler(metaclass=LogBase):
                       f"sector count {str(size // 0x200)}.")
 
     def da_peek(self, addr: int, length: int, filename: str):
-        data = self.mtk.daloader.peek(addr=addr, length=length)
-        if data != b"":
-            if filename is not None:
-                open(filename, "wb").write(data)
-                self.info(f"Successfully wrote data from {hex(addr)}, length {hex(length)} to {filename}")
+        bytestoread = length
+        pos = 0
+        pagesize = 0x200
+        if self.mtk.daloader.xflash:
+            pagesize = 1*1024*1024
+        pg = progress(pagesize)
+        bytesread=0
+        wf = None
+        if filename is not None:
+            wf = open(filename, "wb")
+        retval = bytearray()
+        while bytestoread > 0:
+            msize = min(bytestoread,pagesize)
+            data = self.mtk.daloader.peek(addr=addr+pos, length=msize)
+            if wf is not None:
+                wf.write(data)
             else:
-                self.info(
-                    f"Data read from {hex(addr)}, length: {hex(length)}:\n{hexlify(data).decode('utf-8')}\n")
+                retval.extend(data)
+            pg.show_progress("Dump:",bytesread//pagesize,length//pagesize)
+            pos+=len(data)
+            bytesread+=len(data)
+            bytestoread-=len(data)
+        if filename is not None:
+            wf.close()
+            self.info(f"Successfully wrote data from {hex(addr)}, length {hex(length)} to {filename}")
+        else:
+            self.info(
+                f"Data read from {hex(addr)}, length: {hex(length)}:\n{hexlify(retval).decode('utf-8')}\n")
 
     def da_poke(self, addr: int, data: str, filename: str):
         if filename is not None:

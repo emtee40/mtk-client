@@ -185,7 +185,6 @@ class legacyext(metaclass=LogBase):
 
     def generate_keys(self):
         hwc = self.cryptosetup()
-        meid = b""
         retval = {}
         retval["hwcode"] = hex(self.config.hwcode)
         meid = self.config.get_meid()
@@ -194,11 +193,10 @@ class legacyext(metaclass=LogBase):
             self.info("MEID        : " + hexlify(meid).decode('utf-8'))
         else:
             try:
-                if self.config.chipconfig.meid_addr is not None:
-                    meid = b"".join([pack("<I", val) for val in self.readmem(self.config.chipconfig.meid_addr, 4)])
-                    self.config.set_meid(meid)
-                    self.info("MEID        : " + hexlify(meid).decode('utf-8'))
-                    retval["meid"] = hexlify(meid).decode('utf-8')
+                meid = b"".join([pack("<I", val) for val in self.readmem(0x1008ec, 4)])
+                self.config.set_meid(meid)
+                self.info("MEID        : " + hexlify(meid).decode('utf-8'))
+                retval["meid"] = hexlify(meid).decode('utf-8')
             except Exception as err:
                 pass
         if socid is not None:
@@ -206,11 +204,10 @@ class legacyext(metaclass=LogBase):
             retval["socid"] = socid
         else:
             try:
-                if self.config.chipconfig.socid_addr is not None:
-                    socid = b"".join([pack("<I",val) for val in self.readmem(self.config.chipconfig.socid_addr,8)])
-                    self.config.set_socid(socid)
-                    self.info("SOCID        : " + hexlify(socid).decode('utf-8'))
-                    retval["socid"] = hexlify(socid).decode('utf-8')
+                socid = b"".join([pack("<I", val) for val in self.readmem(0x100934, 8)])
+                self.config.set_socid(socid)
+                self.info("SOCID        : " + hexlify(socid).decode('utf-8'))
+                retval["socid"] = hexlify(socid).decode('utf-8')
             except Exception as err:
                 pass
         if self.config.chipconfig.dxcc_base is not None:

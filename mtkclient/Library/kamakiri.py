@@ -71,8 +71,11 @@ class Kamakiri(metaclass=LogBase):
 
     def kamakiri2(self, addr):
         self.udev = self.mtk.port.cdc.device
-        self.udev.ctrl_transfer(0x21, 0x20, 0, 0, self.linecode + array.array('B', pack("<I", addr)))
-        self.udev.ctrl_transfer(0x80, 0x6, 0x0200, 0, 9)
+        try:
+            self.udev.ctrl_transfer(0x21, 0x20, 0, 0, self.linecode + array.array('B', pack("<I", addr)))
+            self.udev.ctrl_transfer(0x80, 0x6, 0x0200, 0, 9)
+        except:
+            pass
 
     def da_read_write(self, address, length, data=None, check_result=True):
         self.udev = self.mtk.port.cdc.device
@@ -214,6 +217,7 @@ class Kamakiri(metaclass=LogBase):
                         return True, address
                 except RuntimeError:
                     try:
+                        self.info("Bruteforce, testing " + hex(address) + "...")
                         self.mtk.preloader.read32(addr)
                     except:
                         return False, address + 4

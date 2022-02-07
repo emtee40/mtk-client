@@ -865,7 +865,7 @@ class DALegacy(metaclass=LogBase):
             skipdl = 0
             self.usbwrite(pack(">I", skipdl))
         elif hwcode == 0x6582:
-            newcombo = 0
+            newcombo = 1
             self.usbwrite(pack(">I", newcombo))
         time.sleep(0.350)
         buffer = self.usbread(toread)
@@ -1049,14 +1049,16 @@ class DALegacy(metaclass=LogBase):
                             self.daconfig.flashsize = self.sdc.m_sdmmc_ua_size
                     elif self.daconfig.flashtype == "nor":
                         self.daconfig.flashsize = self.nor.m_nor_flash_size
-                    self.info("Reconnecting to preloader")
-                    self.set_usb_cmd()
-                    self.mtk.port.close(reset=False)
-                    time.sleep(2)
-                    while not self.mtk.port.cdc.connect():
-                        time.sleep(0.5)
                     self.info("Connected to preloader")
-                    self.check_usb_cmd()
+                    speed = self.check_usb_cmd()
+                    if speed[0] == 0: # 1 = USB High Speed, 2= USB Ultra high speed
+                        self.info("Reconnecting to preloader")
+                        self.set_usb_cmd()
+                        self.mtk.port.close(reset=False)
+                        time.sleep(2)
+                        while not self.mtk.port.cdc.connect():
+                            time.sleep(0.5)
+                        self.info("Connected to preloader")
                     return True
             return False
 
@@ -1112,14 +1114,13 @@ class DALegacy(metaclass=LogBase):
         if self.usbwrite(self.Cmd.USB_CHECK_STATUS):  # 72
             res = self.usbread(1)
             if res == self.Rsp.ACK:
-                res = self.usbread(1)
-                if len(res) > 0:
-                    return True
-        return False
+                speed = self.usbread(1)
+                return speed
+        return None
 
     def set_usb_cmd(self):
         if self.usbwrite(self.Cmd.USB_SETUP_PORT):  # 72
-            if self.usbwrite(b"\x01"):
+            if self.usbwrite(b"\x01"): #  USB_HIGH_SPEED
                 res = self.usbread(1)
                 if len(res) > 0:
                     if res[0] is self.Rsp.ACK[0]:
