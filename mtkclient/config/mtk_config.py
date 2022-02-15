@@ -5,7 +5,13 @@ from binascii import hexlify
 from mtkclient.Library.utils import LogBase
 from mtkclient.Library.settings import hwparam
 from mtkclient.config.brom_config import chipconfig, damodes, hwconfig
-from PySide6.QtCore import QObject
+try:
+    from PySide6.QtCore import QObject
+except ImportError:
+    class QObject():
+        def tr(self, arg):
+            return
+    pass
 
 class Mtk_Config(metaclass=LogBase):
     def __init__(self, loglevel=logging.INFO, gui=None, guiprogress=None, update_status_text=None):
