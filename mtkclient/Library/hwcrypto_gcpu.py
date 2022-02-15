@@ -309,8 +309,12 @@ class GCpu(metaclass=LogBase):
             for i in range(1, 48):
                 self.write32(self.gcpu_base + regval["GCPU_REG_MEM_CMD"] + (i * 4), args[i])
         # Clear/Enable GCPU Interrupt
-        self.reg.GCPU_REG_INT_CLR = CLR_EN
-        self.reg.GCPU_REG_INT_EN = GCPU_INT_MASK
+        if cmd == 0x79:
+            self.reg.GCPU_REG_INT_CLR = 1
+            self.reg.GCPU_REG_INT_EN = 0
+        else:
+            self.reg.GCPU_REG_INT_CLR = CLR_EN
+            self.reg.GCPU_REG_INT_EN = GCPU_INT_MASK
         # GCPU Decryption Mode
         self.reg.GCPU_REG_MEM_CMD = cmd
         # GCPU PC
@@ -433,7 +437,7 @@ class GCpu(metaclass=LogBase):
         return rdata
 
     def aes_read_ecb(self, data, encrypt=False, src=0x12, dst=0x1a, keyslot=0x30):
-        if self.load_hw_key(0x30):
+        if self.load_hw_key(0x30): #0x58
             self.memptr_set(src, data)
             if encrypt:
                 if not self.aes_encrypt_ecb(keyslot, src, dst):
@@ -534,6 +538,18 @@ class GCpu(metaclass=LogBase):
             data += pack("<I", word)
         return data
 
+    def mtk_gcpu_mtee_8167(self, data=None, encrypt=True, src=0x12, dst=0x1a, keyslot=0x58):
+        if self.load_hw_key(keyslot):
+            if data is None:
+                data = bytearray(bytes.fromhex("735f23c962e7a10ab201d9a6426064b1"))
+            self.memptr_set(src, data)
+            if encrypt:
+                if not self.aes_encrypt_ecb(keyslot, src, dst):
+                    return self.memptr_get(dst, 16)
+            else:
+                if not self.aes_decrypt_ecb(keyslot, src, dst):
+                    return self.memptr_get(dst, 16)
+
     def aes_decrypt_ecb(self, key_offset, data_offset, out_offset):
         self.reg.GCPU_REG_MEM_P0 = 1
         self.reg.GCPU_REG_MEM_P1 = key_offset
@@ -547,10 +563,10 @@ class GCpu(metaclass=LogBase):
         self.reg.GCPU_REG_MEM_P1 = key_offset
         self.reg.GCPU_REG_MEM_P2 = data_offset
         self.reg.GCPU_REG_MEM_P3 = out_offset
-        if self.set_mode_cmd(encrypt=False, mode="ecb", encryptedkey=False) != 0:
+        if self.set_mode_cmd(encrypt=True, mode="ecb", encryptedkey=False) != 0:
             raise Exception("failed to call the function!")
 
-    def load_hw_key(self, offset):
+    def load_hw_key(self, offset): # vGcpuMEMExeNoIntr
         self.reg.GCPU_REG_MEM_P0 = 0x58  # SrcStartAddr
         self.reg.GCPU_REG_MEM_P1 = offset  # DstStartAddr
         self.reg.GCPU_REG_MEM_P2 = 4  # Length/16 for ECB

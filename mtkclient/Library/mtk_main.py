@@ -275,7 +275,7 @@ class Main(metaclass=LogBase):
             dwords = length // 4
             if length % 4:
                 dwords += 1
-            if filename != None:
+            if filename is not None:
                 wf = open(filename, "wb")
             sdata = b""
             print_progress(0, 100, prefix='Progress:',
@@ -285,9 +285,12 @@ class Main(metaclass=LogBase):
             pos = 0
             while dwords:
                 size = min(512 // 4, dwords)
-                data = b"".join(int.to_bytes(val, 4, 'little') for val in mtk.preloader.read32(addr + pos, size))
+                if dwords == 1:
+                    data = pack("<I",mtk.preloader.read32(addr + pos, size))
+                else:
+                    data = b"".join(int.to_bytes(val, 4, 'little') for val in mtk.preloader.read32(addr + pos, size))
                 sdata += data
-                if filename != "":
+                if filename is not None:
                     wf.write(data)
                 pos += len(data)
                 prog = pos / length * 100
@@ -298,7 +301,7 @@ class Main(metaclass=LogBase):
                 dwords = (length - pos) // 4
             print_progress(100, 100, prefix='Progress:',
                            suffix='Finished', bar_length=50)
-            if filename == "":
+            if filename is None:
                 print(hexlify(sdata).decode('utf-8'))
             else:
                 wf.close()
@@ -514,6 +517,8 @@ class Main(metaclass=LogBase):
             mtk = da_handler.configure_da(mtk, preloader)
             if mtk is not None:
                 da_handler.handle_da_cmds(mtk, cmd, self.args)
+            else:
+                self.close()
 
 
     def cmd_log(self, mtk, filename):

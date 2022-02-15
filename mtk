@@ -90,6 +90,7 @@ if __name__ == '__main__':
     da_cmds = parser_da.add_subparsers(dest='subcmd', help='Commands: peek poke keys unlock')
     da_peek = da_cmds.add_parser("peek", help="Read memory")
     da_peek.add_argument('--preloader', help='Set the preloader filename for dram config')
+    da_dump = da_cmds.add_parser("memdump", help="Dump whole memory areas")
     da_poke = da_cmds.add_parser("poke", help="Write memory")
     da_poke.add_argument('--preloader', help='Set the preloader filename for dram config')
     da_keys = da_cmds.add_parser("generatekeys", help="Generate keys")
@@ -115,6 +116,8 @@ if __name__ == '__main__':
     da_peek.add_argument('address', type=str, help="Address to read from (hex value)")
     da_peek.add_argument('length', type=str, help="Length to read")
     da_peek.add_argument('--filename', type=str, help="Filename to write data into")
+
+    da_dump.add_argument('directory', type=str, help="Directory to dump ram dump files")
 
     da_poke.add_argument('address', type=str, help="Address to read from (hex value)")
     da_poke.add_argument('data', type=str, help="Data to write")

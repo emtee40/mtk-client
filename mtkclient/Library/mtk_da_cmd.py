@@ -78,6 +78,9 @@ class DA_handler(metaclass=LogBase):
             if mtk.port.cdc.connected and os.path.exists(".state"):
                 info = mtk.daloader.reinit()
                 return mtk
+        if mtk.config.target_config is None:
+            self.info("Please disconnect, start mtkclient and reconnect.")
+            return None
         if mtk.config.target_config["daa"]:
             mtk = mtk.bypass_security()
             self.mtk = mtk
@@ -105,7 +108,6 @@ class DA_handler(metaclass=LogBase):
             else:
                 self.info("Device is in Preloader-Mode :(")
         if not mtk.daloader.upload_da(preloader=preloader):
-            self.error("Error uploading da")
             return None
         else:
             mtk.daloader.writestate()
@@ -498,7 +500,7 @@ class DA_handler(metaclass=LogBase):
         pos = 0
         pagesize = 0x200
         if self.mtk.daloader.xflash:
-            pagesize = 1*1024*1024
+            pagesize = self.mtk.daloader.get_packet_length()
         pg = progress(pagesize)
         bytesread=0
         wf = None
@@ -507,15 +509,19 @@ class DA_handler(metaclass=LogBase):
         retval = bytearray()
         while bytestoread > 0:
             msize = min(bytestoread,pagesize)
-            data = self.mtk.daloader.peek(addr=addr+pos, length=msize)
-            if wf is not None:
-                wf.write(data)
-            else:
-                retval.extend(data)
-            pg.show_progress("Dump:",bytesread//pagesize,length//pagesize)
-            pos+=len(data)
-            bytesread+=len(data)
-            bytestoread-=len(data)
+            try:
+                data = self.mtk.daloader.peek(addr=addr+pos, length=msize)
+                if wf is not None:
+                    wf.write(data)
+                else:
+                    retval.extend(data)
+                pg.show_progress("Dump:",bytesread//pagesize,length//pagesize)
+                pos+=len(data)
+                bytesread+=len(data)
+                bytestoread-=len(data)
+            except:
+                pass
+        pg.show_progress("Dump:", 100, 100)
         if filename is not None:
             wf.close()
             self.info(f"Successfully wrote data from {hex(addr)}, length {hex(length)} to {filename}")
@@ -660,13 +666,21 @@ class DA_handler(metaclass=LogBase):
         elif cmd == "da":
             subcmd = args.subcmd
             if subcmd is None:
-                print("Available da cmds are: [peek, poke, generatekeys, seccfg, rpmb, meta]")
+                print("Available da cmds are: [peek, poke, generatekeys, seccfg, rpmb, meta, memdump]")
                 return
             if subcmd == "peek":
                 addr = getint(args.address)
                 length = getint(args.length)
                 filename = args.filename
                 self.da_peek(addr=addr, length=length, filename=filename)
+            elif subcmd == "memdump":
+                directory = args.directory
+                if not os.path.exists(directory):
+                    os.mkdir(directory)
+                self.da_peek(addr=0, length=0x11200000,
+                              filename=os.path.join(directory, "dump_brom.bin"))
+                self.da_peek(addr=0x20000000, length=0xE0000000,
+                              filename=os.path.join(directory, "dump_ram.bin"))
             elif subcmd == "poke":
                 addr = getint(args.address)
                 filename = args.filename
@@ -675,7 +689,7 @@ class DA_handler(metaclass=LogBase):
             elif subcmd == "generatekeys":
                 mtk.daloader.keys()
             elif subcmd == "seccfg":
-                v=mtk.daloader.seccfg(args.flag)
+                v = mtk.daloader.seccfg(args.flag)
                 if v[0]:
                     self.info(v[1])
                 else:

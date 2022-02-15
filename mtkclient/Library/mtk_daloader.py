@@ -202,6 +202,13 @@ class DAloader(metaclass=LogBase):
     def readflash(self, addr, length, filename, parttype, display=True):
         return self.da.readflash(addr=addr, length=length, filename=filename, parttype=parttype, display=display)
 
+    def get_packet_length(self):
+        if self.xflash:
+            pt=self.da.get_packet_length()
+            return pt.read_packet_length
+        else:
+            return 512
+
     def peek(self, addr: int, length:int):
         if self.xflash:
             return self.xft.custom_read(addr=addr, length=length)

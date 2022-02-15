@@ -157,8 +157,9 @@ class DAconfig(metaclass=LogBase):
             data = data[idx:]
             mlen = unpack("<I", data[0x20:0x20 + 4])[0]
             siglen = unpack("<I", data[0x2C:0x2C + 4])[0]
-            data = data[:mlen]
-
+            data = data[:mlen-siglen]
+            dramsize = unpack("<I",data[-4:])[0]
+            data = data[-dramsize-4:-4]
         bldrstring = b"MTK_BLOADER_INFO_v"
         len_bldrstring = len(bldrstring)
         idx = data.find(bldrstring)
@@ -168,7 +169,7 @@ class DAconfig(metaclass=LogBase):
             ver = int(data[idx + len_bldrstring:idx + len_bldrstring + 2].rstrip(b"\x00"))
             return ver, data
         ver = int(data[idx + len_bldrstring:idx + len_bldrstring + 2].rstrip(b"\x00"))
-        emi = data[idx:-siglen]
+        emi = data[idx:]
         rlen = len(emi) - 4
         if len(emi) > 4:
             val = unpack("<I", emi[-4:])[0]

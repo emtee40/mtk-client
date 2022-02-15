@@ -79,7 +79,7 @@ class DAXFlash(metaclass=LogBase):
         GET_NAND_INFO = 0x040002
         GET_NOR_INFO = 0x040003
         GET_UFS_INFO = 0x040004
-        GET_VERSION = 0x040005
+        GET_DA_VERSION = 0x040005
         GET_EXPIRE_DATA = 0x040006
         GET_PACKET_LENGTH = 0x040007
         GET_RANDOM_ID = 0x040008
@@ -320,7 +320,9 @@ class DAXFlash(metaclass=LogBase):
             if status == 0:
                 try:
                     if self.xsend(pack("<I", len(emi))):
-                        return self.send_param([emi])
+                        if self.send_param([emi]):
+                            self.info(f"DRAM setup passed.")
+                            return True
                 except Exception as err:
                     self.error(f"Error on sending emi: {str(err)}")
                     return False
@@ -352,9 +354,19 @@ class DAXFlash(metaclass=LogBase):
                 if self.usbwrite(pkt1):
                     if self.usbwrite(param):
                         if self.send_data(da):
+                            self.info(f"Upload data was accepted. Jumping to stage 2...")
                             if timeout:
                                 time.sleep(timeout)
-                            status = self.status()
+                            status = -1
+                            try:
+                                status = self.status()
+                            except:
+                                if status == -1:
+                                    self.error(f"Stage was't executed. Maybe dram issue ?.")
+                                    return False
+                                self.error(f"Error on boot to: {self.eh.status(status)}")
+                                return False
+
                             if status == 0x434E5953 or status == 0x0:
                                 return True
                             else:
@@ -478,6 +490,16 @@ class DAXFlash(metaclass=LogBase):
                 self.error(f"Error on format: {self.eh.status(status)}")
         return False
 
+    def get_da_version(self):
+        data = self.send_devctrl(self.Cmd.GET_DA_VERSION)
+        status = self.status()
+        if status == 0:
+            self.info(f"DA-VERSION      : {data.decode('utf-8')}")
+            return data
+        else:
+            self.error(f"Error on getting chip id: {self.eh.status(status)}")
+            return None
+
     def get_chip_id(self):
         class Chipid:
             hw_code = 0
@@ -488,10 +510,15 @@ class DAXFlash(metaclass=LogBase):
 
         cid = Chipid
         data = self.send_devctrl(self.Cmd.GET_CHIP_ID)
-        cid.hw_code, cid.hw_sub_code, cid.hw_version, cid.sw_version, cid.chip_evolution = unpack(">HHHHH",
+        cid.hw_code, cid.hw_sub_code, cid.hw_version, cid.sw_version, cid.chip_evolution = unpack("<HHHHH",
                                                                                                   data[:(5 * 2)])
         status = self.status()
         if status == 0:
+            self.info("HW-CODE         : 0x%X", cid.hw_code)
+            self.info("HWSUB-CODE      : 0x%X", cid.hw_sub_code)
+            self.info("HW-VERSION      : 0x%X", cid.hw_version)
+            self.info("SW-VERSION      : 0x%X", cid.sw_version)
+            self.info("CHIP-EVOLUTION  : 0x%X", cid.chip_evolution)
             return cid
         else:
             self.error(f"Error on getting chip id: {self.eh.status(status)}")
@@ -962,7 +989,7 @@ class DAXFlash(metaclass=LogBase):
             log_channel = 1
             system_os = self.FtSystemOSE.OS_LINUX
             ufs_provision = 0x0
-            param = pack("<IIIII", da_log_level, log_channel, system_os, ufs_provision, 0x0)
+            param = pack("<IIIII", da_log_level, log_channel, system_os, ufs_provision, 0x1)
             if self.send_param(param):
                 return True
         return False
@@ -997,6 +1024,7 @@ class DAXFlash(metaclass=LogBase):
 
             hashaddr, hashmode, hashlen = self.mtk.daloader.compute_hash_pos(da1, da2, da2sig_len)
             if hashaddr is not None:
+                da1 = self.xft.patch_da1(da1)
                 da2 = self.xft.patch_da2(da2)
                 da1 = self.mtk.daloader.fix_hash(da1, da2, hashaddr, hashmode, hashlen)
                 self.patch = True
@@ -1058,9 +1086,8 @@ class DAXFlash(metaclass=LogBase):
             self.daconfig.boot1size = self.ufs.lu1_size
             self.daconfig.boot2size = self.ufs.lu2_size
         self.chipid = self.get_chip_id()
+        self.daversion = self.get_da_version()
         self.randomid = self.get_random_id()
-        # if self.get_da_stor_life_check() == 0x0:
-        #   cid = self.get_chip_id()
         speed = self.get_usb_speed()
         if speed == b"full-speed":
             self.info("Reconnecting to preloader")
@@ -1133,9 +1160,6 @@ class DAXFlash(metaclass=LogBase):
                     if loaded:
                         self.info("Successfully uploaded stage 2")
                         self.reinit(True)
-                        # if self.get_da_stor_life_check() == 0x0:
-                        cid = self.get_chip_id()
-                        self.info("DA-CODE      : 0x%X", (cid.hw_code << 4) + (cid.hw_code >> 4))
                         self.config.hwparam.writesetting("hwcode", hex(self.config.hwcode))
 
                         daextdata = self.xft.patch()
@@ -1155,6 +1179,7 @@ class DAXFlash(metaclass=LogBase):
                         return True
                     else:
                         self.error("Error on booting to da (xflash)")
+                        return False
             else:
                 self.error("Didn't get brom connection, got instead: " + hexlify(connagent).decode('utf-8'))
         return False
