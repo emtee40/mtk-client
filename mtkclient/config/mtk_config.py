@@ -60,6 +60,8 @@ class Mtk_Config(metaclass=LogBase):
         self.gpt_settings = None
         self.hwparam = None
         self.hwparam_path = "logs"
+        self.sram = None
+        self.dram = None
         if loglevel == logging.DEBUG:
             logfilename = os.path.join("logs", "log.txt")
             fh = logging.FileHandler(logfilename)

@@ -677,10 +677,32 @@ class DA_handler(metaclass=LogBase):
                 directory = args.directory
                 if not os.path.exists(directory):
                     os.mkdir(directory)
-                self.da_peek(addr=0, length=0x11200000,
+                dramaddr = 0x20000000
+                dramsize = 0xE0000000
+                bromaddr = 0
+                bromsize = 0x200000
+                sramaddr = 0x200000
+                sramsize = 0x11200000
+                efuseaddr = 0x11C10000
+                efusesize = 0x10000
+                if self.mtk.config.dram is not None:
+                    dramaddr = self.mtk.config.dram.base_address
+                    dramsize = self.mtk.config.dram.size
+                if self.mtk.config.sram is not None:
+                    sramaddr = self.mtk.config.sram.base_address
+                    sramsize = self.mtk.config.sram.size
+                self.info("Dumping brom...")
+                self.da_peek(addr=bromaddr, length=bromsize,
                               filename=os.path.join(directory, "dump_brom.bin"))
-                self.da_peek(addr=0x20000000, length=0xE0000000,
-                              filename=os.path.join(directory, "dump_ram.bin"))
+                self.info("Dumping sram...")
+                self.da_peek(addr=sramaddr, length=sramsize,
+                              filename=os.path.join(directory, "dump_sram.bin"))
+                self.info("Dumping dram...")
+                self.da_peek(addr=dramaddr, length=dramsize,
+                              filename=os.path.join(directory, "dump_dram.bin"))
+                self.info("Dumping efuse...")
+                self.da_peek(addr=efuseaddr, length=efusesize,
+                              filename=os.path.join(directory, "dump_efuse.bin"))
             elif subcmd == "poke":
                 addr = getint(args.address)
                 filename = args.filename

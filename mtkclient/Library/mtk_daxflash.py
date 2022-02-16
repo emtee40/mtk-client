@@ -1056,7 +1056,7 @@ class DAXFlash(metaclass=LogBase):
         return False
 
     def reinit(self, display=False):
-        self.sram, self.dram = self.get_ram_info()
+        self.config.sram, self.config.dram = self.get_ram_info()
         self.emmc = self.get_emmc_info(display)
         self.nand = self.get_nand_info(display)
         self.nor = self.get_nor_info(display)
