@@ -165,19 +165,13 @@ class DAconfig(metaclass=LogBase):
         idx = data.find(bldrstring)
         if idx == -1:
             return None
-        elif idx == 0:
+        elif idx == 0 and self.config.chipconfig.damode == damodes.XFLASH:
             ver = int(data[idx + len_bldrstring:idx + len_bldrstring + 2].rstrip(b"\x00"))
             return ver, data
-        ver = int(data[idx + len_bldrstring:idx + len_bldrstring + 2].rstrip(b"\x00"))
-        emi = data[idx:]
-        rlen = len(emi) - 4
-        if len(emi) > 4:
-            val = unpack("<I", emi[-4:])[0]
-            if val == rlen:
-                emi = emi[:rlen]
-                if not self.config.chipconfig.damode == damodes.XFLASH:
-                    if emi.find(b"MTK_BIN") != -1:
-                        emi = emi[emi.find(b"MTK_BIN") + 0xC:]
+        else:
+            if data.find(b"MTK_BIN") != -1:
+                emi = data[data.find(b"MTK_BIN") + 0xC:]
+                ver = int(data[idx + len_bldrstring:idx + len_bldrstring + 2].rstrip(b"\x00"))
                 return ver, emi
         return None
 

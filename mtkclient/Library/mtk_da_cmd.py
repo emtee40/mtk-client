@@ -517,7 +517,7 @@ class DA_handler(metaclass=LogBase):
                     wf.write(data)
                 else:
                     retval.extend(data)
-                pg.show_progress("Dump:", bytesread // pagesize, length // pagesize)
+                pg.show_progress("Dump:", bytesread, length)
                 pos += len(data)
                 bytesread += len(data)
                 bytestoread -= len(data)
