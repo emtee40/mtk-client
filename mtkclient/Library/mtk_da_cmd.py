@@ -9,6 +9,7 @@ from mtkclient.config.payloads import pathconfig
 from mtkclient.Library.error import ErrorHandler
 from mtkclient.Library.utils import progress
 
+
 class DA_handler(metaclass=LogBase):
     def __init__(self, mtk, loglevel=logging.INFO):
         self.__logger = self.__logger
@@ -42,12 +43,13 @@ class DA_handler(metaclass=LogBase):
                 multiplier = 32
                 while True:
                     try:
-                        data.extend(b"".join([pack("<I", val) for val in self.mtk.preloader.read32(0x200000 + idx, (4*multiplier))]))
-                        idx = idx + (16*multiplier)
-                        #sys.stdout.write("\r"+str(length-(idx-startidx)))
-                        #sys.stdout.flush()                        sys.stdout.write("\r"+str(length-(idx-startidx)))
-                        if ((idx-startidx) > length):
-                            #done reading
+                        data.extend(b"".join(
+                            [pack("<I", val) for val in self.mtk.preloader.read32(0x200000 + idx, (4 * multiplier))]))
+                        idx = idx + (16 * multiplier)
+                        # sys.stdout.write("\r"+str(length-(idx-startidx)))
+                        # sys.stdout.flush()                        sys.stdout.write("\r"+str(length-(idx-startidx)))
+                        if ((idx - startidx) > length):
+                            # done reading
                             break
                     except Exception as err:
                         self.error(str(err))
@@ -92,7 +94,7 @@ class DA_handler(metaclass=LogBase):
                         preloader = self.dump_preloader_ram()
         else:
             self.info("Device is unprotected.")
-            #if not mtk.config.is_brom:
+            # if not mtk.config.is_brom:
             #   self.mtk.preloader.reset_to_brom()
             if mtk.config.is_brom:
                 self.info("Device is in BROM-Mode. Bypassing security.")
@@ -113,7 +115,7 @@ class DA_handler(metaclass=LogBase):
             mtk.daloader.writestate()
             return mtk
 
-    def da_gpt(self, directory:str):
+    def da_gpt(self, directory: str):
         if directory is None:
             directory = ""
 
@@ -502,23 +504,23 @@ class DA_handler(metaclass=LogBase):
         if self.mtk.daloader.xflash:
             pagesize = self.mtk.daloader.get_packet_length()
         pg = progress(pagesize)
-        bytesread=0
+        bytesread = 0
         wf = None
         if filename is not None:
             wf = open(filename, "wb")
         retval = bytearray()
         while bytestoread > 0:
-            msize = min(bytestoread,pagesize)
+            msize = min(bytestoread, pagesize)
             try:
-                data = self.mtk.daloader.peek(addr=addr+pos, length=msize)
+                data = self.mtk.daloader.peek(addr=addr + pos, length=msize)
                 if wf is not None:
                     wf.write(data)
                 else:
                     retval.extend(data)
-                pg.show_progress("Dump:",bytesread//pagesize,length//pagesize)
-                pos+=len(data)
-                bytesread+=len(data)
-                bytestoread-=len(data)
+                pg.show_progress("Dump:", bytesread // pagesize, length // pagesize)
+                pos += len(data)
+                bytesread += len(data)
+                bytestoread -= len(data)
             except:
                 pass
         pg.show_progress("Dump:", 100, 100)
@@ -693,16 +695,16 @@ class DA_handler(metaclass=LogBase):
                     sramsize = self.mtk.config.sram.size
                 self.info("Dumping brom...")
                 self.da_peek(addr=bromaddr, length=bromsize,
-                              filename=os.path.join(directory, "dump_brom.bin"))
-                self.info("Dumping sram...")
+                             filename=os.path.join(directory, "dump_brom.bin"))
+                self.info(f"Dumping sram at {hex(sramaddr)}, size {hex(sramsize)}...")
                 self.da_peek(addr=sramaddr, length=sramsize,
-                              filename=os.path.join(directory, "dump_sram.bin"))
-                self.info("Dumping dram...")
-                self.da_peek(addr=dramaddr, length=dramsize,
-                              filename=os.path.join(directory, "dump_dram.bin"))
-                self.info("Dumping efuse...")
+                             filename=os.path.join(directory, "dump_sram.bin"))
+                self.info(f"Dumping dram at {hex(dramaddr)}, size {hex(dramsize-dramaddr)}...")
+                self.da_peek(addr=dramaddr, length=dramsize-dramaddr,
+                             filename=os.path.join(directory, f"dump_dram_{hex(dramaddr)}.bin"))
+                self.info(f"Dumping efuse at {hex(efuseaddr)}, size at {hex(efusesize)}...")
                 self.da_peek(addr=efuseaddr, length=efusesize,
-                              filename=os.path.join(directory, "dump_efuse.bin"))
+                             filename=os.path.join(directory, "dump_efuse.bin"))
             elif subcmd == "poke":
                 addr = getint(args.address)
                 filename = args.filename

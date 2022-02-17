@@ -240,7 +240,7 @@ class xflashext(metaclass=LogBase):
 
     def custom_read(self, addr, length):
         if self.cmd(XCmd.CUSTOM_READ):
-            self.xsend(addr)
+            self.xsend(data=addr, is64bit=True)
             self.xsend(length)
             data = self.xread()
             status = self.status()
@@ -259,7 +259,7 @@ class xflashext(metaclass=LogBase):
 
     def custom_write(self, addr, data):
         if self.cmd(XCmd.CUSTOM_WRITE):
-            self.xsend(addr)
+            self.xsend(data=addr, is64bit=True)
             self.xsend(len(data))
             self.xsend(data)
             status = self.status()

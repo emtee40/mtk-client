@@ -173,10 +173,14 @@ class DAXFlash(metaclass=LogBase):
         except:
             return -1
 
-    def xsend(self, data, datatype=DataType.DT_PROTOCOL_FLOW):
+    def xsend(self, data, datatype=DataType.DT_PROTOCOL_FLOW, is64bit:bool = False):
         if isinstance(data, int):
-            data = pack("<I", data)
-            length = 4
+            if is64bit:
+                data = pack("<Q", data)
+                length = 8
+            else:
+                data = pack("<I", data)
+                length = 4
         else:
             length = len(data)
         tmp = pack("<III", self.Cmd.MAGIC, datatype, length)
