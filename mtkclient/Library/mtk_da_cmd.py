@@ -64,7 +64,7 @@ class DA_handler(metaclass=LogBase):
                             try:
                                 with open(filename, "wb") as wf:
                                     wf.write(preloader)
-                                    print(f"Successfully extracted preloader for this device to: {preloader}")
+                                    print(f"Successfully extracted preloader for this device to: {filename}")
                             except:
                                 pass
                 return preloader
