@@ -680,7 +680,7 @@ class DA_handler(metaclass=LogBase):
                 if not os.path.exists(directory):
                     os.mkdir(directory)
                 dramaddr = 0x20000000
-                dramsize = 0xE0000000
+                dramsize = 0x100000000 - 0x20000000 # 0xE0000000
                 bromaddr = 0
                 bromsize = 0x200000
                 sramaddr = 0x200000
@@ -700,7 +700,7 @@ class DA_handler(metaclass=LogBase):
                 self.da_peek(addr=sramaddr, length=sramsize,
                              filename=os.path.join(directory, "dump_sram.bin"))
                 self.info(f"Dumping dram at {hex(dramaddr)}, size {hex(dramsize-dramaddr)}...")
-                self.da_peek(addr=dramaddr, length=dramsize-dramaddr,
+                self.da_peek(addr=dramaddr, length=0x100000000-dramaddr,
                              filename=os.path.join(directory, f"dump_dram_{hex(dramaddr)}.bin"))
                 self.info(f"Dumping efuse at {hex(efuseaddr)}, size at {hex(efusesize)}...")
                 self.da_peek(addr=efuseaddr, length=efusesize,
