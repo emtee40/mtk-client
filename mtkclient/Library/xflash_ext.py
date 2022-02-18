@@ -172,10 +172,10 @@ class xflashext(metaclass=LogBase):
         da1patched = bytearray(da1)
         # Patch security
         da_version_check = find_binary(da1, b"\x40\xB1\x01\x23\x4F\xF0")
-        if da_version_check != -1:
+        if da_version_check is not None:
             da1patched[da_version_check+0x2] = 0x0
         else:
-            self.info("Error on patching da1 version check...")
+            self.warning("Error on patching da1 version check...")
         return da1patched
 
     def patch_da2(self, da2):
