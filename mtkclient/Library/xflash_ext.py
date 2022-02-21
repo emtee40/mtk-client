@@ -1,6 +1,8 @@
 import hmac
 import os
 from struct import unpack, pack
+
+from mtkclient.Library.settings import hwparam
 from mtkclient.config.payloads import pathconfig
 from mtkclient.Library.error import ErrorHandler
 from mtkclient.Library.hwcrypto import crypto_setup, hwcrypto
@@ -360,7 +362,7 @@ class xflashext(metaclass=LogBase):
         if self.config.chipconfig.meid_addr:
             meid = self.custom_read(0x1008ec, 16)
             if meid != b"":
-                self.config.set_meid(meid)
+                #self.config.set_meid(meid)
                 self.info("Generating sej rpmbkey...")
                 self.setotp(hwc)
                 rpmbkey = hwc.aes_hwcrypt(mode="rpmb", data=meid, btype="sej")
@@ -548,29 +550,22 @@ class xflashext(metaclass=LogBase):
         hwc = self.cryptosetup()
         meid = self.config.get_meid()
         socid = self.config.get_socid()
+        hwcode = self.config.get_hwcode()
         retval = {}
-        retval["hwcode"] = hex(self.config.hwcode)
         if meid is not None:
             self.info("MEID        : " + hexlify(meid).decode('utf-8'))
-        else:
-            try:
-                meid = b"".join([pack("<I", val) for val in self.readmem(0x1008ec, 4)])
-                self.config.set_meid(meid)
-                self.info("MEID        : " + hexlify(meid).decode('utf-8'))
-                retval["meid"]=hexlify(meid).decode('utf-8')
-            except Exception as err:
-                pass
+            retval["meid"] = meid
+            if self.config.hwparam is None:
+                self.config.hwparam = hwparam(meid, self.config.hwparam_path)
+            self.config.hwparam.writesetting("meid", hexlify(meid).decode('utf-8'))
         if socid is not None:
-            self.info("SOCID        : " + hexlify(socid).decode('utf-8'))
-            retval["socid"] = hexlify(socid).decode('utf-8')
-        else:
-            try:
-                socid = b"".join([pack("<I", val) for val in self.readmem(0x100934, 8)])
-                self.config.set_socid(socid)
-                self.info("SOCID        : " + hexlify(socid).decode('utf-8'))
-                retval["socid"] = hexlify(socid).decode('utf-8')
-            except Exception as err:
-                pass
+            self.info("SOCID       : " + hexlify(socid).decode('utf-8'))
+            retval["socid"] = socid
+            self.config.hwparam.writesetting("socid", hexlify(socid).decode('utf-8'))
+        if hwcode is not None:
+            self.info("HWCODE      : " + hex(hwcode))
+            retval["hwcode"] = hwcode
+            self.config.hwparam.writesetting("hwcode", hex(hwcode))
 
         if self.config.chipconfig.dxcc_base is not None:
             self.info("Generating dxcc rpmbkey...")
@@ -620,7 +615,7 @@ class xflashext(metaclass=LogBase):
             if meid == b"":
                 meid = self.custom_read(0x1008ec, 16)
             if meid != b"":
-                self.config.set_meid(meid)
+                #self.config.set_meid(meid)
                 self.info("Generating sej rpmbkey...")
                 self.setotp(hwc)
                 rpmbkey = hwc.aes_hwcrypt(mode="rpmb", data=meid, btype="sej")

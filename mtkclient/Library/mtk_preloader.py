@@ -137,6 +137,7 @@ class Preloader(metaclass=LogBase):
         if os.path.exists(".state"):
             try:
                 os.remove(".state")
+                os.remove(os.path.join("logs", "hwparam.json"))
             except:
                 pass
         readsocid = self.config.readsocid
@@ -594,7 +595,7 @@ class Preloader(metaclass=LogBase):
                         self.error("Error on get_meid: " + self.eh.status(status))
             else:
                 self.config.is_brom = False
-        return b""
+        return None
 
     def get_socid(self):
         if self.usbwrite(self.Cmd.GET_BL_VER.value):

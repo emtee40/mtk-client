@@ -1063,7 +1063,7 @@ class DALegacy(metaclass=LogBase):
             return False
 
     def upload_da(self):
-        self.info("Uploading da...")
+        self.info("Uploading legacy da...")
         if self.upload():
             self.info(self.flashconfig)
             if self.daconfig.flashtype == "emmc":

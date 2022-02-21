@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import hashlib
+from binascii import hexlify
 from mtkclient.Library.utils import LogBase, logsetup, progress
 from mtkclient.Library.error import ErrorHandler
 from mtkclient.Library.daconfig import DAconfig
@@ -42,6 +43,10 @@ class DAloader(metaclass=LogBase):
         config = {}
         config["xflash"] = self.mtk.config.chipconfig.damode==damodes.XFLASH
         config["hwcode"] = self.config.hwcode
+        if self.config.meid is not None:
+            config["meid"] = hexlify(self.config.meid).decode('utf-8')
+        if self.config.socid is not None:
+            config["socid"] = hexlify(self.config.socid).decode('utf-8')
         config["flashtype"] = self.daconfig.flashtype
         config["flashsize"] = self.daconfig.flashsize
         if not self.mtk.config.chipconfig.damode==damodes.XFLASH:
@@ -92,6 +97,10 @@ class DAloader(metaclass=LogBase):
         if os.path.exists(".state"):
             config = json.loads(open(".state", "r").read())
             self.config.hwcode = config["hwcode"]
+            if "meid" in config:
+                self.config.meid = bytes.fromhex(config["meid"])
+            if "socid" in config:
+                self.config.socid = bytes.fromhex(config["socid"])
             self.xflash = config["xflash"]
             self.config.init_hwcode(self.config.hwcode)
             if self.xflash:

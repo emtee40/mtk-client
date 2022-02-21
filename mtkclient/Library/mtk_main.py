@@ -323,6 +323,7 @@ class Main(metaclass=LogBase):
         ArgHandler(self.args, config)
         self.eh = ErrorHandler()
         mtk = Mtk(config=config, loglevel=loglevel)
+        config.set_peek(mtk.daloader.peek)
         if mtk.config.debugmode:
             logfilename = os.path.join("logs", "log.txt")
             if os.path.exists(logfilename):

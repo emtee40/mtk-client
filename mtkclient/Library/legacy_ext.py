@@ -1,5 +1,7 @@
 import os
 from struct import unpack, pack
+
+from mtkclient.Library.settings import hwparam
 from mtkclient.config.payloads import pathconfig
 from mtkclient.Library.error import ErrorHandler
 from mtkclient.Library.hwcrypto import crypto_setup, hwcrypto
@@ -46,6 +48,7 @@ class legacyext(metaclass=LogBase):
         check_addr = find_binary(da2, b"\x08\xB5\x4F\xF4\x50\x42")
         if check_addr is not None:
             da2patched[check_addr:check_addr + 6] = b"\x08\xB5\x00\x20\x08\xBD"
+            self.info("Legacy DA2 is patched.")
         else:
             self.warning("Legacy address check not patched.")
         return da2patched
@@ -189,27 +192,21 @@ class legacyext(metaclass=LogBase):
         retval["hwcode"] = hex(self.config.hwcode)
         meid = self.config.get_meid()
         socid = self.config.get_socid()
+        hwcode = self.config.get_hwcode()
         if meid is not None:
             self.info("MEID        : " + hexlify(meid).decode('utf-8'))
-        else:
-            try:
-                meid = b"".join([pack("<I", val) for val in self.readmem(0x1008ec, 4)])
-                self.config.set_meid(meid)
-                self.info("MEID        : " + hexlify(meid).decode('utf-8'))
-                retval["meid"] = hexlify(meid).decode('utf-8')
-            except Exception as err:
-                pass
+            retval["meid"] = meid
+            if self.config.hwparam is None:
+                self.config.hwparam = hwparam(meid, self.config.hwparam_path)
+            self.config.hwparam.writesetting("meid", hexlify(meid).decode('utf-8'))
         if socid is not None:
-            self.info("SOCID        : " + hexlify(socid).decode('utf-8'))
+            self.info("SOCID       : " + hexlify(socid).decode('utf-8'))
             retval["socid"] = socid
-        else:
-            try:
-                socid = b"".join([pack("<I", val) for val in self.readmem(0x100934, 8)])
-                self.config.set_socid(socid)
-                self.info("SOCID        : " + hexlify(socid).decode('utf-8'))
-                retval["socid"] = hexlify(socid).decode('utf-8')
-            except Exception as err:
-                pass
+            self.config.hwparam.writesetting("socid", hexlify(socid).decode('utf-8'))
+        if hwcode is not None:
+            self.info("HWCODE      : " + hex(hwcode))
+            retval["hwcode"] = hex(hwcode)
+            self.config.hwparam.writesetting("hwcode", hex(hwcode))
         if self.config.chipconfig.dxcc_base is not None:
             self.info("Generating dxcc rpmbkey...")
             rpmbkey = hwc.aes_hwcrypt(btype="dxcc", mode="rpmb")
@@ -256,8 +253,11 @@ class legacyext(metaclass=LogBase):
                 val=json.loads(open("tee.json","r").read())
                 self.decrypt_tee(val["filename"],bytes.fromhex(val["data"]),bytes.fromhex(val["data2"]))
             if meid == b"":
-                if self.config.chipconfig.meid_addr:
-                    meid = self.custom_read(self.config.chipconfig.meid_addr,16)
+                if self.config.chipconfig.meid_addr is None:
+                    meid_addr = 0x1008ec
+                else:
+                    meid_addr = self.config.chipconfig.meid_addr
+                meid = b"".join([pack("<I", val) for val in self.readmem(meid_addr, 4)])
             if meid != b"":
                 self.info("Generating sej rpmbkey...")
                 self.setotp(hwc)

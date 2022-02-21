@@ -5,6 +5,7 @@ from binascii import hexlify
 from mtkclient.Library.utils import LogBase
 from mtkclient.Library.settings import hwparam
 from mtkclient.config.brom_config import chipconfig, damodes, hwconfig
+from struct import pack
 try:
     from PySide6.QtCore import QObject
 except ImportError:
@@ -15,6 +16,7 @@ except ImportError:
 
 class Mtk_Config(metaclass=LogBase):
     def __init__(self, loglevel=logging.INFO, gui=None, guiprogress=None, update_status_text=None):
+        self.peek = None
         self.gui = gui
         self.guiprogress = guiprogress
         self.update_status_text = update_status_text
@@ -70,9 +72,22 @@ class Mtk_Config(metaclass=LogBase):
         else:
             self.__logger.setLevel(logging.INFO)
 
+    def set_peek(self, peek):
+        self.peek = peek
+
     def set_gui_status(self, status):
         if self.update_status_text is not None:
             self.update_status_text.emit(status)
+
+    def get_hwcode(self):
+        if self.hwcode is None:
+            if self.peek is not None:
+                self.hwcode = self.peek(0x800000, 0x4)
+                self.set_hwcode(self.hwcode)
+        return self.hwcode
+
+    def set_hwcode(self,hwcode):
+        self.hwparam.writesetting("hwcode", hex(hwcode))
 
     def set_meid(self,meid):
         self.hwparam = hwparam(meid, self.hwparam_path)
@@ -80,10 +95,12 @@ class Mtk_Config(metaclass=LogBase):
         self.hwparam.writesetting("meid", hexlify(meid).decode('utf-8'))
 
     def get_meid(self):
-        if self.meid is None and self.hwparam is not None:
-            self.meid = self.hwparam.loadsetting("meid")
-        elif self.meid is not None:
-            self.hwparam.writesetting("meid",hexlify(self.meid).decode('utf-8'))
+        if self.meid is None:
+            if self.peek is not None:
+                if self.chipconfig.meid_addr is not None:
+                    self.meid = self.peek(self.chipconfig.meid_addr, 0x10)
+                self.meid = self.peek(0x1008ec, 0x10)
+                #self.set_meid(self.meid)
         return self.meid
 
     def set_socid(self,socid):
@@ -91,8 +108,11 @@ class Mtk_Config(metaclass=LogBase):
         self.hwparam.writesetting("socid",hexlify(socid).decode('utf-8'))
 
     def get_socid(self):
-        if self.socid is None and self.hwparam is not None:
-            self.socid = self.hwparam.loadsetting("socid")
+        if self.socid is None:
+            if self.chipconfig.socid_addr is not None:
+                if self.peek is not None:
+                    self.socid = self.peek(0x1008ec, 0x20)
+                    self.set_socid(self.socid)
         return self.socid
 
     def set_hwparam_path(self, path):
