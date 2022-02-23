@@ -195,13 +195,13 @@ class legacyext(metaclass=LogBase):
         hwcode = self.config.get_hwcode()
         if meid is not None:
             self.info("MEID        : " + hexlify(meid).decode('utf-8'))
-            retval["meid"] = meid
+            retval["meid"] = hexlify(meid).decode('utf-8')
             if self.config.hwparam is None:
                 self.config.hwparam = hwparam(meid, self.config.hwparam_path)
             self.config.hwparam.writesetting("meid", hexlify(meid).decode('utf-8'))
         if socid is not None:
             self.info("SOCID       : " + hexlify(socid).decode('utf-8'))
-            retval["socid"] = socid
+            retval["socid"] = hexlify(socid).decode('utf-8')
             self.config.hwparam.writesetting("socid", hexlify(socid).decode('utf-8'))
         if hwcode is not None:
             self.info("HWCODE      : " + hex(hwcode))

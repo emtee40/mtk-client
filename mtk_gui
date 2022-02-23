@@ -451,7 +451,6 @@ class MainWindow(QMainWindow):
 
     def on_generatekeys(self):
         self.genkeys.generateKeys()
-        return
 
     def on_unlock(self):
         self.unlock.unlock("unlock")
@@ -461,7 +460,6 @@ class MainWindow(QMainWindow):
 
     def on_readpreloader(self):
         self.readflash.dumpFlash("boot1")
-        return
 
     def on_readboot2(self):
         self.readflash.dumpFlash("boot2")

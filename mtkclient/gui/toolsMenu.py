@@ -97,8 +97,9 @@ class generateKeysMenu(QObject):
         self.sendUpdateSignal = toolkit.sendUpdateSignal
         toolkit.sendToLogSignal.emit(self.tr("Generating keys"))
         res = self.mtkClass.daloader.keys()
-        with open(os.path.join(parameters[0],"hwparam.json"),"w") as wf:
-            wf.write(json.dumps(res))
+        if res:
+            with open(os.path.join(parameters[0],"hwparam.json"),"w") as wf:
+                wf.write(json.dumps(res))
         self.parent.Status["result"] = res
         self.parent.Status["done"] = True
         self.sendUpdateSignal.emit()
