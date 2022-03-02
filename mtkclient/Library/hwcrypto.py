@@ -75,7 +75,10 @@ class hwcrypto(metaclass=LogBase):
                 if self.gcpu.aes_setup_cbc(addr=addr, data=data, iv=iv, encrypt=encrypt):
                     return self.gcpu.aes_read_cbc(addr=addr, encrypt=encrypt)
             elif mode == "mtee":
-                return self.gcpu.mtk_gcpu_mtee_6735()
+                if self.hwcode == 0x321:
+                    return self.gcpu.mtk_gcpu_mtee_6735()
+                elif self.hwcode == 0x8167:
+                    return self.gcpu.mtk_gcpu_mtee_8167()
         elif btype == "dxcc":
             if mode == "fde":
                 return self.dxcc.generate_rpmb(1)

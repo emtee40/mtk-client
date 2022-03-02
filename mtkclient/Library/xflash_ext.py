@@ -632,7 +632,7 @@ class xflashext(metaclass=LogBase):
             else:
                 self.info("SEJ Mode: No meid found. Are you in brom mode ?")
         if self.config.chipconfig.gcpu_base is not None:
-            if self.config.hwcode == 0x335:
+            if self.config.hwcode in [0x335,0x8167]:
                 self.info("Generating gcpu mtee2 key...")
                 mtee2 = hwc.aes_hwcrypt(btype="gcpu", mode="mtee")
                 if mtee2 is not None:

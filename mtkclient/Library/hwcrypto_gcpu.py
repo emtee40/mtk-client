@@ -247,14 +247,23 @@ class GCpu(metaclass=LogBase):
     def acquire(self):
         if self.hwcode == 0x8167:
             self.write32(CLR_CLK_GATING_CTRL2, self.read32(CLR_CLK_GATING_CTRL2) | 0x8000000)
-        if self.hwcode in [0x8172, 0x8127]:
+            self.reg.GCPU_REG_CTL |= 0xF
+            self.reg.GCPU_REG_MSC = self.reg.GCPU_REG_MSC & 0x7FF0BF7F | 0x34080
+            self.reg.GCPU_REG_CTL |= 0x1F
+            self.reg.GCPU_REG_MSC |= 0x2000
+            self.reg.GCPU_AXI = 0x885B
+            self.reg.GCPU_UNK2 &= 0xFFFDFFFD
+            self.reg.GCPU_REG_MEM_ADDR = 0x80002000
+            self.reg.GCPU_REG_INT_CLR = 1
+            self.reg.GCPU_REG_INT_EN = 0
+        elif self.hwcode in [0x8172, 0x8127]:
             self.release()
             self.reg.GCPU_REG_MSC = self.reg.GCPU_REG_MSC & 0xFFFFDFFF
         elif self.hwcode == 0x335:
             self.reg.GCPU_REG_CTL = self.reg.GCPU_REG_MSC & 0xFFFFDFFF
             self.reg.GCPU_REG_CTL |= 7
             self.reg.GCPU_REG_MSC = 0x80FF1800
-            self.reg.GCPU_UNK1 = 0x887F
+            self.reg.GCPU_AXI = 0x887F
             self.reg.GCPU_UNK2 = 0
         else:
             self.reg.GCPU_REG_CTL &= 0xFFFFFFF0
@@ -309,7 +318,7 @@ class GCpu(metaclass=LogBase):
             for i in range(1, 48):
                 self.write32(self.gcpu_base + regval["GCPU_REG_MEM_CMD"] + (i * 4), args[i])
         # Clear/Enable GCPU Interrupt
-        if cmd == 0x79:
+        if self.hwcode == 0x8167:
             self.reg.GCPU_REG_INT_CLR = 1
             self.reg.GCPU_REG_INT_EN = 0
         else:
@@ -538,11 +547,12 @@ class GCpu(metaclass=LogBase):
             data += pack("<I", word)
         return data
 
-    def mtk_gcpu_mtee_8167(self, data=None, encrypt=True, src=0x12, dst=0x1a, keyslot=0x58):
+    def mtk_gcpu_mtee_8167(self, data=None, encrypt=True, src=0x13, dst=0x13, keyslot=0x30):
+        self.init()
+        self.acquire()
         if self.load_hw_key(keyslot):
-            if data is None:
-                data = bytearray(bytes.fromhex("735f23c962e7a10ab201d9a6426064b1"))
-            self.memptr_set(src, data)
+            self.memptr_set(src, bytearray(bytes.fromhex("4B65796D61737465724D617374657200")))
+            #self.memptr_set(src, bytearray(bytes.fromhex("0102030405060708090A0B0C0D0E0F0102030405060708090A0B0C0D0E0F0000")))
             if encrypt:
                 if not self.aes_encrypt_ecb(keyslot, src, dst):
                     return self.memptr_get(dst, 16)
@@ -559,7 +569,7 @@ class GCpu(metaclass=LogBase):
             raise Exception("failed to call the function!")
 
     def aes_encrypt_ecb(self, key_offset, data_offset, out_offset):
-        self.reg.GCPU_REG_MEM_P0 = 0
+        self.reg.GCPU_REG_MEM_P0 = 1
         self.reg.GCPU_REG_MEM_P1 = key_offset
         self.reg.GCPU_REG_MEM_P2 = data_offset
         self.reg.GCPU_REG_MEM_P3 = out_offset
