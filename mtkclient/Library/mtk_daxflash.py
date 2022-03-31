@@ -13,6 +13,7 @@ from mtkclient.Library.daconfig import EMMC_PartitionType, UFS_PartitionType, Da
 from mtkclient.Library.partition import Partition
 from mtkclient.config.payloads import pathconfig
 from mtkclient.Library.xflash_ext import xflashext, XCmd
+from mtkclient.Library.settings import hwparam
 
 
 class NandExtension:
@@ -1060,6 +1061,7 @@ class DAXFlash(metaclass=LogBase):
         return False
 
     def reinit(self, display=False):
+        self.config.hwparam = hwparam(self.config.meid, self.config.hwparam_path)
         self.config.sram, self.config.dram = self.get_ram_info()
         self.emmc = self.get_emmc_info(display)
         self.nand = self.get_nand_info(display)

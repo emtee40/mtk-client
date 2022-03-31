@@ -2,7 +2,6 @@ import hmac
 import os
 from struct import unpack, pack
 
-from mtkclient.Library.settings import hwparam
 from mtkclient.config.payloads import pathconfig
 from mtkclient.Library.error import ErrorHandler
 from mtkclient.Library.hwcrypto import crypto_setup, hwcrypto
@@ -555,8 +554,6 @@ class xflashext(metaclass=LogBase):
         if meid is not None:
             self.info("MEID        : " + hexlify(meid).decode('utf-8'))
             retval["meid"] = hexlify(meid).decode('utf-8')
-            if self.config.hwparam is None:
-                self.config.hwparam = hwparam(meid, self.config.hwparam_path)
             self.config.hwparam.writesetting("meid", hexlify(meid).decode('utf-8'))
         if socid is not None:
             self.info("SOCID       : " + hexlify(socid).decode('utf-8'))
