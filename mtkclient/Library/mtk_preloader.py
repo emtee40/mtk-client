@@ -237,30 +237,39 @@ class Preloader(metaclass=LogBase):
                     self.error(self.eh.status(status))
         return result
 
-    def write32(self, addr, dwords) -> bool:
-        if isinstance(dwords, int):
-            dwords = [dwords]
-        if self.echo(self.Cmd.WRITE32.value):
+    def write(self, addr, values, length=32) -> bool:
+        cmd = self.Cmd.WRITE16 if length == 16 else self.Cmd.WRITE32
+        packfmt = ">H" if length == 16 else ">I"
+
+        if isinstance(values, int):
+            values = [values]
+        if self.echo(cmd.value):
             if self.echo(pack(">I", addr)):
-                ack = self.echo(pack(">I", len(dwords)))
+                ack = self.echo(pack(">I", len(values)))
                 status = self.rword()
                 if status > 0xFF:
-                    self.error(f"Error on da_write32, addr {hex(addr)}, {self.eh.status(status)}")
+                    self.error(f"Error on da_write{length}, addr {hex(addr)}, {self.eh.status(status)}")
                     return False
                 if ack and status <= 3:
-                    for dword in dwords:
-                        if not self.echo(pack(">I", dword)):
+                    for val in values:
+                        if not self.echo(pack(packfmt, val)):
                             break
                     status2 = self.rword()
                     if status2 <= 0xFF:
                         return True
                     else:
-                        self.error(f"Error on da_write32, addr {hex(addr)}, {self.eh.status(status2)}")
+                        self.error(f"Error on da_write{length}, addr {hex(addr)}, {self.eh.status(status2)}")
             else:
-                self.error(f"Error on da_write32, addr {hex(addr)}, write address")
+                self.error(f"Error on da_write{length}, addr {hex(addr)}, write address")
         else:
-            self.error(f"Error on da_write32, addr {hex(addr)}, send cmd")
+            self.error(f"Error on da_write{length}, addr {hex(addr)}, send cmd")
         return False
+
+    def write16(self, addr, words) -> bool:
+        return self.write(addr, words, 16)
+
+    def write32(self, addr, dwords) -> bool:
+        return self.write(addr, dwords, 32)
 
     def writemem(self, addr, data):
         for i in range(0, len(data), 4):
