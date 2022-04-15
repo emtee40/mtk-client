@@ -306,7 +306,7 @@ hwconfig = {
         name="MT6573/MT6260"),
     0x6575: chipconfig(  # var1
         watchdog=0xC0000000,  #
-        # uart
+        uart=0xC1009000,
         da_payload_addr=0xc2001000,
         pl_payload_addr=0xc2058000,
         # gcpu_base
