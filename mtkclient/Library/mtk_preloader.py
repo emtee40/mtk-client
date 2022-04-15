@@ -358,21 +358,27 @@ class Preloader(metaclass=LogBase):
         SetReg_DisableWatchDogTimer; BRom_WriteCmd32(): Reg 0x10007000[1]={ Value 0x22000000 }.
         """
         addr, value = self.config.get_watchdog_addr()
-        res = self.write32(addr, [value])
+        res = None
+
+        if hwcode in [0x6575, 0x6577]:
+            """
+            SoCs which share the same watchdog IP as mt6577 must use 16-bit I/O.
+            For example: mt6575, mt8317 and mt8377 (their hwcodes are 0x6575).
+            """
+            res = self.write16(addr, value)
+        else:
+            res = self.write32(addr, value)
+            if res and hwcode == 0x6592:
+                """
+                mt6592 has an additional watchdog register at 0x10000500.
+                TODO: verify if writing to this register is actually needed.
+                """
+                res = self.write32(0x10000500, 0x22000000)
         if not res:
             self.error("Received wrong SetReg_DisableWatchDogTimer response")
             return False
-        if hwcode == 0x6592:
-            res = self.write32(0x10000500, [0x22000000])
-            if res:
-                return True
-        elif hwcode in [0x6575, 0x6577]:
-            res = self.write32(0x2200, [0xC0000000])
-            if res:
-                return True
         else:
             return True
-        return False
 
     def get_bromver(self):
         if self.usbwrite(self.Cmd.GET_VERSION.value):
