@@ -171,7 +171,7 @@ class Mtk_Config(metaclass=LogBase):
             elif wdt == 0x10007400:
                 return [wdt, 0x22000000]
             elif wdt == 0xC0000000:
-                return [wdt, 0x0]
+                return [wdt, 0x2264]
             elif wdt == 0x2200:
                 if self.hwcode == 0x6276 or self.hwcode == 0x8163:
                     return [wdt, 0x610C0000]
