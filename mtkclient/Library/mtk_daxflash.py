@@ -1029,7 +1029,7 @@ class DAXFlash(metaclass=LogBase):
 
             hashaddr, hashmode, hashlen = self.mtk.daloader.compute_hash_pos(da1, da2, da2sig_len)
             if hashaddr is not None:
-                da1 = self.xft.patch_da1(da1)
+                #da1 = self.xft.patch_da1(da1)
                 da2 = self.xft.patch_da2(da2)
                 da1 = self.mtk.daloader.fix_hash(da1, da2, hashaddr, hashmode, hashlen)
                 self.patch = True

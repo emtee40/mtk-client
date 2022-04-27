@@ -181,7 +181,7 @@ class PLTools(metaclass=LogBase):
         except:
             pass
 
-    def crasher(self, mtk, enforcecrash):
+    def crasher(self, mtk, enforcecrash:bool=False):
         plt = PLTools(mtk, self.__logger.level)
         if enforcecrash or self.config.meid is None:
             self.info("We're not in bootrom, trying to crash da...")
@@ -192,7 +192,7 @@ class PLTools(metaclass=LogBase):
                     self.__logger.debug(str(e))
                     pass
                 portconfig = [[0xE8D, 0x0003, 1]]
-                mtk.port = Port(mtk, portconfig, self.__logger.level)
+                mtk.port = Port(mtk=mtk, portconfig=portconfig, serialportname=mtk.port.serialportname, loglevel=self.__logger.level)
                 if mtk.preloader.init(maxtries=20):
                     break
         return mtk

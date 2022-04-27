@@ -689,6 +689,19 @@ if __name__ == '__main__':
     parser_gpt.add_argument('--generatekeys', action="store_true", help='Option for deriving hw keys')
     parser_r.add_argument('--generatekeys', action="store_true", help='Option for deriving hw keys')
 
+    parser_printgpt.add_argument('--serialport', help='Use serial port')
+    parser_footer.add_argument('--serialport', help='Use serial port')
+    parser_e.add_argument('--serialport', help='Use serial port')
+    parser_es.add_argument('--serialport', help='Use serial port')
+    parser_wl.add_argument('--serialport', help='Use serial port')
+    parser_wf.add_argument('--serialport', help='Use serial port')
+    parser_w.add_argument('--serialport', help='Use serial port')
+    parser_rs.add_argument('--serialport', help='Use serial port')
+    parser_rf.add_argument('--serialport', help='Use serial port')
+    parser_rl.add_argument('--serialport', help='Use serial port')
+    parser_gpt.add_argument('--serialport', help='Use serial port')
+    parser_r.add_argument('--serialport', help='Use serial port')
+
     args = parser.parse_args()
     cmd = args.cmd
     if cmd not in cmds:

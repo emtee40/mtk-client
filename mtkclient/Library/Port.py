@@ -8,8 +8,8 @@ import time
 from binascii import hexlify
 from struct import pack
 from mtkclient.Library.utils import LogBase, logsetup
-from mtkclient.Library.usblib import usb_class
-
+from mtkclient.Library.Connection.usblib import usb_class
+from mtkclient.Library.Connection.seriallib import serial_class
 
 class Port(metaclass=LogBase):
     class deviceclass:
@@ -20,21 +20,26 @@ class Port(metaclass=LogBase):
             self.vid = vid
             self.pid = pid
 
-    def __init__(self, mtk, portconfig, loglevel=logging.INFO):
+    def __init__(self, mtk, portconfig, serialportname:str=None, loglevel=logging.INFO):
         self.__logger = logsetup(self, self.__logger, loglevel, mtk.config.gui)
         self.info = self.__logger.info
         self.debug = self.__logger.debug
         self.error = self.__logger.error
         self.config = mtk.config
         self.mtk = mtk
-        self.cdc = usb_class(portconfig=portconfig, loglevel=loglevel, devclass=10)
+        self.serialportname = None
+        if serialportname is not None:
+            self.cdc = serial_class(portconfig=portconfig, loglevel=loglevel, devclass=10)
+            self.cdc.setportname(serialportname)
+        else:
+            self.cdc = usb_class(portconfig=portconfig, loglevel=loglevel, devclass=10)
         self.usbread = self.cdc.usbread
         self.usbwrite = self.cdc.usbwrite
         self.close = self.cdc.close
         self.rdword = self.cdc.rdword
         self.rword = self.cdc.rword
         self.rbyte = self.cdc.rbyte
-        self.detectusbdevices = self.cdc.detectusbdevices
+        self.detectusbdevices = self.cdc.detectdevices
         self.usbreadwrite = self.cdc.usbreadwrite
 
         if loglevel == logging.DEBUG:

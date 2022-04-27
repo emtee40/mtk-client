@@ -259,7 +259,7 @@ class Main(metaclass=LogBase):
                             time.sleep(2)
                             config = Mtk_Config(loglevel=self.__logger.level, gui=mtk.config.gui,
                                                 guiprogress=mtk.config.guiprogress)
-                            mtk = Mtk(loglevel=self.__logger.level, config=config)
+                            mtk = Mtk(loglevel=self.__logger.level, config=config, serialportname=mtk.port.serialportname)
                             res = mtk.preloader.init()
                             if not res:
                                 self.error("Error on loading preloader")
@@ -322,7 +322,12 @@ class Main(metaclass=LogBase):
         config = Mtk_Config(loglevel=loglevel, gui=None, guiprogress=None)
         ArgHandler(self.args, config)
         self.eh = ErrorHandler()
-        mtk = Mtk(config=config, loglevel=loglevel)
+        serialport = None
+        try:
+            serialport = self.args.serialport
+        except:
+            pass
+        mtk = Mtk(config=config, loglevel=loglevel, serialportname=serialport)
         config.set_peek(mtk.daloader.peek)
         if mtk.config.debugmode:
             logfilename = os.path.join("logs", "log.txt")
@@ -375,7 +380,7 @@ class Main(metaclass=LogBase):
             self.close()
         elif cmd == "brute":
             self.info("Kamakiri / DA Bruteforce run")
-            rmtk = Mtk(config=mtk.config, loglevel=self.__logger.level)
+            rmtk = Mtk(config=mtk.config, loglevel=self.__logger.level, serialportname=mtk.port.serialportname)
             plt = PLTools(rmtk, self.__logger.level)
             plt.runbrute(self.args)
             self.close()
