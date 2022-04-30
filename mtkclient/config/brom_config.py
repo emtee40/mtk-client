@@ -305,21 +305,7 @@ hwconfig = {
         dacode=0x6573,
         name="MT6573/MT6260"),
     0x6575: chipconfig(  # var1
-        watchdog=0xC0000000,  #
-        # uart
-        da_payload_addr=0xc2001000,
-        pl_payload_addr=0xc2058000,
-        # gcpu_base
-        sej_base=0xC101A000,
-        # no dxcc
-        # cqdma_base
-        ap_dma_mem=0xC100119C,
-        # blacklist
-        damode=damodes.DEFAULT,  #
-        dacode=0x6575,
-        name="MT6575/77"),
-    0x6577: chipconfig(  # var1
-        watchdog=0xC0000000,  # fixme
+        watchdog=0xC0000000,
         uart=0xC1009000,
         da_payload_addr=0xc2001000,
         pl_payload_addr=0xc2058000,
@@ -329,7 +315,21 @@ hwconfig = {
         # cqdma_base
         ap_dma_mem=0xC100119C,
         # blacklist
-        damode=damodes.DEFAULT,  #
+        damode=damodes.DEFAULT,
+        dacode=0x6575,
+        name="MT6575/77"),
+    0x6577: chipconfig(  # var1
+        watchdog=0xC0000000,
+        uart=0xC1009000,
+        da_payload_addr=0xc2001000,
+        pl_payload_addr=0xc2058000,
+        # gcpu_base
+        sej_base=0xC101A000,
+        # no dxcc
+        # cqdma_base
+        ap_dma_mem=0xC100119C,
+        # blacklist
+        damode=damodes.DEFAULT,
         dacode=0x6577,
         name="MT6577"),
     0x6580: chipconfig(var1=0xAC,

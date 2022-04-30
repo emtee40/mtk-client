@@ -237,30 +237,39 @@ class Preloader(metaclass=LogBase):
                     self.error(self.eh.status(status))
         return result
 
-    def write32(self, addr, dwords) -> bool:
-        if isinstance(dwords, int):
-            dwords = [dwords]
-        if self.echo(self.Cmd.WRITE32.value):
+    def write(self, addr, values, length=32) -> bool:
+        cmd = self.Cmd.WRITE16 if length == 16 else self.Cmd.WRITE32
+        packfmt = ">H" if length == 16 else ">I"
+
+        if isinstance(values, int):
+            values = [values]
+        if self.echo(cmd.value):
             if self.echo(pack(">I", addr)):
-                ack = self.echo(pack(">I", len(dwords)))
+                ack = self.echo(pack(">I", len(values)))
                 status = self.rword()
                 if status > 0xFF:
-                    self.error(f"Error on da_write32, addr {hex(addr)}, {self.eh.status(status)}")
+                    self.error(f"Error on da_write{length}, addr {hex(addr)}, {self.eh.status(status)}")
                     return False
                 if ack and status <= 3:
-                    for dword in dwords:
-                        if not self.echo(pack(">I", dword)):
+                    for val in values:
+                        if not self.echo(pack(packfmt, val)):
                             break
                     status2 = self.rword()
                     if status2 <= 0xFF:
                         return True
                     else:
-                        self.error(f"Error on da_write32, addr {hex(addr)}, {self.eh.status(status2)}")
+                        self.error(f"Error on da_write{length}, addr {hex(addr)}, {self.eh.status(status2)}")
             else:
-                self.error(f"Error on da_write32, addr {hex(addr)}, write address")
+                self.error(f"Error on da_write{length}, addr {hex(addr)}, write address")
         else:
-            self.error(f"Error on da_write32, addr {hex(addr)}, send cmd")
+            self.error(f"Error on da_write{length}, addr {hex(addr)}, send cmd")
         return False
+
+    def write16(self, addr, words) -> bool:
+        return self.write(addr, words, 16)
+
+    def write32(self, addr, dwords) -> bool:
+        return self.write(addr, dwords, 32)
 
     def writemem(self, addr, data):
         for i in range(0, len(data), 4):
@@ -349,21 +358,27 @@ class Preloader(metaclass=LogBase):
         SetReg_DisableWatchDogTimer; BRom_WriteCmd32(): Reg 0x10007000[1]={ Value 0x22000000 }.
         """
         addr, value = self.config.get_watchdog_addr()
-        res = self.write32(addr, [value])
+        res = None
+
+        if hwcode in [0x6575, 0x6577]:
+            """
+            SoCs which share the same watchdog IP as mt6577 must use 16-bit I/O.
+            For example: mt6575, mt8317 and mt8377 (their hwcodes are 0x6575).
+            """
+            res = self.write16(addr, value)
+        else:
+            res = self.write32(addr, value)
+            if res and hwcode == 0x6592:
+                """
+                mt6592 has an additional watchdog register at 0x10000500.
+                TODO: verify if writing to this register is actually needed.
+                """
+                res = self.write32(0x10000500, 0x22000000)
         if not res:
             self.error("Received wrong SetReg_DisableWatchDogTimer response")
             return False
-        if hwcode == 0x6592:
-            res = self.write32(0x10000500, [0x22000000])
-            if res:
-                return True
-        elif hwcode in [0x6575, 0x6577]:
-            res = self.write32(0x2200, [0xC0000000])
-            if res:
-                return True
         else:
             return True
-        return False
 
     def get_bromver(self):
         if self.usbwrite(self.Cmd.GET_VERSION.value):
