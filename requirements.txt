@@ -6,3 +6,4 @@ usb
 shiboken6
 pyside6
 mock
+pyserial
