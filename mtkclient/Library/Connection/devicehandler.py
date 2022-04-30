@@ -6,7 +6,7 @@ import serial.tools.list_ports
 import inspect
 import traceback
 from binascii import hexlify
-from edlclient.Library.utils import *
+from mtkclient.Library.utils import *
 
 class DeviceClass(metaclass=LogBase):
 
