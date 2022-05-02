@@ -39,8 +39,8 @@ class Mtk(metaclass=LogBase):
             ("A3687BB12846", "0123A3602846"),  # oppo security
             ("B3F5807F01D1", "B3F5807F01D14FF000004FF000007047"),  # confirmed : mt6739 c30, mt6833
             ("B3F5807F04BF4FF4807305F011B84FF0FF307047", "B3F5807F04BF4FF480734FF000004FF000007047"),
+            ("10B50C680268","10B5012010BD") # Ram blacklist
         ]
-
         i = 0
         for patchval in patches:
             pattern = bytes.fromhex(patchval[0])
@@ -52,9 +52,10 @@ class Mtk(metaclass=LogBase):
                 # break
             i += 1
         if patched:
-            # with open(sys.argv[1]+".patched","wb") as wf:
-            #    wf.write(data)
-            #    print("Patched !")
+            import sys
+            with open(sys.argv[1]+".patched","wb") as wf:
+                wf.write(data)
+                print("Patched !")
             self.info(f"Patched preloader security: {hex(i)}")
         else:
             self.warning(f"Failed to patch preloader security")

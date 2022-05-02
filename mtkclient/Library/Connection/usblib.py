@@ -390,6 +390,8 @@ class usb_class(DeviceClass):
     def usbread(self, resplen=None, maxtimeout=10):
         if maxtimeout == 0:
             timeout = 10
+        else:
+            timeout = maxtimeout
         if resplen is None:
             resplen = self.maxsize
         if resplen <= 0:
