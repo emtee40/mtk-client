@@ -442,11 +442,12 @@ class Main(metaclass=LogBase):
                             #    data=0x200*b"\x00"+data
                             mtk.preloader.send_partition_data(partition, mtk.patch_preloader_security(pldata))
                             status = mtk.preloader.jump_to_partition(partition)  # Do not remove !
-                            with open("peek.bin","wb") as wf:
-                                for pos in range(0,0x200000,0x200):
-                                    print("Reading pos %08X" % pos)
-                                    res = mtk.preloader.read32(pos, 0x200//4)
-                                    wf.write(b"".join([pack("<I",val) for val in res]))
+                            if self.args.offset is not None and self.args.length is not None:
+                                with open("peek.bin","wb") as wf:
+                                    for pos in range(0,self.args.offset,self.args.length):
+                                        print("Reading pos %08X" % pos)
+                                        res = mtk.preloader.read32(pos, self.args.length//4)
+                                        wf.write(b"".join([pack("<I",val) for val in res]))
                             #for val in res:
                             #    print(hex(val))
                             if status != 0x0:
