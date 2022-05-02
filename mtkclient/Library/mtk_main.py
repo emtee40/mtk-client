@@ -401,7 +401,7 @@ class Main(metaclass=LogBase):
             if os.path.exists(plstage):
                 with open(plstage, "rb") as rf:
                     rf.seek(0)
-                    pldata = rf.read()
+                    pldata = mtk.patch_preloader_security(rf.read())
             if mtk.preloader.init():
                 if mtk.config.target_config["daa"]:
                     mtk = mtk.bypass_security()
@@ -419,14 +419,14 @@ class Main(metaclass=LogBase):
                 mtk.config.preloader = mtk.patch_preloader_security(dadata)
             if mtk.config.preloader_filename is not None:
                 self.info("Using custom preloader : " + mtk.config.preloader_filename)
-                daaddr, dadata = mtk.parse_preloader(mtk.config.preloader)
-                mtk.config.preloader = mtk.patch_preloader_security(dadata)
+                mtk.preloader.setreg_disablewatchdogtimer(mtk.config.hwcode)
+                daaddr, dadata = mtk.parse_preloader(mtk.config.preloader_filename)
+                dadata = mtk.config.preloader = mtk.patch_preloader_security(dadata)
                 if mtk.preloader.send_da(daaddr, len(dadata), 0x100, dadata):
                     self.info(f"Sent preloader to {hex(daaddr)}, length {hex(len(dadata))}")
                     if mtk.preloader.jump_da(daaddr):
                         self.info(f"PL Jumped to daaddr {hex(daaddr)}.")
                         time.sleep(2)
-                        """
                         mtk = Mtk(config=mtk.config, loglevel=self.__logger.level)
                         res = mtk.preloader.init()
                         if not res:
@@ -440,17 +440,20 @@ class Main(metaclass=LogBase):
                             self.info("Booting to : " + partition)
                             # if data[0:4]!=b"\x88\x16\x88\x58":
                             #    data=0x200*b"\x00"+data
-                            mtk.preloader.send_partition_data(partition, pldata)
+                            mtk.preloader.send_partition_data(partition, mtk.patch_preloader_security(pldata))
                             status = mtk.preloader.jump_to_partition(partition)  # Do not remove !
-                            res = mtk.preloader.read32(0x10C180, 10)
-                            for val in res:
-                                print(hex(val))
+                            with open("peek.bin","wb") as wf:
+                                for pos in range(0,0x200000,0x200):
+                                    print("Reading pos %08X" % pos)
+                                    res = mtk.preloader.read32(pos, 0x200//4)
+                                    wf.write(b"".join([pack("<I",val) for val in res]))
+                            #for val in res:
+                            #    print(hex(val))
                             if status != 0x0:
                                 self.error("Error on jumping to partition: " + self.eh.status(status))
                             else:
                                 self.info("Jumping to partition ....")
                             return
-                        """
                         sys.exit(0)
             if mtk.preloader.send_da(plstageaddr, len(pldata), 0x100, pldata):
                 self.info(f"Sent stage2 to {hex(plstageaddr)}, length {hex(len(pldata))}")
