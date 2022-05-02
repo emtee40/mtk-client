@@ -831,7 +831,6 @@ class DALegacy(metaclass=LogBase):
         self.config.bmtsettings(self.config.hwcode)
         self.usbwrite(pack("B", self.config.bmtflag))
         self.usbwrite(pack(">I", self.config.bmtpartsize))
-        # self.usbwrite(pack(">I", bmtblockcount))
         # unsigned char force_charge=0x02; //Setting in tool: 0x02=Auto, 0x01=On
         force_charge = 0x02
         self.usbwrite(pack("B", force_charge))

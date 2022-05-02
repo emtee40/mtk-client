@@ -426,7 +426,7 @@ class Main(metaclass=LogBase):
                     self.info(f"Sent preloader to {hex(daaddr)}, length {hex(len(dadata))}")
                     if mtk.preloader.jump_da(daaddr):
                         self.info(f"PL Jumped to daaddr {hex(daaddr)}.")
-                        time.sleep(2)
+                        time.sleep(1)
                         mtk = Mtk(config=mtk.config, loglevel=self.__logger.level)
                         res = mtk.preloader.init()
                         if not res:
@@ -438,16 +438,26 @@ class Main(metaclass=LogBase):
                         if self.args.startpartition is not None:
                             partition = self.args.startpartition
                             self.info("Booting to : " + partition)
-                            # if data[0:4]!=b"\x88\x16\x88\x58":
-                            #    data=0x200*b"\x00"+data
                             mtk.preloader.send_partition_data(partition, mtk.patch_preloader_security(pldata))
                             status = mtk.preloader.jump_to_partition(partition)  # Do not remove !
-                            if self.args.offset is not None and self.args.length is not None:
-                                with open("peek.bin","wb") as wf:
-                                    for pos in range(0,self.args.offset,self.args.length):
+                        if self.args.offset is not None and self.args.length is not None:
+                            offset = getint(self.args.offset)
+                            length = getint(self.args.length)
+                            rlen = min(0x200, length)
+                            status=0
+                            mtk.preloader.get_hw_sw_ver()
+                            if self.args.filename is not None:
+                                with open(self.args.filename,"wb") as wf:
+                                    for pos in range(offset, offset+length,rlen):
                                         print("Reading pos %08X" % pos)
-                                        res = mtk.preloader.read32(pos, self.args.length//4)
+                                        res = mtk.preloader.read32(pos, rlen//4)
                                         wf.write(b"".join([pack("<I",val) for val in res]))
+                            else:
+                                for pos in range(offset, offset+length,rlen):
+                                    print("Reading pos %08X" % pos)
+                                    res = mtk.preloader.read32(pos, rlen // 4)
+                                    print(hexlify(b"".join([pack("<I",val) for val in res])).decode('utf-8'))
+
                             #for val in res:
                             #    print(hex(val))
                             if status != 0x0:

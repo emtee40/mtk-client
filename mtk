@@ -663,6 +663,7 @@ if __name__ == '__main__':
     parser_plstage.add_argument('--skipwdt', help='Skip wdt init')
     parser_plstage.add_argument('--offset', help='Peek ram offset using patched preloader')
     parser_plstage.add_argument('--length', help='Peek ram length using patched preloader')
+    parser_plstage.add_argument('--filename', help='Filename for peek ram using patched preloader')
     parser_plstage.add_argument('--wdt', help='Set a specific watchdog addr')
     parser_plstage.add_argument('--mode', help='Set a crash mode (0=dasend1,1=dasend2,2=daread)')
     parser_plstage.add_argument('--var1', help='Set kamakiri specific var1 value')

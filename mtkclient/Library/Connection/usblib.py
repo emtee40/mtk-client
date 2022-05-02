@@ -342,6 +342,10 @@ class usb_class(DeviceClass):
                     self.device.attach_kernel_driver(0)
             except Exception as err:
                 self.debug(str(err))
+                if reset:
+                    if not self.device.is_kernel_driver_active(0):
+                        # self.device.attach_kernel_driver(self.interface) #Do NOT uncomment
+                        self.device.attach_kernel_driver(0)
                 pass
             usb.util.dispose_resources(self.device)
             del self.device
@@ -387,28 +391,24 @@ class usb_class(DeviceClass):
         self.verify_data(bytearray(command), "TX:")
         return True
 
-    def usbread(self, resplen=None, maxtimeout=10):
-        if maxtimeout == 0:
-            timeout = 10
-        else:
-            timeout = maxtimeout
+    def usbread(self, resplen=None, maxtimeout=100):
         if resplen is None:
             resplen = self.maxsize
         if resplen <= 0:
             self.info("Warning !")
         res = bytearray()
+        timeout = 0
         loglevel = self.loglevel
         epr = self.EP_IN.read
         wMaxPacketSize = self.EP_IN.wMaxPacketSize
         extend = res.extend
+
         while len(res) < resplen:
             try:
                 extend(epr(resplen))
             except usb.core.USBError as e:
                 error = str(e.strerror)
                 if "timed out" in error:
-                    if timeout is None:
-                        return b""
                     self.debug("Timed out")
                     if timeout == maxtimeout:
                         return b""
@@ -426,6 +426,7 @@ class usb_class(DeviceClass):
             if self.loglevel == logging.DEBUG:
                 self.verify_data(res[:resplen], "RX:")
         return res[:resplen]
+
 
     def ctrl_transfer(self, bmRequestType, bRequest, wValue, wIndex, data_or_wLength):
         ret = self.device.ctrl_transfer(bmRequestType=bmRequestType, bRequest=bRequest, wValue=wValue, wIndex=wIndex,

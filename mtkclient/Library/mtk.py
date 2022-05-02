@@ -53,7 +53,7 @@ class Mtk(metaclass=LogBase):
             i += 1
         if patched:
             import sys
-            with open(sys.argv[1]+".patched","wb") as wf:
+            with open("preloader.patched","wb") as wf:
                 wf.write(data)
                 print("Patched !")
             self.info(f"Patched preloader security: {hex(i)}")
