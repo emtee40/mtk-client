@@ -107,17 +107,21 @@ if __name__ == '__main__':
     da_rpmb_cmds = da_rpmb.add_subparsers(dest='rpmb_subcmd', help='Commands: r w')
     da_rpmb_r = da_rpmb_cmds.add_parser("r", help="Read rpmb")
     da_rpmb_r.add_argument('--filename', type=str, help="Filename to write data into")
+    da_rpmb_r.add_argument('--preloader', help='Set the preloader filename for dram config')
 
     da_rpmb_w = da_rpmb_cmds.add_parser("w", help="Write rpmb")
     da_rpmb_w.add_argument('filename', type=str, help="Filename to write from")
+    da_rpmb_w.add_argument('--preloader', help='Set the preloader filename for dram config')
 
     da_rpmb_e = da_rpmb_cmds.add_parser("e", help="Erase rpmb")
+    da_rpmb_e.add_argument('--preloader', help='Set the preloader filename for dram config')
 
     da_peek.add_argument('address', type=str, help="Address to read from (hex value)")
     da_peek.add_argument('length', type=str, help="Length to read")
     da_peek.add_argument('--filename', type=str, help="Filename to write data into")
 
     da_dump.add_argument('directory', type=str, help="Directory to dump ram dump files")
+    da_dump.add_argument('--preloader', help='Set the preloader filename for dram config')
 
     da_poke.add_argument('address', type=str, help="Address to read from (hex value)")
     da_poke.add_argument('data', type=str, help="Data to write")

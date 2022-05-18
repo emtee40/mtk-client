@@ -410,13 +410,14 @@ class sej(metaclass=LogBase):
         # self.reg.HACC_SECINIT2 = pd[0xA]
         # self.reg.HACC_MKJ = pd[0xB]
 
-    def sej_do_aes(self, encrypt, iv, data, length):
+    def sej_do_aes(self, encrypt, iv=None, data=b"", length=16):
         self.reg.HACC_ACON2 |= self.HACC_AES_CLR
-        piv = bytes_to_dwords(iv)
-        self.reg.HACC_ACFG0 = piv[0]
-        self.reg.HACC_ACFG1 = piv[1]
-        self.reg.HACC_ACFG2 = piv[2]
-        self.reg.HACC_ACFG3 = piv[3]
+        if iv is not None:
+            piv = bytes_to_dwords(iv)
+            self.reg.HACC_ACFG0 = piv[0]
+            self.reg.HACC_ACFG1 = piv[1]
+            self.reg.HACC_ACFG2 = piv[2]
+            self.reg.HACC_ACFG3 = piv[3]
         if encrypt:
             self.reg.HACC_ACON |= self.HACC_AES_ENC
         else:
@@ -541,3 +542,8 @@ class sej(metaclass=LogBase):
             self.sej_set_otp(otp)
         buf = bytes.fromhex("4B65796D61737465724D617374657200")
         return self.dev_kdf(buf=buf, derivelen=16)
+
+    def generate_mtee_meid(self, meid):
+        self.sej_key_config(meid)
+        res1 = self.sej_do_aes(True, None, meid, 32)
+        return self.sej_do_aes(True, None, res1, 32)
