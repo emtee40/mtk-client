@@ -244,7 +244,7 @@ class usb_class(DeviceClass):
 
     def connect(self, EP_IN=-1, EP_OUT=-1):
         if self.connected:
-            self.close()
+            self.close(reset=True)
             self.connected = False
         self.device = None
         self.EP_OUT = None

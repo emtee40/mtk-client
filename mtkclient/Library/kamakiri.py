@@ -7,7 +7,7 @@ import time
 import os
 from struct import pack, unpack
 from mtkclient.Library.utils import LogBase, print_progress, revdword, logsetup, getint
-from mtkclient.Library.usblib import usb
+from mtkclient.Library.Connection.usblib import usb
 from mtkclient.config.payloads import pathconfig
 
 class Kamakiri(metaclass=LogBase):
@@ -172,7 +172,7 @@ class Kamakiri(metaclass=LogBase):
                     break
                 else:
                     print("Please dis- and reconnect device to brom mode to continue ...")
-                    self.mtk.port.close()
+                    self.mtk.port.close(reset=True)
         return True
 
     def newbrute(self, dump_ptr, dump=False):
@@ -261,7 +261,7 @@ class Kamakiri(metaclass=LogBase):
                                 return True
                         except Exception as e:
                             print(e)
-                            rmtk.port.close()
+                            rmtk.port.close(reset=True)
                             time.sleep(0.1)
                             del rmtk
                     except Exception as err:
@@ -275,7 +275,7 @@ class Kamakiri(metaclass=LogBase):
 
         if var1 == 0xFF:
             self.error("Couldn't find the right var1 value.")
-        self.close()
+        self.close(reset=True)
         return False
 
     def dump_brom(self, filename, length=0x20000):
