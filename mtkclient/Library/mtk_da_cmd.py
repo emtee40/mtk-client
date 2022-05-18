@@ -547,6 +547,8 @@ class DA_handler(metaclass=LogBase):
         if mtk is None or mtk.daloader is None:
             self.error("Error on running da, aborting :(")
             sys.exit(1)
+        if mtk.daloader.config.generatekeys and mtk.daloader.is_patched():
+            mtk.daloader.keys()
         if cmd == "gpt":
             directory = args.directory
             self.da_gpt(directory=directory)

@@ -236,6 +236,9 @@ class DAloader(metaclass=LogBase):
         else:
             return self.lft.generate_keys()
 
+    def is_patched(self):
+        return self.da.patch
+
     def seccfg(self, lockflag):
         if self.xflash:
             return self.xft.seccfg(lockflag)

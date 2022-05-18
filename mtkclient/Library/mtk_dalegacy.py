@@ -1033,7 +1033,7 @@ class DALegacy(metaclass=LogBase):
             ackval = self.usbread(1)
             ackval += self.usbread(1)
             ackval += self.usbread(1)
-            self.debug("ACK: " + hexlify(ackval).decode('utf-8'))
+            self.info("ACK: " + hexlify(ackval).decode('utf-8'))
             self.info("Setting stage 2 config ...")
             self.set_stage2_config(self.config.hwcode)
             self.info("Uploading stage 2...")
