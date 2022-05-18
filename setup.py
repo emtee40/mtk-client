@@ -24,6 +24,7 @@ setup(
     'colorama',
     'usb',
     'pyusb',
+    'pyserial',
     'pycryptodome',
     'PySide2',
     'mock'
