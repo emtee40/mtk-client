@@ -62,7 +62,7 @@ class usb_class(DeviceClass):
             windows_dir = None
             try:
                 # add pygame folder to Windows DLL search paths
-                windows_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", "Windows")
+                windows_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", "..", "Windows")
                 try:
                     os.add_dll_directory(windows_dir)
                 except Exception:
@@ -244,7 +244,7 @@ class usb_class(DeviceClass):
 
     def connect(self, EP_IN=-1, EP_OUT=-1):
         if self.connected:
-            self.close(reset=True)
+            self.close()
             self.connected = False
         self.device = None
         self.EP_OUT = None

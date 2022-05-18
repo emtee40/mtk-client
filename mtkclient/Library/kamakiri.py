@@ -172,7 +172,7 @@ class Kamakiri(metaclass=LogBase):
                     break
                 else:
                     print("Please dis- and reconnect device to brom mode to continue ...")
-                    self.mtk.port.close(reset=True)
+                    self.mtk.port.close()
         return True
 
     def newbrute(self, dump_ptr, dump=False):
@@ -261,7 +261,7 @@ class Kamakiri(metaclass=LogBase):
                                 return True
                         except Exception as e:
                             print(e)
-                            rmtk.port.close(reset=True)
+                            rmtk.port.close()
                             time.sleep(0.1)
                             del rmtk
                     except Exception as err:
@@ -275,7 +275,7 @@ class Kamakiri(metaclass=LogBase):
 
         if var1 == 0xFF:
             self.error("Couldn't find the right var1 value.")
-        self.close(reset=True)
+        self.close()
         return False
 
     def dump_brom(self, filename, length=0x20000):

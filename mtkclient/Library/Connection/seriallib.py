@@ -30,7 +30,7 @@ class serial_class(DeviceClass):
 
     def connect(self, EP_IN=-1, EP_OUT=-1):
         if self.connected:
-            self.close(reset=True)
+            self.close()
             self.connected = False
         if self.portname is None:
             devices=self.detectdevices()
@@ -55,7 +55,7 @@ class serial_class(DeviceClass):
 
     def close(self, reset=False):
         if self.connected:
-            self.device.close(reset=True)
+            self.device.close()
             del self.device
             self.connected = False
 
