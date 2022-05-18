@@ -787,7 +787,7 @@ hwconfig = {
         pl_payload_addr=0x40200000,  #
         gcpu_base=0x10050000,
         sej_base=0x1000A000,  # hacc
-        #dxcc_base=0x10210000,  # dxcc_sec
+        dxcc_base=0x10210000,  # dxcc_sec
         cqdma_base=0x10212000,
         ap_dma_mem=0x11000000 + 0x158,  # AP_DMA_I2C_1_RX_MEM_ADDR
         blacklist=[(0x00102834, 0x0), (0x00106A60, 0x0)],
@@ -1195,7 +1195,7 @@ hwconfig = {
         brom_payload_addr=0x100A00,
         da_payload_addr=0x201000,
         pl_payload_addr=0x40001000,  #
-        gcpu_base=0x101E32A0,
+        gcpu_base=0x10210000,
         sej_base=0x1000A000,
         # no dxcc
         cqdma_base=0x10212C00,
