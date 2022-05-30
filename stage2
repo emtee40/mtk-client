@@ -10,7 +10,7 @@ import argparse
 import hashlib
 from binascii import hexlify
 from struct import pack, unpack
-from mtkclient.Library.usblib import usb_class
+from mtkclient.Library.Connection.usblib import usb_class
 from mtkclient.Library.utils import LogBase
 from mtkclient.Library.utils import print_progress
 from mtkclient.Library.hwcrypto import crypto_setup, hwcrypto

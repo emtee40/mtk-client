@@ -3,7 +3,7 @@ import os
 from struct import unpack, pack
 
 from mtkclient.config.payloads import pathconfig
-from mtkclient.Library.error import ErrorHandler
+from mtkclient.Library.error import ErrorHandler, ErrorCodes_XFlash
 from mtkclient.Library.hwcrypto import crypto_setup, hwcrypto
 from mtkclient.Library.utils import LogBase, progress, logsetup, find_binary
 from mtkclient.Library.seccfg import seccfg
@@ -237,6 +237,9 @@ class xflashext(metaclass=LogBase):
                     status = self.status()
                     if status == 0x0:
                         return True
+                    else:
+                        self.error(ErrorCodes_XFlash[status])
+
         return False
 
     def custom_read(self, addr, length):
@@ -359,8 +362,8 @@ class xflashext(metaclass=LogBase):
     def custom_rpmb_init(self):
         hwc = self.cryptosetup()
         if self.config.chipconfig.meid_addr:
-            meid = self.custom_read(0x1008ec, 16)
-            if meid != b"":
+            meid = self.config.get_meid()
+            if meid != b"\x00"*16:
                 #self.config.set_meid(meid)
                 self.info("Generating sej rpmbkey...")
                 self.setotp(hwc)
@@ -382,10 +385,11 @@ class xflashext(metaclass=LogBase):
             cmd = XCmd.CUSTOM_INIT_UFS_RPMB
         if self.cmd(cmd):
             derivedrpmb = self.xread()
-            status = self.status()
-            if status == 0:
-                self.info("Derived rpmb key:" + hexlify(derivedrpmb).decode('utf-8'))
-                return True
+            if int.from_bytes(derivedrpmb[:4],'little') != 0xff:
+                status = self.status()
+                if status == 0:
+                    self.info("Derived rpmb key:" + hexlify(derivedrpmb).decode('utf-8'))
+                    return True
             self.error("Failed to derive a valid rpmb key.")
         return False
 
@@ -402,7 +406,7 @@ class xflashext(metaclass=LogBase):
     def read_rpmb(self, filename=None, display=True):
         progressbar = progress(1,self.mtk.config.guiprogress)
         sectors = 0
-        #val = self.custom_rpmb_init()
+        val = self.custom_rpmb_init()
         ufs = False
         if self.xflash.emmc.rpmb_size != 0:
             sectors = self.xflash.emmc.rpmb_size // 0x100

@@ -438,7 +438,7 @@ class Main(metaclass=LogBase):
                         if self.args.startpartition is not None:
                             partition = self.args.startpartition
                             self.info("Booting to : " + partition)
-                            mtk.preloader.send_partition_data(partition, mtk.patch_preloader_security(pldata))
+                            #mtk.preloader.send_partition_data(partition, mtk.patch_preloader_security(pldata))
                             status = mtk.preloader.jump_to_partition(partition)  # Do not remove !
                         if self.args.offset is not None and self.args.length is not None:
                             offset = getint(self.args.offset)
@@ -456,6 +456,8 @@ class Main(metaclass=LogBase):
                                 for pos in range(offset, offset+length,rlen):
                                     print("Reading pos %08X" % pos)
                                     res = mtk.preloader.read32(pos, rlen // 4)
+                                    if res==[]:
+                                        break
                                     print(hexlify(b"".join([pack("<I",val) for val in res])).decode('utf-8'))
 
                             #for val in res:

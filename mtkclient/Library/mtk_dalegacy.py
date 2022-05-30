@@ -1056,6 +1056,7 @@ class DALegacy(metaclass=LogBase):
                         self.mtk.port.close(reset=False)
                         time.sleep(2)
                         while not self.mtk.port.cdc.connect():
+                            self.info("Waiting for reconnection")
                             time.sleep(0.5)
                         self.info("Connected to preloader")
                     return True

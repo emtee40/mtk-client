@@ -265,6 +265,43 @@ class GCpu(metaclass=LogBase):
             self.reg.GCPU_REG_MSC = 0x80FF1800
             self.reg.GCPU_AXI = 0x887F
             self.reg.GCPU_UNK2 = 0
+        elif self.hwcode == 0x8163:
+            self.reg.GCPU_REG_CTL |= 0xF
+            self.reg.GCPU_REG_MSC |= 0x10000
+            self.reg.GCPU_REG_CTL |= 0x1F
+            self.reg.GCPU_REG_MSC |= 0x2000
+            self.reg.GCPU_AXI = 0x885B
+            self.reg.GCPU_UNK2 &= 0xFFFDFFFD
+            self.reg.GCPU_REG_MEM_ADDR = 0x80002000
+            self.reg.GCPU_REG_INT_CLR = 1
+            self.reg.GCPU_REG_INT_EN = 0
+            init_array = [0xC576E, 0xC5709, 0xC5728, 0xC57CB, 0x94F45, 0xF575,
+                          0x3545, 0xF5B44, 0xF37C7, 0x1A3E78, 0xF3755, 0xF36D,
+                          0xF5BC5, 0x1EBF45, 0x97765, 0x83374, 0x1D1758, 0x110163,
+                          0x100163, 0xB3154, 0x53775, 0xF3547, 0xF5B45, 0xF5944,
+                          0x1B974C, 0x1EB546, 0x1B7B46, 0x1EBD24, 0x97765, 0x97364,
+                          0x87F67, 0x97F47, 0x1D174C, 0xF5955, 0xE3454, 0xF3775,
+                          0xE3457, 0xF3555, 0xE3456, 0xF374F, 0x1BB357, 0x95F4F,
+                          0x1A9766, 0x85F75, 0x1A9768, 0x85F15, 0x1A970C, 0x85F35,
+                          0x1A9721, 0x85FD5, 0x1B97C7, 0x95B55, 0xE3454, 0x94755,
+                          0xE3459, 0x94355, 0xE3457, 0xF3775, 0xE3456, 0xF376F,
+                          0x1BB357, 0xF3775, 0xB34B5, 0x93745, 0x1A3655, 0xEB425,
+                          0xF3755, 0xF3694, 0xF5964, 0x1EBF44, 0x97364, 0x83374,
+                          0x1D1710, 0x94355, 0xB3675, 0xF3774, 0xB3274, 0x3345,
+                          0x1A3655, 0xF58A4, 0x1EBD44, 0xF5955, 0xE3454, 0xF3775,
+                          0xE3457, 0xF3575, 0xE3456, 0xF370F, 0x1BB357, 0xF57C5,
+                          0xF5944, 0xF3647, 0x1A3E78, 0x116B09, 0x106B09, 0xB3154,
+                          0x53775, 0xF3547, 0xF5B45, 0xF5B44, 0x1EB546, 0x1B7B46,
+                          0x1EBD24, 0x97765, 0x97364, 0x87F67, 0x97F47, 0x1D1731,
+                          0xF5B55, 0xE3454, 0xF3775, 0xE3457, 0xF3555, 0xE3456,
+                          0xF372F, 0x1BB357, 0xF5945, 0xF5B44, 0xF3647, 0x1A3E78,
+                          0xF3775, 0xB34B5, 0x93745, 0x1A3655, 0xEB43D, 0xF3755,
+                          0xF3794, 0xF5A64, 0x1EBF44, 0x97364, 0x83374, 0x1D17D5,
+                          0xF3735, 0xB3655, 0x93745, 0x1A3655, 0xF5AA4, 0x1EBD44,
+                          0xF5B55, 0xE3454, 0xF3775, 0xE3457, 0xF3575, 0xE3456,
+                          0xF37CF, 0x1BB357, 0x1BB7ED]
+            for val in init_array:
+                self.reg.GCPU_REG_MEM_DATA = val
         else:
             self.reg.GCPU_REG_CTL &= 0xFFFFFFF0
             self.reg.GCPU_REG_CTL |= 0xF
@@ -446,7 +483,7 @@ class GCpu(metaclass=LogBase):
         return rdata
 
     def aes_read_ecb(self, data, encrypt=False, src=0x12, dst=0x1a, keyslot=0x30):
-        if self.load_hw_key(0x30): #0x58
+        if self.load_hw_key(0x30):  # 0x58
             self.memptr_set(src, data)
             if encrypt:
                 if not self.aes_encrypt_ecb(keyslot, src, dst):
@@ -496,11 +533,11 @@ class GCpu(metaclass=LogBase):
             self.reg.GCPU_REG_MEM_CMD = 0x7B
         else:
             self.reg.GCPU_REG_MEM_CMD = 0x7A
-        self.reg.GCPU_REG_MEM_P0 = src           # u4InBufStart
-        self.reg.GCPU_REG_MEM_P1 = dst           # u4OutBufStart
+        self.reg.GCPU_REG_MEM_P0 = src  # u4InBufStart
+        self.reg.GCPU_REG_MEM_P1 = dst  # u4OutBufStart
         self.reg.GCPU_REG_MEM_P2 = length // 16  # u4BufSize / 16
         self.reg.GCPU_REG_MEM_P3 = 0
-        self.reg.GCPU_REG_MEM_P4 = 0             # AES_MTD_SECURE_KEY_PTR
+        self.reg.GCPU_REG_MEM_P4 = 0  # AES_MTD_SECURE_KEY_PTR
         self.write32(self.gcpu_base + regval["GCPU_REG_MEM_P5"], 0x9 * [0])
         """
         self.reg.GCPU_REG_MEM_P3 = 0
@@ -529,7 +566,7 @@ class GCpu(metaclass=LogBase):
                 break
         self.reg.GCPU_REG_INT_CLR = res
 
-        self.write32(self.gcpu_base + regval["GCPU_REG_MEM_CMD"], 0xE0*[0])
+        self.write32(self.gcpu_base + regval["GCPU_REG_MEM_CMD"], 0xE0 * [0])
 
         self.reg.GCPU_REG_INT_EN = 0x0
         self.reg.GCPU_REG_MSC = 0x80fe1800
@@ -552,7 +589,7 @@ class GCpu(metaclass=LogBase):
         self.acquire()
         if self.load_hw_key(keyslot):
             self.memptr_set(src, bytearray(bytes.fromhex("4B65796D61737465724D617374657200")))
-            #self.memptr_set(src, bytearray(bytes.fromhex("0102030405060708090A0B0C0D0E0F0102030405060708090A0B0C0D0E0F0000")))
+            # self.memptr_set(src, bytearray(bytes.fromhex("0102030405060708090A0B0C0D0E0F0102030405060708090A0B0C0D0E0F0000")))
             if encrypt:
                 if not self.aes_encrypt_ecb(keyslot, src, dst):
                     return self.memptr_get(dst, 16)
@@ -576,7 +613,7 @@ class GCpu(metaclass=LogBase):
         if self.set_mode_cmd(encrypt=True, mode="ecb", encryptedkey=False) != 0:
             raise Exception("failed to call the function!")
 
-    def load_hw_key(self, offset): # vGcpuMEMExeNoIntr
+    def load_hw_key(self, offset):  # vGcpuMEMExeNoIntr
         self.reg.GCPU_REG_MEM_P0 = 0x58  # SrcStartAddr
         self.reg.GCPU_REG_MEM_P1 = offset  # DstStartAddr
         self.reg.GCPU_REG_MEM_P2 = 4  # Length/16 for ECB
