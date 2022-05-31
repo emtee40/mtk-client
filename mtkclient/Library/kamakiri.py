@@ -278,11 +278,17 @@ class Kamakiri(metaclass=LogBase):
         self.close()
         return False
 
-    def dump_brom(self, filename, length=0x20000):
+    def dump_brom(self, filename):
         try:
             with open(filename, 'wb') as wf:
                 print_progress(0, 100, prefix='Progress:', suffix='Complete', bar_length=50)
-                wf.write(self.mtk.port.usbread(length))
+                length = self.mtk.port.usbread(4)
+                length = int.from_bytes(length,'big')
+                rlen = min(length,0x20000)
+                for i in range(length//rlen):
+                    data = self.mtk.port.usbread(rlen)
+                    wf.write(data)
+                    print_progress(i, length//rlen, prefix='Progress:', suffix='Complete', bar_length=50)
                 print_progress(100, 100, prefix='Progress:', suffix='Complete', bar_length=50)
                 return True
         except Exception as e:

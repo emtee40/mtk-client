@@ -4,7 +4,7 @@
 import argparse
 from mtkclient.Library.mtk_main import Main, metamodes
 
-info = "MTK Flash/Exploit Client V1.56 (c) B.Kerler 2018-2022"
+info = "MTK Flash/Exploit Client V1.57 (c) B.Kerler 2018-2022"
 
 cmds = {
     "printgpt": "Print GPT Table information",
@@ -23,6 +23,7 @@ cmds = {
     "footer": "Read crypto footer from flash",
     "reset": "Send mtk reset command",
     "dumpbrom": "Try to dump the bootrom",
+    "dumpsram": "Try to dump the sram",
     "dumppreloader": "Try to dump the preloader",
     "payload": "Run a specific kamakiri / da payload, if no filename is given, generic patcher is used",
     "crash": "Try to crash the preloader",
@@ -53,7 +54,7 @@ if __name__ == '__main__':
     subparsers = parser.add_subparsers(dest="cmd",
                                        help='Valid commands are: \n' +
                                             'printgpt, gpt, r, rl, rf, rs, w, wf, wl, e, es, footer, reset, \n' +
-                                            'dumpbrom, dumppreloader, payload, crash, brute, gettargetconfig, \n' +
+                                            'dumpbrom, dumpsram, dumppreloader, payload, crash, brute, gettargetconfig, \n' +
                                             'peek, stage, plstage, da \n')
 
     parser_printgpt = subparsers.add_parser("printgpt", help="Print GPT Table information")
@@ -73,6 +74,7 @@ if __name__ == '__main__':
     parser_reset = subparsers.add_parser("reset", help="Send mtk reset command")
 
     parser_dumpbrom = subparsers.add_parser("dumpbrom", help="Try to dump the bootrom")
+    parser_dumpsram = subparsers.add_parser("dumpsram", help="Try to dump the sram")
     parser_dumppreloader = subparsers.add_parser("dumppreloader", help="Try to dump the preloader")
     parser_payload = subparsers.add_parser("payload",
                                            help="Run a specific kamakiri / da payload, " +
@@ -145,7 +147,7 @@ if __name__ == '__main__':
     parser_printgpt.add_argument('--da_addr', help='Set a specific da payload addr')
     parser_printgpt.add_argument('--brom_addr', help='Set a specific brom payload addr')
     parser_printgpt.add_argument('--ptype',
-                                 help='Set the payload type ( "amonet","kamakiri","kamakiri2", kamakiri2/da used by ' +
+                                 help='Set the payload type ("amonet","kamakiri","kamakiri2","carbonara" kamakiri2/da used by ' +
                                       'default)')
     parser_printgpt.add_argument('--preloader', help='Set the preloader filename for dram config')
     parser_printgpt.add_argument('--crash', help='Enforce crash if device is in pl mode to enter brom mode')
@@ -169,7 +171,7 @@ if __name__ == '__main__':
     parser_gpt.add_argument('--da_addr', help='Set a specific da payload addr')
     parser_gpt.add_argument('--brom_addr', help='Set a specific brom payload addr')
     parser_gpt.add_argument('--ptype',
-                            help='Set the payload type ("amonet","kamakiri","kamakiri2", kamakiri2/da used by default)')
+                            help='Set the payload type ("amonet","kamakiri","kamakiri2","carbonara", kamakiri2/da used by default)')
     parser_gpt.add_argument('--preloader', help='Set the preloader filename for dram config')
     parser_gpt.add_argument('--parttype', help='Partition type\n' +
                                                '\t\tEMMC: [user, boot1, boot2, gp1, gp2, gp3, gp4, rpmb]' +
@@ -196,7 +198,7 @@ if __name__ == '__main__':
     parser_r.add_argument('--da_addr', help='Set a specific da payload addr')
     parser_r.add_argument('--brom_addr', help='Set a specific brom payload addr')
     parser_r.add_argument('--ptype',
-                          help='Set the payload type ( "amonet","kamakiri","kamakiri2", kamakiri2/da used by default)')
+                          help='Set the payload type ( "amonet","kamakiri","kamakiri2","carbonara" kamakiri2/da used by default)')
     parser_r.add_argument('--preloader', help='Set the preloader filename for dram config')
     parser_r.add_argument('--parttype', help='Partition type\n' +
                                              '\t\tEMMC: [user, boot1, boot2, gp1, gp2, gp3, gp4, rpmb]' +
@@ -222,7 +224,7 @@ if __name__ == '__main__':
     parser_rl.add_argument('--da_addr', help='Set a specific da payload addr')
     parser_rl.add_argument('--brom_addr', help='Set a specific brom payload addr')
     parser_rl.add_argument('--ptype',
-                           help='Set the payload type ( "amonet","kamakiri","kamakiri2", kamakiri2/da used by default)')
+                           help='Set the payload type ( "amonet","kamakiri","kamakiri2","carbonara" kamakiri2/da used by default)')
     parser_rl.add_argument('--preloader', help='Set the preloader filename for dram config')
     parser_rl.add_argument('--parttype', help='Partition type\n' +
                                               '\t\tEMMC: [user, boot1, boot2, gp1, gp2, gp3, gp4, rpmb]' +
@@ -249,7 +251,7 @@ if __name__ == '__main__':
     parser_rf.add_argument('--da_addr', help='Set a specific da payload addr')
     parser_rf.add_argument('--brom_addr', help='Set a specific brom payload addr')
     parser_rf.add_argument('--ptype',
-                           help='Set the payload type ( "amonet","kamakiri","kamakiri2", kamakiri2/da used by default)')
+                           help='Set the payload type ( "amonet","kamakiri","kamakiri2","carbonara" kamakiri2/da used by default)')
     parser_rf.add_argument('--preloader', help='Set the preloader filename for dram config')
     parser_rf.add_argument('--verifystage2', help='Verify if stage2 data has been written correctly')
     parser_rf.add_argument('--parttype', help='Partition type\n' +
@@ -280,7 +282,7 @@ if __name__ == '__main__':
     parser_rs.add_argument('--da_addr', help='Set a specific da payload addr')
     parser_rs.add_argument('--brom_addr', help='Set a specific brom payload addr')
     parser_rs.add_argument('--ptype',
-                           help='Set the payload type ( "amonet","kamakiri","kamakiri2", kamakiri2/da used by default)')
+                           help='Set the payload type ( "amonet","kamakiri","kamakiri2","carbonara" kamakiri2/da used by default)')
     parser_rs.add_argument('--preloader', help='Set the preloader filename for dram config')
     parser_rs.add_argument('--verifystage2', help='Verify if stage2 data has been written correctly')
     parser_rs.add_argument('--parttype', help='Partition type\n' +
@@ -311,7 +313,7 @@ if __name__ == '__main__':
     parser_ro.add_argument('--da_addr', help='Set a specific da payload addr')
     parser_ro.add_argument('--brom_addr', help='Set a specific brom payload addr')
     parser_ro.add_argument('--ptype',
-                           help='Set the payload type ( "amonet","kamakiri","kamakiri2", kamakiri2/da used by default)')
+                           help='Set the payload type ( "amonet","kamakiri","kamakiri2","carbonara" kamakiri2/da used by default)')
     parser_ro.add_argument('--preloader', help='Set the preloader filename for dram config')
     parser_ro.add_argument('--verifystage2', help='Verify if stage2 data has been written correctly')
     parser_ro.add_argument('--parttype', help='Partition type\n' +
@@ -341,7 +343,7 @@ if __name__ == '__main__':
     parser_w.add_argument('--da_addr', help='Set a specific da payload addr')
     parser_w.add_argument('--brom_addr', help='Set a specific brom payload addr')
     parser_w.add_argument('--ptype',
-                          help='Set the payload type ( "amonet","kamakiri","kamakiri2", kamakiri2/da used by default)')
+                          help='Set the payload type ( "amonet","kamakiri","kamakiri2","carbonara" kamakiri2/da used by default)')
     parser_w.add_argument('--preloader', help='Set the preloader filename for dram config')
     parser_w.add_argument('--verifystage2', help='Verify if stage2 data has been written correctly')
     parser_w.add_argument('--parttype', help='Partition type\n' +
@@ -370,7 +372,7 @@ if __name__ == '__main__':
     parser_wf.add_argument('--da_addr', help='Set a specific da payload addr')
     parser_wf.add_argument('--brom_addr', help='Set a specific brom payload addr')
     parser_wf.add_argument('--ptype',
-                           help='Set the payload type ( "amonet","kamakiri","kamakiri2", kamakiri2/da used by default)')
+                           help='Set the payload type ( "amonet","kamakiri","kamakiri2","carbonara" kamakiri2/da used by default)')
     parser_wf.add_argument('--preloader', help='Set the preloader filename for dram config')
     parser_wf.add_argument('--verifystage2', help='Verify if stage2 data has been written correctly')
     parser_wf.add_argument('--parttype', help='Partition type\n' +
@@ -397,7 +399,7 @@ if __name__ == '__main__':
     parser_wl.add_argument('--da_addr', help='Set a specific da payload addr')
     parser_wl.add_argument('--brom_addr', help='Set a specific brom payload addr')
     parser_wl.add_argument('--ptype',
-                           help='Set the payload type ( "amonet","kamakiri","kamakiri2", kamakiri2/da used by default)')
+                           help='Set the payload type ( "amonet","kamakiri","kamakiri2","carbonara" kamakiri2/da used by default)')
     parser_wl.add_argument('--preloader', help='Set the preloader filename for dram config')
     parser_wl.add_argument('--verifystage2', help='Verify if stage2 data has been written correctly')
     parser_wl.add_argument('--parttype', help='Partition type\n' +
@@ -427,7 +429,7 @@ if __name__ == '__main__':
     parser_wo.add_argument('--da_addr', help='Set a specific da payload addr')
     parser_wo.add_argument('--brom_addr', help='Set a specific brom payload addr')
     parser_wo.add_argument('--ptype',
-                           help='Set the payload type ( "amonet","kamakiri","kamakiri2", kamakiri2/da used by default)')
+                           help='Set the payload type ( "amonet","kamakiri","kamakiri2","carbonara" kamakiri2/da used by default)')
     parser_wo.add_argument('--preloader', help='Set the preloader filename for dram config')
     parser_wo.add_argument('--verifystage2', help='Verify if stage2 data has been written correctly')
     parser_wo.add_argument('--parttype', help='Partition type\n' +
@@ -455,7 +457,7 @@ if __name__ == '__main__':
     parser_e.add_argument('--da_addr', help='Set a specific da payload addr')
     parser_e.add_argument('--brom_addr', help='Set a specific brom payload addr')
     parser_e.add_argument('--ptype',
-                          help='Set the payload type ( "amonet","kamakiri","kamakiri2", kamakiri2/da used by default)')
+                          help='Set the payload type ( "amonet","kamakiri","kamakiri2","carbonara" kamakiri2/da used by default)')
     parser_e.add_argument('--preloader', help='Set the preloader filename for dram config')
     parser_e.add_argument('--verifystage2', help='Verify if stage2 data has been written correctly')
     parser_e.add_argument('--parttype', help='Partition type\n' +
@@ -484,7 +486,7 @@ if __name__ == '__main__':
     parser_es.add_argument('--da_addr', help='Set a specific da payload addr')
     parser_es.add_argument('--brom_addr', help='Set a specific brom payload addr')
     parser_es.add_argument('--ptype',
-                           help='Set the payload type ( "amonet","kamakiri","kamakiri2", kamakiri2/da used by default)')
+                           help='Set the payload type ( "amonet","kamakiri","kamakiri2","carbonara" kamakiri2/da used by default)')
     parser_es.add_argument('--preloader', help='Set the preloader filename for dram config')
     parser_es.add_argument('--verifystage2', help='Verify if stage2 data has been written correctly')
     parser_es.add_argument('--parttype', help='Partition type\n' +
@@ -513,7 +515,7 @@ if __name__ == '__main__':
     parser_footer.add_argument('--brom_addr', help='Set a specific brom payload addr')
     parser_footer.add_argument('--ptype',
                                help='Set the payload type ' +
-                                    '("amonet","kamakiri","kamakiri2", kamakiri2/da used by default)')
+                                    '("amonet","kamakiri","kamakiri2","carbonara" kamakiri2/da used by default)')
     parser_footer.add_argument('--preloader', help='Set the preloader filename for dram config')
     parser_footer.add_argument('--verifystage2', help='Verify if stage2 data has been written correctly')
     parser_footer.add_argument('--filename', help='Optional filename')
@@ -534,10 +536,30 @@ if __name__ == '__main__':
     parser_dumpbrom.add_argument('--brom_addr', help='Set a specific brom payload addr')
     parser_dumpbrom.add_argument('--ptype',
                                  help='Set the payload type ' +
-                                      '("amonet","kamakiri","kamakiri2", kamakiri2/da used by default)')
+                                      '("amonet","kamakiri","kamakiri2","carbonara" kamakiri2/da used by default)')
     parser_dumpbrom.add_argument('--filename', help='Optional filename')
     parser_dumpbrom.add_argument('--crash', help='Enforce crash if device is in pl mode to enter brom mode')
     parser_dumpbrom.add_argument('--socid', help='Read Soc ID')
+
+
+    parser_dumpsram.add_argument('--loader', type=str, help='Use specific DA loader, disable autodetection')
+    parser_dumpsram.add_argument('--vid', type=str, help='Set usb vendor id used for MTK Preloader')
+    parser_dumpsram.add_argument('--pid', type=str, help='Set usb product id used for MTK Preloader')
+    parser_dumpsram.add_argument('--debugmode', action='store_true', default=False, help='Enable verbose mode')
+    parser_dumpsram.add_argument('--skip', help='Skip reading partition with names "partname1,partname2,etc."')
+    parser_dumpsram.add_argument('--skipwdt', help='Skip wdt init')
+    parser_dumpsram.add_argument('--wdt', help='Set a specific watchdog addr')
+    parser_dumpsram.add_argument('--mode', help='Set a crash mode (0=dasend1,1=dasend2,2=daread)')
+    parser_dumpsram.add_argument('--var1', help='Set kamakiri specific var1 value')
+    parser_dumpsram.add_argument('--uart_addr', help='Set payload uart_addr value')
+    parser_dumpsram.add_argument('--da_addr', help='Set a specific da payload addr')
+    parser_dumpsram.add_argument('--brom_addr', help='Set a specific brom payload addr')
+    parser_dumpsram.add_argument('--ptype',
+                                 help='Set the payload type ' +
+                                      '("amonet","kamakiri","kamakiri2","carbonara" kamakiri2/da used by default)')
+    parser_dumpsram.add_argument('--filename', help='Optional filename')
+    parser_dumpsram.add_argument('--crash', help='Enforce crash if device is in pl mode to enter brom mode')
+    parser_dumpsram.add_argument('--socid', help='Read Soc ID')
 
     parser_dumppreloader.add_argument('--loader', type=str, help='Use specific DA loader, disable autodetection')
     parser_dumppreloader.add_argument('--vid', type=str, help='Set usb vendor id used for MTK Preloader')
@@ -552,7 +574,7 @@ if __name__ == '__main__':
     parser_dumppreloader.add_argument('--brom_addr', help='Set a specific brom payload addr')
     parser_dumppreloader.add_argument('--ptype',
                                       help='Set the payload type ' +
-                                           '("amonet","kamakiri","kamakiri2", kamakiri2/da used by default)')
+                                           '("amonet","kamakiri","kamakiri2","carbonara" kamakiri2/da used by default)')
     parser_dumppreloader.add_argument('--preloader', help='Set the preloader filename for dram config')
     parser_dumppreloader.add_argument('--filename', help='Optional filename')
     parser_dumppreloader.add_argument('--crash', help='Enforce crash if device is in pl mode to enter brom mode')
@@ -574,7 +596,7 @@ if __name__ == '__main__':
     parser_payload.add_argument('--brom_addr', help='Set a specific brom payload addr')
     parser_payload.add_argument('--ptype',
                                 help='Set the payload type ' +
-                                     '("amonet","kamakiri","kamakiri2", kamakiri2/da used by default)')
+                                     '("amonet","kamakiri","kamakiri2","carbonara" kamakiri2/da used by default)')
     parser_payload.add_argument('--crash', help='Enforce crash if device is in pl mode to enter brom mode')
     parser_payload.add_argument('--socid', help='Read Soc ID')
 
@@ -596,7 +618,7 @@ if __name__ == '__main__':
     parser_brute.add_argument('--brom_addr', help='Set a specific brom payload addr')
     parser_brute.add_argument('--ptype',
                               help='Set the payload type ' +
-                                   '("amonet","kamakiri","kamakiri2", kamakiri2/da used by default)')
+                                   '("amonet","kamakiri","kamakiri2","carbonara" kamakiri2/da used by default)')
     parser_brute.add_argument('--filename', help='Optional filename')
     parser_brute.add_argument('--crash', help='Enforce crash if device is in pl mode to enter brom mode')
     parser_brute.add_argument('--socid', help='Read Soc ID')
@@ -631,7 +653,7 @@ if __name__ == '__main__':
     parser_peek.add_argument('--brom_addr', help='Set a specific brom payload addr')
     parser_peek.add_argument('--ptype',
                              help='Set the payload type ' +
-                                  '("amonet","kamakiri","kamakiri2", kamakiri2/da used by default)')
+                                  '("amonet","kamakiri","kamakiri2","carbonara" kamakiri2/da used by default)')
     parser_peek.add_argument('--crash', help='Enforce crash if device is in pl mode to enter brom mode')
     parser_peek.add_argument('--socid', help='Read Soc ID')
     parser_peek.add_argument('--preloader', help='Set the preloader filename for dram config')
@@ -652,7 +674,7 @@ if __name__ == '__main__':
     parser_stage.add_argument('--brom_addr', help='Set a specific brom payload addr')
     parser_stage.add_argument('--ptype',
                               help='Set the payload type ' +
-                                   '("amonet","kamakiri","kamakiri2", kamakiri2/da used by default)')
+                                   '("amonet","kamakiri","kamakiri2","carbonara" kamakiri2/da used by default)')
     parser_stage.add_argument('--verifystage2', help='Verify if stage2 data has been written correctly')
     parser_stage.add_argument('--filename', help='Optional filename')
     parser_stage.add_argument('--crash', help='Enforce crash if device is in pl mode to enter brom mode')

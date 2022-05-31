@@ -378,6 +378,23 @@ class Main(metaclass=LogBase):
                         self.info("Preloader dumped as: " + filename)
                 rmtk.port.close()
             self.close()
+        elif cmd == "dumpsram":
+            if mtk.preloader.init():
+                rmtk = mtk.crasher()
+                if rmtk is None:
+                    sys.exit(0)
+                if rmtk.port.cdc.vid != 0xE8D and rmtk.port.cdc.pid != 0x0003:
+                    self.warning("We couldn't enter preloader.")
+                filename = self.args.filename
+                if filename is None:
+                    cpu = ""
+                    if rmtk.config.cpu != "":
+                        cpu = "_" + rmtk.config.cpu
+                    filename = "sram" + cpu + "_" + hex(rmtk.config.hwcode)[2:] + ".bin"
+                plt = PLTools(rmtk, self.__logger.level)
+                plt.run_dump_brom(filename, self.args.ptype, loader="generic_sram_payload.bin")
+                rmtk.port.close()
+            self.close()
         elif cmd == "brute":
             self.info("Kamakiri / DA Bruteforce run")
             rmtk = Mtk(config=mtk.config, loglevel=self.__logger.level, serialportname=mtk.port.serialportname)

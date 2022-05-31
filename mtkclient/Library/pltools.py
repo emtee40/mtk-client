@@ -28,7 +28,7 @@ class PLTools(metaclass=LogBase):
         self.kama = Kamakiri(self.mtk, self.__logger.level)
 
         # crypto types
-        setup=crypto_setup()
+        setup = crypto_setup()
         setup.hwcode = self.mtk.config.hwcode
         setup.dxcc_base = self.mtk.config.chipconfig.dxcc_base
         setup.read32 = self.mtk.preloader.read32
@@ -42,7 +42,7 @@ class PLTools(metaclass=LogBase):
         setup.ap_dma_mem = self.mtk.config.chipconfig.ap_dma_mem
         setup.meid_addr = self.mtk.config.chipconfig.meid_addr
         setup.prov_addr = self.mtk.config.chipconfig.prov_addr
-        self.hwcrypto=hwcrypto(setup,loglevel,self.mtk.config.gui)
+        self.hwcrypto = hwcrypto(setup, loglevel, self.mtk.config.gui)
 
         self.pathconfig = pathconfig()
         if loglevel == logging.DEBUG:
@@ -54,7 +54,7 @@ class PLTools(metaclass=LogBase):
             self.__logger.setLevel(logging.INFO)
 
     def runpayload(self, filename, offset=0, ack=0xA1A2A3A4, addr=None, dontack=False):
-        ptype=self.config.ptype
+        ptype = self.config.ptype
         try:
             with open(filename, "rb") as rf:
                 rf.seek(offset)
@@ -75,6 +75,8 @@ class PLTools(metaclass=LogBase):
                 exploittype = 2
             elif ptype == "hashimoto":
                 addr = self.chipconfig.da_payload_addr
+            elif ptype == "carbonara":
+                addr = self.chipconfig.brom_payload_addr
             elif ptype == "":
                 if self.mtk.config.target_config["sla"] or self.mtk.config.target_config["daa"]:
                     addr = self.chipconfig.brom_payload_addr
@@ -121,6 +123,8 @@ class PLTools(metaclass=LogBase):
                 return False
             else:
                 self.error("Error on sending payload: " + filename)
+        elif ptype == "carbonara":
+            self.info("Carbonara is best served at local restaurants.")
         else:
             self.info("Kamakiri / DA Run")
             if self.kama.payload(payload, addr, False, exploittype=2):
@@ -130,10 +134,10 @@ class PLTools(metaclass=LogBase):
                 if result == pack(">I", ack):
                     self.info("Successfully sent payload: " + filename)
                     return True
-                if result==b"\xc1\xc2\xc3\xc4":
+                if result == b"\xc1\xc2\xc3\xc4":
                     if "preloader" in rf.name:
-                        ack=self.mtk.port.usbread(4)
-                        if ack==b"\xC0\xC0\xC0\xC0":
+                        ack = self.mtk.port.usbread(4)
+                        if ack == b"\xC0\xC0\xC0\xC0":
                             with open("preloader.bin", 'wb') as wf:
                                 print_progress(0, 100, prefix='Progress:', suffix='Complete', bar_length=50)
                                 for pos in range(0, 0x40000, 64):
@@ -143,7 +147,7 @@ class PLTools(metaclass=LogBase):
                     else:
                         with open("out.bin", 'wb') as wf:
                             print_progress(0, 100, prefix='Progress:', suffix='Complete', bar_length=50)
-                            for pos in range(0,0x20000,64):
+                            for pos in range(0, 0x20000, 64):
                                 wf.write(self.mtk.port.usbread(64))
                             self.info("Bootrom dumped as: " + "out.bin")
                             return True
@@ -161,7 +165,7 @@ class PLTools(metaclass=LogBase):
                 self.error("Error on bruteforcing.")
         elif self.config.ptype == "kamakiri2":
             self.info("Kamakiri2 Run")
-            if self.kama.bruteforce2(args,0x9900):
+            if self.kama.bruteforce2(args, 0x9900):
                 return True
             else:
                 self.error("Error on bruteforcing.")
@@ -181,7 +185,7 @@ class PLTools(metaclass=LogBase):
         except:
             pass
 
-    def crasher(self, mtk, enforcecrash:bool=False):
+    def crasher(self, mtk, enforcecrash: bool = False):
         plt = PLTools(mtk, self.__logger.level)
         if enforcecrash or self.config.meid is None:
             self.info("We're not in bootrom, trying to crash da...")
@@ -192,22 +196,26 @@ class PLTools(metaclass=LogBase):
                     self.__logger.debug(str(e))
                     pass
                 portconfig = [[0xE8D, 0x0003, 1]]
-                mtk.port = Port(mtk=mtk, portconfig=portconfig, serialportname=mtk.port.serialportname, loglevel=self.__logger.level)
+                mtk.port = Port(mtk=mtk, portconfig=portconfig, serialportname=mtk.port.serialportname,
+                                loglevel=self.__logger.level)
                 if mtk.preloader.init(maxtries=20):
                     break
         return mtk
 
-    def run_dump_brom(self, filename, btype):
-        pfilename = os.path.join(self.pathconfig.get_payloads_path(), "generic_dump_payload.bin")
+    def run_dump_brom(self, filename, btype, loader="generic_dump_payload.bin"):
+        length = 0x20000
+        if loader == "generic_sram_payload.bin":
+            length = 0x200000
+        pfilename = os.path.join(self.pathconfig.get_payloads_path(), loader)
         if btype == "amonet":
-            if self.dump_brom(filename, "gcpu"):
-                self.info("Bootrom dumped as: " + filename)
+            if self.dump_brom(filename, "gcpu", length=length):
+                self.info("Dumped as: " + filename)
                 return True
             else:
                 self.error("Error on sending payload: " + pfilename)
         elif btype == "hashimoto":
-            if self.dump_brom(filename, "cqdma"):
-                self.info("Bootrom dumped as: " + filename)
+            if self.dump_brom(filename, "cqdma", length=length):
+                self.info("Dumped as: " + filename)
                 return True
             else:
                 self.error("Error on sending payload: " + pfilename)
@@ -215,7 +223,7 @@ class PLTools(metaclass=LogBase):
             self.info("Kamakiri / DA Run")
             if self.runpayload(filename=pfilename, ack=0xC1C2C3C4, offset=0):
                 if self.kama.dump_brom(filename):
-                    self.info("Bootrom dumped as: " + filename)
+                    self.info("Dumped as: " + filename)
                     return True
             else:
                 self.error("Error on sending payload: " + filename)
@@ -224,20 +232,19 @@ class PLTools(metaclass=LogBase):
             if self.mtk.config.chipconfig.send_ptr[0] is None:
                 self.info("Unknown chipset, please run \"brute\" command and send the brom as an issue on github")
                 return False
-                if self.kama.bruteforce2(self.args, 0x9900):
-                    return True
-                else:
-                    self.error("Error on bruteforcing.")
             if self.runpayload(filename=pfilename, ack=0xC1C2C3C4, offset=0):
                 if self.kama.dump_brom(filename):
-                    self.info("Bootrom dumped as: " + filename)
+                    self.info("Dumped as: " + filename)
                     return True
             else:
                 self.error("Error on sending payload: " + filename)
+        elif btype == "carbonara":
+            self.info("Carbonara is best served at local restaurants.")
+            return False
         else:
             self.error("Unknown dumpbrom ptype: " + btype)
-            self.info("Available ptypes are: amonet, kamakiri, kamakiri2, hashimoto")
-        self.error("Error on dumping Bootrom.")
+            self.info("Available ptypes are: amonet, kamakiri, kamakiri2, hashimoto, carbonara")
+        self.error("Error on dumping.")
         return False
 
     def run_dump_preloader(self, btype):
@@ -259,7 +266,7 @@ class PLTools(metaclass=LogBase):
         if btype == "kamakiri":
             self.info("Kamakiri / DA Run")
             if self.runpayload(filename=pfilename, ack=0xC1C2C3C4, offset=0):
-                data,filename=self.kama.dump_preloader()
+                data, filename = self.kama.dump_preloader()
                 return data, filename
             else:
                 self.error("Error on sending payload: " + pfilename)
@@ -267,14 +274,17 @@ class PLTools(metaclass=LogBase):
         elif btype == "kamakiri2" or btype is None:
             self.info("Kamakiri2")
             if self.runpayload(filename=pfilename, ack=0xC1C2C3C4, offset=0):
-                data,filename=self.kama.dump_preloader()
+                data, filename = self.kama.dump_preloader()
                 return data, filename
             else:
                 self.error("Error on sending payload: " + pfilename)
                 return None, None
+        elif btype == "carbonara":
+            self.info("Carbonara is best served at local restaurants.")
+            return None, None
         else:
             self.error("Unknown dumpbrom ptype: " + btype)
-            self.info("Available ptypes are: amonet, kamakiri, kamakiri2, hashimoto")
+            self.info("Available ptypes are: amonet, kamakiri, kamakiri2, hashimoto, carbonara")
         self.error("Error on dumping Bootrom.")
         return False
 
@@ -288,7 +298,7 @@ class PLTools(metaclass=LogBase):
             return encrypted
         return False
 
-    def dump_brom(self, filename, btype):
+    def dump_brom(self, filename, btype, length=0x20000):
         if btype == "gcpu" and self.chipconfig.gcpu_base is None:
             self.error("Chipconfig has no gcpu_base field for this cpu")
             return False
@@ -296,13 +306,13 @@ class PLTools(metaclass=LogBase):
             self.error("Chipconfig has no cqdma_base and/or ap_dma_mem field for this cpu")
             return False
         if self.chipconfig.blacklist:
-            self.hwcrypto.disable_range_blacklist(btype,self.mtk)
+            self.hwcrypto.disable_range_blacklist(btype, self.mtk)
         self.info("Dump bootrom")
         print_progress(0, 100, prefix='Progress:', suffix='Complete', bar_length=50)
         old = 0
         with open(filename, 'wb') as wf:
-            for addr in range(0x0, 0x20000, 16):
-                prog = int(addr / 0x20000 * 100)
+            for addr in range(0x0, length, 16):
+                prog = int(addr / length * 100)
                 if round(prog, 1) > old:
                     print_progress(prog, 100, prefix='Progress:', suffix='Complete, addr %08X' % addr,
                                    bar_length=50)
@@ -325,7 +335,7 @@ class PLTools(metaclass=LogBase):
             self.error("Chipconfig has no cqdma_base and/or ap_dma_mem field for this cpu")
             return False
         if self.chipconfig.blacklist:
-            self.hwcrypto.disable_range_blacklist(btype,self.mtk)
+            self.hwcrypto.disable_range_blacklist(btype, self.mtk)
         self.info("Dump bootrom")
         print_progress(0, 100, prefix='Progress:', suffix='Complete', bar_length=50)
         old = 0
@@ -347,7 +357,7 @@ class PLTools(metaclass=LogBase):
         return True
 
     def payload(self, payload, daaddr, ptype):
-        self.hwcrypto.disable_range_blacklist(ptype,self.mtk.preloader.run_ext_cmd)
+        self.hwcrypto.disable_range_blacklist(ptype, self.mtk.preloader.run_ext_cmd)
         try:
             while len(payload) % 4 != 0:
                 payload += b"\x00"
@@ -367,4 +377,3 @@ class PLTools(metaclass=LogBase):
         except Exception as e:
             self.error("Failed to load payload file. Error: " + str(e))
             return False
-
