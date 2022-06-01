@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-# (c) B.Kerler 2018-2021 GPLv3 License
+# (c) B.Kerler 2018-2022 GPLv3 License
 
 import hmac
 import hashlib
@@ -100,7 +100,7 @@ regval = {
     "GCPU_REG_CTL": 0,
     "GCPU_REG_MSC": 4,
 
-    "GCPU_UNK1": 0x20,
+    "GCPU_AXI": 0x20,
     "GCPU_UNK2": 0x24,
 
     "GCPU_REG_PC_CTL": 0x400,
@@ -245,7 +245,7 @@ class GCpu(metaclass=LogBase):
         self.reg.GCPU_REG_MEM_DATA = data
 
     def acquire(self):
-        if self.hwcode == 0x8167:
+        if self.hwcode==0x8167:
             self.write32(CLR_CLK_GATING_CTRL2, self.read32(CLR_CLK_GATING_CTRL2) | 0x8000000)
             self.reg.GCPU_REG_CTL |= 0xF
             self.reg.GCPU_REG_MSC = self.reg.GCPU_REG_MSC & 0x7FF0BF7F | 0x34080
@@ -266,15 +266,17 @@ class GCpu(metaclass=LogBase):
             self.reg.GCPU_AXI = 0x887F
             self.reg.GCPU_UNK2 = 0
         elif self.hwcode == 0x8163:
+            self.write32(CLR_CLK_GATING_CTRL2, self.read32(CLR_CLK_GATING_CTRL2) | 0x8000000)
+            self.reg.GCPU_REG_CTL &= 0xFFFFFFF0
             self.reg.GCPU_REG_CTL |= 0xF
+            self.reg.GCPU_REG_MSC |= 0x10000
+            self.reg.GCPU_REG_CTL &= 0xFFFFFFE0
             self.reg.GCPU_REG_MSC |= 0x10000
             self.reg.GCPU_REG_CTL |= 0x1F
             self.reg.GCPU_REG_MSC |= 0x2000
             self.reg.GCPU_AXI = 0x885B
             self.reg.GCPU_UNK2 &= 0xFFFDFFFD
             self.reg.GCPU_REG_MEM_ADDR = 0x80002000
-            self.reg.GCPU_REG_INT_CLR = 1
-            self.reg.GCPU_REG_INT_EN = 0
             init_array = [0xC576E, 0xC5709, 0xC5728, 0xC57CB, 0x94F45, 0xF575,
                           0x3545, 0xF5B44, 0xF37C7, 0x1A3E78, 0xF3755, 0xF36D,
                           0xF5BC5, 0x1EBF45, 0x97765, 0x83374, 0x1D1758, 0x110163,
@@ -302,6 +304,8 @@ class GCpu(metaclass=LogBase):
                           0xF37CF, 0x1BB357, 0x1BB7ED]
             for val in init_array:
                 self.reg.GCPU_REG_MEM_DATA = val
+            self.reg.GCPU_REG_INT_CLR = 1
+            self.reg.GCPU_REG_INT_EN = 0
         else:
             self.reg.GCPU_REG_CTL &= 0xFFFFFFF0
             self.reg.GCPU_REG_CTL |= 0xF

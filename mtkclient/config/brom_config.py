@@ -1128,19 +1128,6 @@ hwconfig = {
         description="Dimensity 1200",
         loader="mt6893_payload.bin"),
     # Dimensity 1100 - MT6891 Realme Q3 Pro
-    0x8110: chipconfig(  # var1
-        # watchdog
-        # uart
-        # brom_payload_addr
-        # da_payload_addr
-        # gcpu_base
-        # sej_base
-        # cqdma_base
-        # ap_dma_mem
-        # blacklist
-        damode=damodes.XFLASH,
-        dacode=0x8110,
-        name="MT8110"),
     0x8127: chipconfig(
         var1=0xA,
         watchdog=0x10007000,
@@ -1334,7 +1321,7 @@ hwconfig = {
         dacode=0x8195,
         damode=damodes.XFLASH,
         # description
-        name="MT8195"
+        name="MT8195 Chromebook"
         # loader
     ),
     0x8512: chipconfig(
@@ -1381,7 +1368,7 @@ hwconfig = {
         # socid_addr
         dacode=0x8518,
         damode=damodes.XFLASH,
-        name="MT8518"
+        name="MT8518 VoiceAssistant"
         # loader
     ),
     0x8590: chipconfig(
