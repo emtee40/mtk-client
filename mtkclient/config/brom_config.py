@@ -1273,8 +1273,8 @@ hwconfig = {
         # description
         loader="mt8173_payload.bin"),  # sloane, suez
     0x8176: chipconfig(
-        # var1
-        watchdog=0x10212c00,
+        var1=0xA,
+        watchdog=0x10007000,
         uart=0x11002000,
         brom_payload_addr=0x120A00,
         da_payload_addr=0xC0000,
@@ -1284,20 +1284,20 @@ hwconfig = {
         # no dxcc
         cqdma_base=0x10212c00,
         ap_dma_mem=0x11000000 + 0x1A0,
-        # blacklist
-        # blacklist_count
-        # send_ptr
-        # ctrl_buffer
-        # cmd_handler
-        # brom_register_access
-        # meid_addr
+        blacklist=[(0x122774, 0x0), (0x00125904, 0x0)],
+        blacklist_count=0x00000008,
+        send_ptr=(0x1227b4, 0xa0e4),
+        ctrl_buffer=0x0012305C,
+        cmd_handler=0x0000AC6B,
+        brom_register_access=(0xa3b8,0xa580),
+        meid_addr=0x1230B0,
+        misc_lock=0x1202050,
         # socid_addr
         dacode=0x8173,
         damode=damodes.DEFAULT,
         # description
-        name="MT8176"
-        # loader
-    ),
+        name="MT8176",
+        loader="mt8176_payload.bin"),
     0x930: chipconfig(
         # var1
         watchdog=0x10007000,
