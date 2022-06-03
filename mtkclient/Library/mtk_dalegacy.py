@@ -902,8 +902,15 @@ class DALegacy(metaclass=LogBase):
                     nand_ids.append(unpack(">H", self.usbread(2))[0])
                 if self.daconfig.emi is not None:  # toDo
                     self.usbwrite(self.Cmd.ENABLE_DRAM)  # E8
-                    self.usbwrite(pack(">I", self.daconfig.emiver))
-                    if self.usbread(1) == self.Rsp.ACK:
+                    if self.daconfig.emiver == 0:
+                        self.usbwrite(pack(">I", 0xFFFFFFFF))
+                    else:
+                        self.usbwrite(pack(">I", self.daconfig.emiver))
+                    ret = self.usbread(1)
+                    if ret == self.Rsp.NACK:
+                        self.error("EMI Config not accepted :(")
+                        return False
+                    if ret == self.Rsp.ACK:
                         self.info("Sending dram info ...")
                         dramlength = len(self.daconfig.emi)
                         if self.daconfig.emiver in [0x10, 0x14, 0x15]:
@@ -917,6 +924,15 @@ class DALegacy(metaclass=LogBase):
                             self.debug("Info: " + hexlify(info).decode('utf-8'))
                             dramlength = unpack(">I", self.usbread(0x4))[0]
                             self.usbwrite(self.Rsp.ACK)
+                        elif self.daconfig.emiver in [0x00]:
+                            dramlength = unpack(">I", self.usbread(0x4))[0]  # 0x000000B0
+                            self.debug("Info: " + hex(dramlength))
+                            self.usbwrite(self.Rsp.ACK)
+                            lendram = len(self.daconfig.emi)
+                            self.daconfig.emi = self.daconfig.emi[:dramlength]
+                            self.usbwrite(pack(">I", dramlength))
+                        else:
+                            self.warning("Unknown emi version: %d" % self.daconfig.emiver)
                         self.usbwrite(self.daconfig.emi)
                         checksum = unpack(">H", self.usbread(2))[0]  # 0x440C
                         self.debug("Status: %04X" % checksum)

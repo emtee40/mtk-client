@@ -345,14 +345,14 @@ class usb_class(DeviceClass):
                     pass
             except Exception as err:
                 self.debug(str(err))
-                if reset:
-                    try:
-                        if not self.device.is_kernel_driver_active(0):
-                            # self.device.attach_kernel_driver(self.interface) #Do NOT uncomment
-                            self.device.attach_kernel_driver(0)
-                    except:
-                        pass
-                pass
+            if reset:
+                try:
+                    if not self.device.is_kernel_driver_active(0):
+                        # self.device.attach_kernel_driver(self.interface) #Do NOT uncomment
+                        self.device.attach_kernel_driver(0)
+                except:
+                    pass
+            pass
             usb.util.dispose_resources(self.device)
             del self.device
             if reset:
