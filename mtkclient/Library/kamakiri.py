@@ -152,7 +152,7 @@ class Kamakiri(metaclass=LogBase):
     def bruteforce2(self, args, startaddr=0x9900):
         found = False
         while not found:
-            self.mtk.init()
+            #self.mtk.init()
             self.mtk.preloader.display = False
             if self.mtk.preloader.init(display=False):
                 self.mtk = self.mtk.crasher(display=False)
