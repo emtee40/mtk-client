@@ -42,9 +42,10 @@ class legacyext(metaclass=LogBase):
         self.da2 = None
         self.da2address = None
 
+
     def patch_da2(self, da2):
         da2patched = bytearray(da2)
-        # Patch security
+        # Patch security READ_REG16_CMD
         check_addr = find_binary(da2, b"\x08\xB5\x4F\xF4\x50\x42")
         if check_addr is not None:
             da2patched[check_addr:check_addr + 6] = b"\x08\xB5\x00\x20\x08\xBD"

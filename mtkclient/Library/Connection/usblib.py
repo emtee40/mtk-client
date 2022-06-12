@@ -298,20 +298,19 @@ class usb_class(DeviceClass):
 
         if self.EP_OUT is not None and self.EP_IN is not None:
             self.debug(self.configuration)
-            if self.interface != 0:
+            try:
+                usb.util.claim_interface(self.device, 0)
+            except:
+                try:
+                    if self.device.is_kernel_driver_active(0):
+                        self.debug("Detaching kernel driver")
+                        self.device.detach_kernel_driver(0)
+                except Exception as err:
+                    self.debug("No kernel driver supported: " + str(err))
                 try:
                     usb.util.claim_interface(self.device, 0)
                 except:
-                    try:
-                        if self.device.is_kernel_driver_active(0):
-                            self.debug("Detaching kernel driver")
-                            self.device.detach_kernel_driver(0)
-                    except Exception as err:
-                        self.debug("No kernel driver supported: " + str(err))
-                    try:
-                        usb.util.claim_interface(self.device, 0)
-                    except:
-                        pass
+                    pass
             try:
                     usb.util.claim_interface(self.device, self.interface)
             except:

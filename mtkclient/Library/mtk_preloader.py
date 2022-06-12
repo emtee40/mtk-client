@@ -222,20 +222,30 @@ class Preloader(metaclass=LogBase):
                         self.info("SOC_ID:\t\t\t" + hexlify(socid).decode('utf-8').upper())
         return True
 
-    def read32(self, addr, dwords=1) -> list:
+    def read(self, addr, dwords=1, length=32) -> list:
         result = []
-        if self.echo(self.Cmd.READ32.value):
+        cmd = self.Cmd.READ16 if length == 16 else self.Cmd.READ32
+        if self.echo(cmd.value):
             if self.echo(pack(">I", addr)):
                 ack = self.echo(pack(">I", dwords))
                 status = self.rword()
                 if ack and status <= 0xFF:
-                    result = self.rdword(dwords)
+                    if length==32:
+                        result = self.rdword(dwords)
+                    else:
+                        result = self.rword(dwords)
                     status2 = unpack(">H", self.usbread(2))[0]
                     if status2 <= 0xFF:
                         return result
                 else:
                     self.error(self.eh.status(status))
         return result
+
+    def read32(self, addr, dwords=1) -> list:
+        return self.read(addr,dwords,32)
+
+    def read16(self, addr, dwords=1) -> list:
+        return self.read(addr,dwords,16)
 
     def write(self, addr, values, length=32) -> bool:
         cmd = self.Cmd.WRITE16 if length == 16 else self.Cmd.WRITE32

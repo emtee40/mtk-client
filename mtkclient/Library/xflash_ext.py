@@ -169,6 +169,7 @@ class xflashext(metaclass=LogBase):
         return None
 
     def patch_da1(self, da1):
+        # Patch error 0xC0020039
         self.info("Patching da1 ...")
         da1patched = bytearray(da1)
         # Patch security
@@ -180,6 +181,7 @@ class xflashext(metaclass=LogBase):
         return da1patched
 
     def patch_da2(self, da2):
+        # Patch error 0xC0030007
         self.info("Patching da2 ...")
         # open("da2.bin","wb").write(da2)
         da2patched = bytearray(da2)
