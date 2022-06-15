@@ -36,6 +36,11 @@ class Partition(metaclass=LogBase):
             part_entry_start_lba=gpt_settings.gpt_part_entry_start_lba,
         )
         header = guid_gpt.parseheader(data, self.config.pagesize)
+        if header.signature == b'\x00\x00\x00\x00\x00\x00\x00\x00':
+            data = self.readflash(addr=self.mtk.daloader.daconfig.flashsize-0x4000, length=2 * self.config.pagesize, filename="", parttype=parttype, display=False)
+            header = guid_gpt.parseheader(data, self.config.pagesize)
+            if header.signature == b'\x00\x00\x00\x00\x00\x00\x00\x00':
+                return None, None
         sectors = header.first_usable_lba
         if sectors == 0:
             return None, None

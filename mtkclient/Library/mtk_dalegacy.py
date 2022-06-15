@@ -821,6 +821,7 @@ class DALegacy(metaclass=LogBase):
 
     def set_stage2_config(self, hwcode):
         # m_nor_chip_select[0]="CS_0"(0x00), m_nor_chip_select[1]="CS_WITH_DECODER"(0x08)
+        self.config.set_da_config(self.daconfig)
         self.usbwrite(pack("B", self.mtk.config.bromver))
         self.usbwrite(pack("B", self.mtk.config.blver))
         m_nor_chip = 0x08
@@ -849,7 +850,6 @@ class DALegacy(metaclass=LogBase):
         if hwcode == 0x6592:
             is_gpt_solution = 0
             self.usbwrite(pack(">I", is_gpt_solution))
-            toread = (6 * 4)
         elif hwcode == 0x6580 or hwcode == 0x8163:
             slc_percent = 0x1
             self.usbwrite(pack(">I", slc_percent))
@@ -915,18 +915,24 @@ class DALegacy(metaclass=LogBase):
                         dramlength = len(self.daconfig.emi)
                         if self.daconfig.emiver in [0x10, 0x14, 0x15]:
                             dramlength = unpack(">I", self.usbread(0x4))[0]  # 0x000000BC
-                            self.debug("Info: " + hex(dramlength))
+                            self.info("RAM-Length: " + hex(dramlength))
                             self.usbwrite(self.Rsp.ACK)
                             lendram = len(self.daconfig.emi)
                             self.usbwrite(pack(">I", lendram))
                         elif self.daconfig.emiver in [0x0B]:
                             info = self.usbread(0x10)  # 0x000000BC
-                            self.debug("Info: " + hexlify(info).decode('utf-8'))
+                            self.info("RAM-Info: " + hexlify(info).decode('utf-8'))
                             dramlength = unpack(">I", self.usbread(0x4))[0]
                             self.usbwrite(self.Rsp.ACK)
+                        elif self.daconfig.emiver in [0x0D]:
+                            dramlength = unpack(">I", self.usbread(0x4))[0]
+                            self.info("RAM-Length: " + hex(dramlength))
+                            self.usbwrite(self.Rsp.ACK)
+                            self.daconfig.emi = self.daconfig.emi[:dramlength]
+                            self.daconfig.emi = pack(">I", 0x100) + self.daconfig.emi[0x4:dramlength]
                         elif self.daconfig.emiver in [0x00]:
                             dramlength = unpack(">I", self.usbread(0x4))[0]  # 0x000000B0
-                            self.debug("Info: " + hex(dramlength))
+                            self.info("RAM-Length: " + hex(dramlength))
                             self.usbwrite(self.Rsp.ACK)
                             lendram = len(self.daconfig.emi)
                             self.daconfig.emi = self.daconfig.emi[:dramlength]
@@ -935,13 +941,13 @@ class DALegacy(metaclass=LogBase):
                             self.warning("Unknown emi version: %d" % self.daconfig.emiver)
                         self.usbwrite(self.daconfig.emi)
                         checksum = unpack(">H", self.usbread(2))[0]  # 0x440C
-                        self.debug("Status: %04X" % checksum)
+                        self.info("Checksum: %04X" % checksum)
                         self.usbwrite(self.Rsp.ACK)
                         self.usbwrite(pack(">I", 0x80000001))  # Send DRAM config
                         m_ext_ram_ret = unpack(">I", self.usbread(4))[0]  # 0x00000000 S_DONE
                         self.info(f"M_EXT_RAM_RET : {m_ext_ram_ret}")
                         if m_ext_ram_ret != 0:
-                            self.error("Preloader error: %d => %s" % (m_ext_ram_ret, error_to_string(m_ext_ram_ret)))
+                            self.error("Preloader error: 0x%X => %s" % (m_ext_ram_ret, error_to_string(m_ext_ram_ret)))
                             self.mtk.port.close(reset=False)
                             return False
                         m_ext_ram_type = self.usbread(1)[0]  # 0x02 HW_RAM_DRAM
@@ -950,6 +956,12 @@ class DALegacy(metaclass=LogBase):
                         self.info(f"M_EXT_RAM_CHIP_SELECT : {hex(m_ext_ram_chip_select)}")
                         m_ext_ram_size = unpack(">Q", self.usbread(8))[0]  # 0x80000000
                         self.info(f"M_EXT_RAM_SIZE : {hex(m_ext_ram_size)}")
+                        if self.daconfig.emiver in [0x0D]:
+                            self.usbread(4) # 00000003
+                            Raw_0 = self.usbread(4) # 1C004004
+                            Raw_1 = self.usbread(4) # aa080033
+                            CJ_0 = self.usbread(4) # 00000013
+                            CJ_1 = self.usbread(4) # 00000010
                 else:
                     self.error("Preloader needed due to dram config.")
                     self.mtk.port.close(reset=True)
@@ -982,33 +994,36 @@ class DALegacy(metaclass=LogBase):
         return False
 
     def upload(self):
-        if self.daconfig.da is None:
+        if self.daconfig.da_loader is None:
             self.error("No valid da loader found... aborting.")
             return False
         loader = self.daconfig.loader
         self.info(f"Uploading legacy stage 1 from {os.path.basename(loader)}")
         with open(loader, 'rb') as bootldr:
             # stage 1
-            da1offset = self.daconfig.da.region[1].m_buf
-            da1size = self.daconfig.da.region[1].m_len
-            da1address = self.daconfig.da.region[1].m_start_addr
-            da2address = self.daconfig.da.region[1].m_start_addr
-            da1sig_len = self.daconfig.da.region[1].m_sig_len
+            da1offset = self.daconfig.da_loader.region[1].m_buf
+            da1size = self.daconfig.da_loader.region[1].m_len
+            da1address = self.daconfig.da_loader.region[1].m_start_addr
+            da2address = self.daconfig.da_loader.region[1].m_start_addr
+            da1sig_len = self.daconfig.da_loader.region[1].m_sig_len
             bootldr.seek(da1offset)
             da1 = bootldr.read(da1size)
             # ------------------------------------------------
-            da2offset = self.daconfig.da.region[2].m_buf
-            da2sig_len = self.daconfig.da.region[2].m_sig_len
+            da2offset = self.daconfig.da_loader.region[2].m_buf
+            da2sig_len = self.daconfig.da_loader.region[2].m_sig_len
             bootldr.seek(da2offset)
-            da2 = bootldr.read(self.daconfig.da.region[2].m_len)
+            da2 = bootldr.read(self.daconfig.da_loader.region[2].m_len)
 
             if self.mtk.config.is_brom or not self.mtk.config.target_config["sbc"]:
                 hashaddr, hashmode, hashlen = self.mtk.daloader.compute_hash_pos(da1, da2, da2sig_len)
                 if hashaddr is not None:
-                    da2 = self.lft.patch_da2(da2)
-                    da1 = self.mtk.daloader.fix_hash(da1, da2, hashaddr, hashmode, hashlen)
-                    self.patch = True
-                    self.daconfig.da2 = da2[:hashlen]
+                    da2patched = self.lft.patch_da2(da2)
+                    if da2patched != da2:
+                        da1 = self.mtk.daloader.fix_hash(da1, da2, hashaddr, hashmode, hashlen)
+                        self.patch = True
+                        self.daconfig.da2 = da2patched[:hashlen]
+                    else:
+                        self.daconfig.da2 = da2[:hashlen]
                 else:
                     self.daconfig.da2 = da2[:-da2sig_len]
             else:
@@ -1103,9 +1118,9 @@ class DALegacy(metaclass=LogBase):
         self.mtk.port.close(reset=True)
 
     def brom_send(self, dasetup, dadata, stage, packetsize=0x1000):
-        offset = dasetup.da.region[stage].m_buf
-        size = dasetup.da.region[stage].m_len
-        address = dasetup.da.region[stage].m_start_addr
+        offset = dasetup.da_loader.region[stage].m_buf
+        size = dasetup.da_loader.region[stage].m_len
+        address = dasetup.da_loader.region[stage].m_start_addr
         self.usbwrite(pack(">I", address))
         self.usbwrite(pack(">I", size))
         self.usbwrite(pack(">I", packetsize))

@@ -1007,25 +1007,25 @@ class DAXFlash(metaclass=LogBase):
         return False
 
     def upload(self):
-        if self.daconfig.da is None:
+        if self.daconfig.da_loader is None:
             self.error("No valid da loader found... aborting.")
             return False
         loader = self.daconfig.loader
         self.info(f"Uploading xflash stage 1 from {os.path.basename(loader)}")
         with open(loader, 'rb') as bootldr:
             # stage 1
-            da1offset = self.daconfig.da.region[1].m_buf
-            da1size = self.daconfig.da.region[1].m_len
-            da1address = self.daconfig.da.region[1].m_start_addr
-            da2address = self.daconfig.da.region[1].m_start_addr
-            da1sig_len = self.daconfig.da.region[1].m_sig_len
+            da1offset = self.daconfig.da_loader.region[1].m_buf
+            da1size = self.daconfig.da_loader.region[1].m_len
+            da1address = self.daconfig.da_loader.region[1].m_start_addr
+            da2address = self.daconfig.da_loader.region[1].m_start_addr
+            da1sig_len = self.daconfig.da_loader.region[1].m_sig_len
             bootldr.seek(da1offset)
             da1 = bootldr.read(da1size)
             # ------------------------------------------------
-            da2offset = self.daconfig.da.region[2].m_buf
-            da2sig_len = self.daconfig.da.region[2].m_sig_len
+            da2offset = self.daconfig.da_loader.region[2].m_buf
+            da2sig_len = self.daconfig.da_loader.region[2].m_sig_len
             bootldr.seek(da2offset)
-            da2 = bootldr.read(self.daconfig.da.region[2].m_len)
+            da2 = bootldr.read(self.daconfig.da_loader.region[2].m_len)
 
             hashaddr, hashmode, hashlen = self.mtk.daloader.compute_hash_pos(da1, da2, da2sig_len)
             if hashaddr is not None:
@@ -1162,7 +1162,7 @@ class DAXFlash(metaclass=LogBase):
                 self.info("Uploading stage 2...")
                 with open(self.daconfig.loader, 'rb') as bootldr:
                     stage = stage + 1
-                    loaded = self.boot_to(self.daconfig.da.region[stage].m_start_addr, self.daconfig.da2)
+                    loaded = self.boot_to(self.daconfig.da_loader.region[stage].m_start_addr, self.daconfig.da2)
                     if loaded:
                         self.info("Successfully uploaded stage 2")
                         self.reinit(True)

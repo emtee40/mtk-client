@@ -68,7 +68,7 @@ class xflashext(metaclass=LogBase):
 
     def patch(self):
         self.da2 = self.xflash.daconfig.da2
-        self.da2address = self.xflash.daconfig.da.region[2].m_start_addr  # at_address
+        self.da2address = self.xflash.daconfig.da_loader.region[2].m_start_addr  # at_address
         daextensions = os.path.join(self.pathconfig.get_payloads_path(), "da_x.bin")
         if os.path.exists(daextensions):
             daextdata = bytearray(open(daextensions, "rb").read())

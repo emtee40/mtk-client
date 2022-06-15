@@ -126,7 +126,7 @@ class DAconfig(metaclass=LogBase):
         self.sparesize = 0
         self.readsize = 0
         self.pagesize = 512
-        self.da = None
+        self.da_loader = None
         self.da2 = None
         self.dasetup = {}
         self.loader = loader
@@ -205,6 +205,8 @@ class DAconfig(metaclass=LogBase):
                     bootldr.seek(0x6C + (i * 0xDC))
                     da = DA(bootldr.read(0xDC))
                     da.setfilename(loader)
+                    if da.hw_code == 0x6592 and "5.1648" not in loader:
+                        continue
                     if da.hw_code not in self.dasetup:
                         self.dasetup[da.hw_code] = [da]
                     else:
@@ -229,10 +231,10 @@ class DAconfig(metaclass=LogBase):
             for loader in loaders:
                 if loader.hw_version <= self.config.hwver:
                     if loader.sw_version <= self.config.swver:
-                        if self.da is None:
-                            self.da = loader
+                        if self.da_loader is None:
+                            self.da_loader = loader
                             self.loader = loader.loader
 
-        if self.da is None:
-            self.error("No da config set up")
-        return self.da
+        if self.da_loader is None:
+            self.error("No da_loader config set up")
+        return self.da_loader

@@ -10,6 +10,7 @@ from mtkclient.Library.utils import LogBase, print_progress, revdword, logsetup,
 from mtkclient.Library.Connection.usblib import usb
 from mtkclient.config.payloads import pathconfig
 
+
 class Kamakiri(metaclass=LogBase):
     def __init__(self, mtk, loglevel=logging.INFO):
         self.__logger = logsetup(self, self.__logger, loglevel, mtk.config.gui)
@@ -152,7 +153,7 @@ class Kamakiri(metaclass=LogBase):
     def bruteforce2(self, args, startaddr=0x9900):
         found = False
         while not found:
-            #self.mtk.init()
+            # self.mtk.init()
             self.mtk.preloader.display = False
             if self.mtk.preloader.init(display=False):
                 self.mtk = self.mtk.crasher(display=False)
@@ -283,12 +284,12 @@ class Kamakiri(metaclass=LogBase):
             with open(filename, 'wb') as wf:
                 print_progress(0, 100, prefix='Progress:', suffix='Complete', bar_length=50)
                 length = self.mtk.port.usbread(4)
-                length = int.from_bytes(length,'big')
-                rlen = min(length,0x20000)
-                for i in range(length//rlen):
+                length = int.from_bytes(length, 'big')
+                rlen = min(length, 0x20000)
+                for i in range(length // rlen):
                     data = self.mtk.port.usbread(rlen)
                     wf.write(data)
-                    print_progress(i, length//rlen, prefix='Progress:', suffix='Complete', bar_length=50)
+                    print_progress(i, length // rlen, prefix='Progress:', suffix='Complete', bar_length=50)
                 print_progress(100, 100, prefix='Progress:', suffix='Complete', bar_length=50)
                 return True
         except Exception as e:

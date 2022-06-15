@@ -118,9 +118,9 @@ class Preloader(metaclass=LogBase):
     def __init__(self, mtk, loglevel=logging.INFO):
         self.mtk = mtk
         self.__logger = logsetup(self, self.__logger, loglevel, mtk.config.gui)
-        # self.info = self.__logger.info
-        # self.debug = self.__logger.debug
-        # self.error = self.__logger.error
+        self.info = self.__logger.info
+        self.debug = self.__logger.debug
+        self.error = self.__logger.error
         self.eh = ErrorHandler()
         self.gcpu = None
         self.config = mtk.config
@@ -138,7 +138,7 @@ class Preloader(metaclass=LogBase):
             try:
                 os.remove(".state")
                 os.remove(os.path.join("logs", "hwparam.json"))
-            except:
+            except OSError:
                 pass
         readsocid = self.config.readsocid
         skipwdt = self.config.skipwdt
@@ -230,7 +230,7 @@ class Preloader(metaclass=LogBase):
                 ack = self.echo(pack(">I", dwords))
                 status = self.rword()
                 if ack and status <= 0xFF:
-                    if length==32:
+                    if length == 32:
                         result = self.rdword(dwords)
                     else:
                         result = self.rword(dwords)
@@ -242,10 +242,10 @@ class Preloader(metaclass=LogBase):
         return result
 
     def read32(self, addr, dwords=1) -> list:
-        return self.read(addr,dwords,32)
+        return self.read(addr, dwords, 32)
 
     def read16(self, addr, dwords=1) -> list:
-        return self.read(addr,dwords,16)
+        return self.read(addr, dwords, 16)
 
     def write(self, addr, values, length=32) -> bool:
         cmd = self.Cmd.WRITE16 if length == 16 else self.Cmd.WRITE32
@@ -304,7 +304,7 @@ class Preloader(metaclass=LogBase):
 
         usbdlreg &= ~USBDL_BROM
         # Add magic number for MT6582
-        usbdlreg |= USBDL_MAGIC     # | 0x444C0000
+        usbdlreg |= USBDL_MAGIC  # | 0x444C0000
 
         # set BOOT_MISC0 as watchdog resettable
         RST_CON = self.config.chipconfig.misc_lock + 8
@@ -328,7 +328,7 @@ class Preloader(metaclass=LogBase):
             status = self.rword()
             if status <= 0xFF:
                 status2 = self.rword()
-                if status <= 0xFF:
+                if status2 <= 0xFF:
                     return True
         return False
 
@@ -368,7 +368,6 @@ class Preloader(metaclass=LogBase):
         SetReg_DisableWatchDogTimer; BRom_WriteCmd32(): Reg 0x10007000[1]={ Value 0x22000000 }.
         """
         addr, value = self.config.get_watchdog_addr()
-        res = None
 
         if hwcode in [0x6575, 0x6577]:
             """
@@ -659,13 +658,18 @@ class Preloader(metaclass=LogBase):
             pos += size
         # self.usbwrite(b"")
         try:
-            checksum, status = self.rword(2)
-            if gen_chksum != checksum and checksum != 0:
-                self.warning("Checksum of upload doesn't match !")
-            if 0 <= status <= 0xFF:
-                return True
+            res = self.rword(2)
+            if isinstance(res, list):
+                checksum, status = res
+                if gen_chksum != checksum and checksum != 0:
+                    self.warning("Checksum of upload doesn't match !")
+                if 0 <= status <= 0xFF:
+                    return True
+                else:
+                    self.error(f"upload_data failed with error: " + self.eh.status(status))
+                    return False
             else:
-                self.error(f"upload_data failed with error: " + self.eh.status(status))
+                self.error("Error on getting checksum while uploading data.")
                 return False
         except Exception as e:
             self.error(f"upload_data resp error : " + str(e))
