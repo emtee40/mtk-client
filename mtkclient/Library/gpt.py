@@ -253,7 +253,7 @@ class gpt(metaclass=LogBase):
             sectors = self.header.first_usable_lba
             mstr += f"\t<program SECTOR_SIZE_IN_BYTES=\"{sectorsize}\" " + \
                     f"file_sector_offset=\"0\" " + \
-                    f"filename=\"gpt_main{str(lun)}.bin\" " + \
+                    f"filename=\"gpt_lun{str(lun)}.bin\" " + \
                     f"label=\"PrimaryGPT\" " + \
                     f"num_partition_sectors=\"{sectors}\" " + \
                     f"partofsingleimage=\"{partofsingleimage}\" " + \

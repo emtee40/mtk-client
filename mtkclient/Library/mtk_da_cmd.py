@@ -119,7 +119,7 @@ class DA_handler(metaclass=LogBase):
         if directory is None:
             directory = ""
 
-        sfilename = os.path.join(directory, f"gpt_main.bin")
+        sfilename = os.path.join(directory, f"gpt.bin")
         data, guid_gpt = self.mtk.daloader.get_gpt()
         if guid_gpt is None:
             self.error("Error reading gpt")
@@ -200,7 +200,7 @@ class DA_handler(metaclass=LogBase):
             storedir = directory
             if not os.path.exists(storedir):
                 os.mkdir(storedir)
-            sfilename = os.path.join(storedir, f"gpt_main.bin")
+            sfilename = os.path.join(storedir, f"gpt.bin")
             with open(sfilename, "wb") as wf:
                 wf.write(data)
 
