@@ -32,7 +32,9 @@ class crypto_setup:
 class hwcrypto(metaclass=LogBase):
     def __init__(self, setup, loglevel=logging.INFO, gui: bool = False):
         self.__logger = logsetup(self, self.__logger, loglevel, gui)
-
+        self.info = self.__logger.info
+        self.error = self.__logger.error
+        self.warning = self.__logger.warning
         self.dxcc = dxcc(setup, loglevel, gui)
         self.gcpu = GCpu(setup, loglevel, gui)
         self.sej = sej(setup, loglevel)

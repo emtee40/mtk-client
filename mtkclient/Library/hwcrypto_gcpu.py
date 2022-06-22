@@ -195,6 +195,9 @@ def xor_data(a: bytearray, b: bytearray, length=None):
 class GCpu(metaclass=LogBase):
     def __init__(self, setup, loglevel=logging.INFO, gui: bool = False):
         self.__logger = logsetup(self, self.__logger, loglevel, gui)
+        self.info = self.__logger.info
+        self.error = self.__logger.error
+        self.warning = self.__logger.warning
         self.read32 = setup.read32
         self.write32 = setup.write32
         self.reg = GCpuReg(setup)

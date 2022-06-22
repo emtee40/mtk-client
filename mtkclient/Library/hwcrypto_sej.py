@@ -155,6 +155,8 @@ class sej(metaclass=LogBase):
         self.read32 = setup.read32
         self.write32 = setup.write32
         self.info = self.__logger.info
+        self.error = self.__logger.error
+        self.warning = self.__logger.warning
         if loglevel == logging.DEBUG:
             logfilename = os.path.join("logs", "log.txt")
             fh = logging.FileHandler(logfilename, encoding='utf-8')

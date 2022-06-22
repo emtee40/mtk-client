@@ -1077,6 +1077,9 @@ class dxcc(metaclass=LogBase):
         self.da_payload_addr = setup.da_payload_addr
 
         self.__logger = self.__logger
+        self.info = self.__logger.info
+        self.error = self.__logger.error
+        self.warning = self.__logger.warning
         self.reg = dxcc_reg(setup)
 
     def tzcc_clk(self, value):
