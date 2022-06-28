@@ -89,6 +89,13 @@ class Mtk_Config(metaclass=LogBase):
                 self.set_hwcode(self.hwcode)
         return self.hwcode
 
+    def get_cid(self):
+        return self.cid
+
+    def set_cid(self, cid):
+        self.hwparam.writesetting("cid",cid.hex())
+        self.cid = cid.hex()
+
     def set_hwcode(self,hwcode):
         self.hwparam.writesetting("hwcode", hex(hwcode))
 

@@ -556,6 +556,7 @@ class xflashext(metaclass=LogBase):
         meid = self.config.get_meid()
         socid = self.config.get_socid()
         hwcode = self.config.get_hwcode()
+        cid = self.config.get_cid()
         retval = {}
         if meid is not None:
             self.info("MEID        : " + hexlify(meid).decode('utf-8'))
@@ -569,7 +570,9 @@ class xflashext(metaclass=LogBase):
             self.info("HWCODE      : " + hex(hwcode))
             retval["hwcode"] = hex(hwcode)
             self.config.hwparam.writesetting("hwcode", hex(hwcode))
-
+        if cid is not None:
+            self.info("CID         : " + cid)
+            retval["cid"] = cid
         if self.config.chipconfig.dxcc_base is not None:
             self.info("Generating dxcc rpmbkey...")
             rpmbkey = hwc.aes_hwcrypt(btype="dxcc", mode="rpmb")

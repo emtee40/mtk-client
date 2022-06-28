@@ -176,7 +176,7 @@ class emmcinfo:
         cid = pack("<QQ", self.m_emmc_cid[0], self.m_emmc_cid[1])
         res += f"m_emmc_cid = {hexlify(cid).decode('utf-8')}\n"
         if self.config.hwparam is not None:
-            self.config.hwparam.writesetting("cid", hexlify(cid).decode('utf-8'))
+            self.config.set_cid(cid)
         res += f"m_emmc_fwver = {hexlify(self.m_emmc_fwver).decode('utf-8')}\n"
         return res
 
@@ -200,7 +200,7 @@ class sdcinfo:
         print(f"m_sdmmc_ua_size = {hex(self.m_sdmmc_ua_size)}")
         cid = pack("<QQ", self.m_sdmmc_cid[0], self.m_sdmmc_cid[1])
         if self.config.hwparam is not None:
-            self.config.hwparam.writesetting("cid", hexlify(cid).decode('utf-8'))
+            self.config.set_cid(cid)
         print(f"m_sdmmc_cid = {hexlify(cid).decode('utf-8')}")
 
 

@@ -513,18 +513,18 @@ class DAXFlash(metaclass=LogBase):
             sw_version = 0
             chip_evolution = 0
 
-        cid = Chipid
+        chipid = Chipid
         data = self.send_devctrl(self.Cmd.GET_CHIP_ID)
-        cid.hw_code, cid.hw_sub_code, cid.hw_version, cid.sw_version, cid.chip_evolution = unpack("<HHHHH",
+        chipid.hw_code, chipid.hw_sub_code, chipid.hw_version, chipid.sw_version, chipid.chip_evolution = unpack("<HHHHH",
                                                                                                   data[:(5 * 2)])
         status = self.status()
         if status == 0:
-            self.info("HW-CODE         : 0x%X", cid.hw_code)
-            self.info("HWSUB-CODE      : 0x%X", cid.hw_sub_code)
-            self.info("HW-VERSION      : 0x%X", cid.hw_version)
-            self.info("SW-VERSION      : 0x%X", cid.sw_version)
-            self.info("CHIP-EVOLUTION  : 0x%X", cid.chip_evolution)
-            return cid
+            self.info("HW-CODE         : 0x%X", chipid.hw_code)
+            self.info("HWSUB-CODE      : 0x%X", chipid.hw_sub_code)
+            self.info("HW-VERSION      : 0x%X", chipid.hw_version)
+            self.info("SW-VERSION      : 0x%X", chipid.sw_version)
+            self.info("CHIP-EVOLUTION  : 0x%X", chipid.chip_evolution)
+            return chipid
         else:
             self.error(f"Error on getting chip id: {self.eh.status(status)}")
         return None
@@ -593,7 +593,8 @@ class DAXFlash(metaclass=LogBase):
                 except:
                     pass
                 self.info(f"EMMC CID:        {hexlify(emmc.cid).decode('utf-8')}")
-                self.config.hwparam.writesetting("cid", hexlify(emmc.cid).decode('utf-8'))
+                if self.config.hwparam is not None:
+                    self.config.set_cid(emmc.cid)
                 self.info(f"EMMC Boot1 Size: {hex(emmc.boot1_size)}")
                 self.info(f"EMMC Boot2 Size: {hex(emmc.boot2_size)}")
                 self.info(f"EMMC GP1 Size:   {hex(emmc.gp1_size)}")
@@ -697,7 +698,8 @@ class DAXFlash(metaclass=LogBase):
                     except:
                         pass
                     self.info(f"UFS CID:      {hexlify(ufs.cid).decode('utf-8')}")
-                    self.config.hwparam.writesetting("cid", hexlify(ufs.cid).decode('utf-8'))
+                    if self.config.hwparam is not None:
+                        self.config.set_cid(ufs.cid)
                     self.info(f"UFS LU0 Size: {hex(ufs.lu0_size)}")
                     self.info(f"UFS LU1 Size: {hex(ufs.lu1_size)}")
                     self.info(f"UFS LU2 Size: {hex(ufs.lu2_size)}")
