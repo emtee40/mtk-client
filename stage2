@@ -580,7 +580,7 @@ def main():
                 filename = args.filename
             start = getint(args.start)
             length = getint(args.length)
-            st2.rpmb(start, length, filename, args.reverse)
+            st2.rpmb(start, length, filename, not args.reverse)
         elif cmd == "preloader":
             if args.filename is None:
                 filename = os.path.join("logs", "preloader")
