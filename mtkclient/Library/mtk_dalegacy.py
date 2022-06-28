@@ -845,7 +845,6 @@ class DALegacy(metaclass=LogBase):
         self.usbwrite(pack("B", extclock))
         msdc_boot_ch = 0
         self.usbwrite(pack("B", msdc_boot_ch))
-        time.sleep(0.350)
         toread = 4
         if hwcode == 0x6592:
             is_gpt_solution = 0
@@ -868,6 +867,7 @@ class DALegacy(metaclass=LogBase):
         elif hwcode == 0x6582:
             newcombo = 1
             self.usbwrite(pack(">I", newcombo))
+        time.sleep(0.350)
         buffer = self.usbread(toread)
         if buffer == b'':
             self.error("Didn't receive Stage2 dram info, please check usb cable/hub and retry.")
@@ -1032,7 +1032,6 @@ class DALegacy(metaclass=LogBase):
             if self.mtk.preloader.send_da(da1address, da1size, da1sig_len, da1):
                 if self.mtk.preloader.jump_da(da1address):
                     sync = self.usbread(1)
-                    time.sleep(0.300)
                     if sync != b"\xC0":
                         self.error("Error on DA sync")
                         return False
