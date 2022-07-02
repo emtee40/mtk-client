@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 # (c) B.Kerler 2018-2021 GPLv3 License
 import logging
+import os.path
+
 from mtkclient.Library.utils import LogBase, logsetup
 from mtkclient.Library.gpt import gpt
 
@@ -13,6 +15,17 @@ class Partition(metaclass=LogBase):
         self.config = self.mtk.config
         self.readflash = readflash
         self.read_pmt = read_pmt
+        if self.config.gpt_file is not None:
+            self.gptfilename = self.config.gpt_file
+            self.readflash = self.readflash_override
+
+    def readflash_override(self, addr:int, length:int,filename:str="",parttype:str="",display:bool=False):
+        with open(self.gptfilename,"rb") as rf:
+            rf.seek(addr)
+            data=rf.read(length)
+            if filename == "":
+                return data
+        return None
 
     def get_gpt(self, gpt_settings, parttype="user"):
         data = self.readflash(addr=0, length=2 * self.config.pagesize, filename="", parttype=parttype, display=False)

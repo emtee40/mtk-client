@@ -23,6 +23,13 @@ metamodes = "[FASTBOOT, FACTFACT, METAMETA, FACTORYM, ADVEMETA]"
 class ArgHandler(metaclass=LogBase):
     def __init__(self, args, config):
         try:
+            config.gpt_file = None
+            if args.gpt_file is not None:
+                if os.path.exists(args.gpt_file):
+                    config.gpt_file = args.gpt_file
+        except AttributeError:
+            pass
+        try:
             if args.vid is not None:
                 config.vid = getint(args.vid)
         except AttributeError:
