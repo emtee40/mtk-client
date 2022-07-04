@@ -4,7 +4,7 @@
 import argparse
 from mtkclient.Library.mtk_main import Main, metamodes
 
-info = "MTK Flash/Exploit Client V1.57 (c) B.Kerler 2018-2022"
+info = "MTK Flash/Exploit Client V1.58 (c) B.Kerler 2018-2022"
 
 cmds = {
     "printgpt": "Print GPT Table information",
@@ -34,7 +34,8 @@ cmds = {
     "peek": "Read memory in patched preloader mode",
     "stage": "Run stage2 payload via boot rom mode (kamakiri)",
     "plstage": "Run stage2 payload via preloader mode (send_da)",
-    "da": "Run da xflash/legacy special commands"
+    "da": "Run da xflash/legacy special commands",
+    "script" : "Run multiple commands using text script"
 }
 
 
@@ -55,8 +56,9 @@ if __name__ == '__main__':
                                        help='Valid commands are: \n' +
                                             'printgpt, gpt, r, rl, rf, rs, w, wf, wl, e, es, footer, reset, \n' +
                                             'dumpbrom, dumpsram, dumppreloader, payload, crash, brute, gettargetconfig, \n' +
-                                            'peek, stage, plstage, da \n')
+                                            'peek, stage, plstage, da, script\n')
 
+    parser_script = subparsers.add_parser("script", help="Run text script")
     parser_printgpt = subparsers.add_parser("printgpt", help="Print GPT Table information")
     parser_gpt = subparsers.add_parser("gpt", help="Save gpt table to given directory")
     parser_r = subparsers.add_parser("r", help="Read flash to filename")
@@ -130,6 +132,31 @@ if __name__ == '__main__':
     da_poke.add_argument('--filename', type=str, help="Filename to read data from")
 
     da_unlock.add_argument('flag', type=str, help="Needed flag (unlock,lock)")
+
+    parser_script.add_argument('script', help='Text script to run')
+    parser_script.add_argument('--loader', type=str, help='Use specific DA loader, disable autodetection')
+    parser_script.add_argument('--vid', type=str, help='Set usb vendor id used for MTK Preloader')
+    parser_script.add_argument('--pid', type=str, help='Set usb product id used for MTK Preloader')
+    parser_script.add_argument('--sectorsize', default='0x200', help='Set default sector size')
+    parser_script.add_argument('--debugmode', action='store_true', default=False, help='Enable verbose mode')
+    parser_script.add_argument('--gpt-num-part-entries', default='0', help='Set GPT entry count')
+    parser_script.add_argument('--gpt-part-entry-size', default='0', help='Set GPT entry size')
+    parser_script.add_argument('--gpt-part-entry-start-lba', default='0', help='Set GPT entry start lba sector')
+    parser_script.add_argument('--skipwdt', help='Skip wdt init')
+    parser_script.add_argument('--wdt', help='Set a specific watchdog addr')
+    parser_script.add_argument('--mode', help='Set a crash mode (0=dasend1,1=dasend2,2=daread)')
+    parser_script.add_argument('--var1', help='Set kamakiri specific var1 value')
+    parser_script.add_argument('--uart_addr', help='Set payload uart_addr value')
+    parser_script.add_argument('--da_addr', help='Set a specific da payload addr')
+    parser_script.add_argument('--brom_addr', help='Set a specific brom payload addr')
+    parser_script.add_argument('--gpt_file', help='Use a gpt file instead of trying to read gpt from flash')
+    parser_script.add_argument('--ptype',
+                                 help='Set the payload type ("amonet","kamakiri","kamakiri2","carbonara" kamakiri2/da used by ' +
+                                      'default)')
+    parser_script.add_argument('--preloader', help='Set the preloader filename for dram config')
+    parser_script.add_argument('--crash', help='Enforce crash if device is in pl mode to enter brom mode')
+    parser_script.add_argument('--socid', help='Read Soc ID')
+
 
     parser_printgpt.add_argument('--loader', type=str, help='Use specific DA loader, disable autodetection')
     parser_printgpt.add_argument('--vid', type=str, help='Set usb vendor id used for MTK Preloader')
@@ -751,4 +778,4 @@ if __name__ == '__main__':
         showcommands()
         exit(0)
 
-    mtk = Main(args).run()
+    mtk = Main(args).run(parser)

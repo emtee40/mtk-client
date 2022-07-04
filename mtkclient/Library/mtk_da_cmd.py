@@ -552,20 +552,17 @@ class DA_handler(metaclass=LogBase):
         if cmd == "gpt":
             directory = args.directory
             self.da_gpt(directory=directory)
-            self.close()
         elif cmd == "printgpt":
             data, guid_gpt = mtk.daloader.get_gpt()
             if guid_gpt is None:
                 self.error("Error reading gpt")
             else:
                 guid_gpt.print()
-            self.close()
         elif cmd == "r":
             partitionname = args.partitionname
             parttype = args.parttype
             filename = args.filename
             self.da_read(partitionname=partitionname, parttype=parttype, filename=filename)
-            self.close()
         elif cmd == "rl":
             directory = args.directory
             parttype = args.parttype
@@ -574,12 +571,10 @@ class DA_handler(metaclass=LogBase):
             else:
                 skip = []
             self.da_rl(directory=directory, parttype=parttype, skip=skip)
-            self.close()
         elif cmd == "rf":
             filename = args.filename
             parttype = args.parttype
             self.da_rf(filename=filename, parttype=parttype)
-            self.close()
         elif cmd == "rs":
             start = getint(args.startsector)
             sectors = getint(args.sectors)
@@ -589,7 +584,6 @@ class DA_handler(metaclass=LogBase):
                 print(f"Dumped sector {str(start)} with sector count {str(sectors)} as {filename}.")
             else:
                 print(f"Failed to dump sector {str(start)} with sector count {str(sectors)} as {filename}.")
-            self.close()
         elif cmd == "ro":
             start = getint(args.offset)
             length = getint(args.length)
@@ -599,11 +593,9 @@ class DA_handler(metaclass=LogBase):
                 print(f"Dumped offset {hex(start)} with length {hex(length)} as {filename}.")
             else:
                 print(f"Failed to dump offset {hex(start)} with length {hex(length)} as {filename}.")
-            self.close()
         elif cmd == "footer":
             filename = args.filename
             self.da_footer(filename=filename)
-            self.close()
         elif cmd == "w":
             partitionname = args.partitionname
             filename = args.filename
@@ -611,12 +603,10 @@ class DA_handler(metaclass=LogBase):
             filenames = filename.split(",")
             partitions = partitionname.split(",")
             self.da_write(parttype=parttype, filenames=filenames, partitions=partitions)
-            self.close()
         elif cmd == "wl":
             directory = args.directory
             parttype = args.parttype
             self.da_wl(directory=directory, parttype=parttype)
-            self.close()
         elif cmd == "wo":
             start = getint(args.offset)
             length = getint(args.length)
@@ -638,19 +628,17 @@ class DA_handler(metaclass=LogBase):
             else:
                 print(f"Failed to write {filename} to offset {hex(start)} with " +
                       f"length {hex(length)}.")
-            self.close()
+                self.close()
         elif cmd == "wf":
             filename = args.filename
             parttype = args.parttype
             filenames = filename.split(",")
             self.da_wf(filenames=filenames, parttype=parttype)
-            self.close()
         elif cmd == "e":
             partitionname = args.partitionname
             parttype = args.parttype
             partitions = partitionname.split(",")
             self.da_erase(partitions=partitions, parttype=parttype)
-            self.close()
         elif cmd == "es":
             partitionname = args.partitionname
             parttype = args.parttype
@@ -660,13 +648,11 @@ class DA_handler(metaclass=LogBase):
                 self.close()
             partitions = partitionname.split(",")
             self.da_es(partitions=partitions, parttype=parttype, sectors=sectors)
-            self.close()
         elif cmd == "reset":
             if os.path.exists(".state"):
                 os.remove(".state")
                 os.remove(os.path.join("logs", "hwparam.json"))
             mtk.daloader.close()
-            self.close()
             print("Reset command was sent. Disconnect usb cable to power off.")
         elif cmd == "da":
             subcmd = args.subcmd
@@ -737,4 +723,3 @@ class DA_handler(metaclass=LogBase):
                     print("metamode is needed [usb,uart,off]!")
                 else:
                     mtk.daloader.setmetamode(metamode)
-            self.close()

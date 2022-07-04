@@ -17,7 +17,7 @@ from mtkclient.Library.utils import print_progress
 from mtkclient.Library.error import ErrorHandler
 from mtkclient.Library.mtk_da_cmd import DA_handler
 from mtkclient.Library.gpt import gpt_settings
-
+import argparse
 metamodes = "[FASTBOOT, FACTFACT, METAMETA, FACTORYM, ADVEMETA]"
 
 class ArgHandler(metaclass=LogBase):
@@ -314,7 +314,7 @@ class Main(metaclass=LogBase):
                 wf.close()
                 self.info(f"Data from {hex(addr)} with size of {hex(length)} was written to " + filename)
 
-    def run(self):
+    def run(self, parser):
         try:
             if self.args.debugmode:
                 loglevel = logging.DEBUG
@@ -346,7 +346,30 @@ class Main(metaclass=LogBase):
         self.debug(" ".join(sys.argv))
 
         cmd = self.args.cmd
-        if cmd == "dumpbrom":
+        if cmd == "script":
+            if not os.path.exists(self.args.script):
+                self.error("Couldn't find script: "+self.args.script)
+                self.close()
+                return
+            commands=open(self.args.script,"r").read().splitlines()
+            # DA / FLash commands start here
+            try:
+                preloader = self.args.preloader
+            except:
+                preloader = None
+            da_handler = DA_handler(mtk, loglevel)
+            mtk = da_handler.configure_da(mtk, preloader)
+            if mtk is not None:
+                for rcmd in commands:
+                    self.args = parser.parse_args(rcmd.split(" "))
+                    ArgHandler(self.args, config)
+                    cmd = self.args.cmd
+                    da_handler.handle_da_cmds(mtk, cmd, self.args)
+                    sys.stdout.flush()
+                    sys.stderr.flush()
+            else:
+                self.close()
+        elif cmd == "dumpbrom":
             if mtk.preloader.init():
                 rmtk = mtk.crasher()
                 if rmtk is None:

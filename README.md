@@ -129,6 +129,12 @@ For the 'basics' you can use the GUI interface. This supports dumping partitions
 python mtk_gui
 ```
 
+### Run multiple commands
+```bash
+python mtk script run.example
+```
+See the file "run.example" on how to structure the script file
+
 ### Root the phone (Tested with android 9 - 12)
 
 1. Dump boot and vbmeta
