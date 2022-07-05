@@ -13,14 +13,16 @@ from mtkclient.Library.Port import Port
 from mtkclient.Library.utils import LogBase, logsetup
 from mtkclient.Library.error import ErrorHandler
 
+
 def split_by_n(seq, unit_count):
     """A generator to divide a sequence into chunks of n units."""
     while seq:
         yield seq[:unit_count]
         seq = seq[unit_count:]
 
+
 class Mtk(metaclass=LogBase):
-    def __init__(self, config, loglevel=logging.INFO, serialportname:str=None, preinit=True):
+    def __init__(self, config, loglevel=logging.INFO, serialportname: str = None, preinit=True):
         self.config = config
         self.loader = config.loader
         self.vid = config.vid
@@ -30,7 +32,7 @@ class Mtk(metaclass=LogBase):
         self.__logger = logsetup(self, self.__logger, loglevel, config.gui)
         self.eh = ErrorHandler()
         if preinit:
-            self.setup(self.vid,self.pid,self.interface,serialportname)
+            self.setup(self.vid, self.pid, self.interface, serialportname)
 
     def patch_preloader_security(self, data):
         patched = False
@@ -39,7 +41,7 @@ class Mtk(metaclass=LogBase):
             ("A3687BB12846", "0123A3602846"),  # oppo security
             ("B3F5807F01D1", "B3F5807F01D14FF000004FF000007047"),  # confirmed : mt6739 c30, mt6833
             ("B3F5807F04BF4FF4807305F011B84FF0FF307047", "B3F5807F04BF4FF480734FF000004FF000007047"),
-            ("10B50C680268","10B5012010BD") # Ram blacklist
+            ("10B50C680268", "10B5012010BD")  # Ram blacklist
         ]
         i = 0
         for patchval in patches:
@@ -53,7 +55,7 @@ class Mtk(metaclass=LogBase):
             i += 1
         if patched:
             import sys
-            with open("preloader.patched","wb") as wf:
+            with open("preloader.patched", "wb") as wf:
                 wf.write(data)
                 print("Patched !")
             self.info(f"Patched preloader security: {hex(i)}")
@@ -73,10 +75,10 @@ class Mtk(metaclass=LogBase):
         if magic == 0x014D4D4D:
             self.info(f"Valid preloader detected.")
             daaddr = unpack("<I", data[0x1C:0x20])[0]
-            dasize = unpack("<I", data[0x20:0x24])[0]
-            maxsize = unpack("<I", data[0x24:0x28])[0]
-            content_offset = unpack("<I", data[0x28:0x2C])[0]
-            sig_length = unpack("<I", data[0x2C:0x30])[0]
+            # dasize = unpack("<I", data[0x20:0x24])[0]
+            # maxsize = unpack("<I", data[0x24:0x28])[0]
+            # content_offset = unpack("<I", data[0x28:0x2C])[0]
+            # sig_length = unpack("<I", data[0x2C:0x30])[0]
             jump_offset = unpack("<I", data[0x30:0x34])[0]
             daaddr = jump_offset + daaddr
             dadata = data[jump_offset:]
@@ -86,7 +88,7 @@ class Mtk(metaclass=LogBase):
             dadata = data
         return daaddr, dadata
 
-    def setup(self, vid=None, pid=None, interface=None, serialportname:str = None):
+    def setup(self, vid=None, pid=None, interface=None, serialportname: str = None):
         if vid is None:
             vid = self.vid
         if pid is None:

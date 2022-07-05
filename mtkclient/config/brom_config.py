@@ -463,7 +463,7 @@ hwconfig = {
         misc_lock=0x10001838,
         damode=damodes.DEFAULT,  #
         dacode=0x6735,
-        name="MT6735/T",
+        name="MT6735/T,MT8735A",
         loader="mt6735_payload.bin"),
     0x335: chipconfig(
         var1=0x28,  # confirmed

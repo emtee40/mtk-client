@@ -16,7 +16,7 @@ from PySide6.QtGui import QTextOption, QPixmap, QTransform, QIcon, QAction
 from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QCheckBox, QVBoxLayout, QHBoxLayout, QLineEdit, \
                             QPushButton
 
-from mtkclient.Library.mtk import Mtk
+from mtkclient.Library.mtk_class import Mtk
 from mtkclient.Library.mtk_da_cmd import DA_handler
 from mtkclient.Library.gpt import gpt_settings
 from mtkclient.Library.mtk_main import Main, Mtk_Config

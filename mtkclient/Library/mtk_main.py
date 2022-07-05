@@ -7,7 +7,7 @@ import logging
 import time
 from binascii import hexlify
 from struct import unpack, pack
-from mtkclient.Library.mtk import Mtk
+from mtkclient.Library.mtk_class import Mtk
 from mtkclient.config.payloads import pathconfig
 from mtkclient.Library.pltools import PLTools
 from mtkclient.Library.meta import META
