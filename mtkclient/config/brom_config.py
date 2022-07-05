@@ -1228,9 +1228,9 @@ hwconfig = {
         uart=0x11002000,
         brom_payload_addr=0x100A00,
         da_payload_addr=0x201000,
-        # pl_payload_addr=0x40001000
-        # gcpu_base
-        # sej_base=0x1000A000,
+        pl_payload_addr=0x40001000,
+        gcpu_base=0x10241000,
+        sej_base=0x1000A000,
         # cqdma_base
         ap_dma_mem=0x11000280 + 0x1A0,
         # blacklist
@@ -1243,7 +1243,7 @@ hwconfig = {
         # socid_addr
         damode=damodes.XFLASH,
         dacode=0x8168,
-        name="MT8168"
+        name="MT8168/MT6357"
         # description
         # loader
     ),

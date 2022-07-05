@@ -737,6 +737,7 @@ if __name__ == '__main__':
     parser_plstage.add_argument('--uart_addr', help='Set payload uart_addr value')
     parser_plstage.add_argument('--da_addr', help='Set a specific da payload addr')
     parser_plstage.add_argument('--brom_addr', help='Set a specific brom payload addr')
+    parser_plstage.add_argument("--metamode", type=str, help="metamode to use [FASTBOOT,METAMETA,etc.]")
     parser_plstage.add_argument('--ptype',
                                 help='Set the payload type ' +
                                      '("amonet","kamakiri","kamakiri2", kamakiri2/da used by default)')

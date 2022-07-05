@@ -19,6 +19,7 @@ class META(metaclass=LogBase):
         FACT = b"FACTFACT"      # Factory menu
         ATE  = b"FACTORYM"      # ATE Signaling Test
         READY = b"READY"
+        ATNBOOT = b"AT+NBOOT"
 
     def __init__(self, mtk, loglevel=logging.INFO):
         self.mtk = mtk
@@ -63,8 +64,9 @@ class META(metaclass=LogBase):
                             break
                         if resp==b"READY":
                             EP_OUT(metamode, len(metamode))
-                            resp = bytearray(EP_IN(maxinsize))
-                            if resp==b"READY":
+                            while resp==b"READY":
+                                resp = bytearray(EP_IN(maxinsize))
+                            if resp in [b"ATEMEVDX",b"TOOBTSAF",b"ATEMATEM",b"TCAFTCAF",b"MYROTCAF"]:
                                 return True
                             self.warning(resp)
                 else:

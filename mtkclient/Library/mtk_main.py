@@ -18,7 +18,7 @@ from mtkclient.Library.error import ErrorHandler
 from mtkclient.Library.mtk_da_cmd import DA_handler
 from mtkclient.Library.gpt import gpt_settings
 import argparse
-metamodes = "[FASTBOOT, FACTFACT, METAMETA, FACTORYM, ADVEMETA]"
+metamodes = "[FASTBOOT, FACTFACT, METAMETA, FACTORYM, ADVEMETA, AT+NBOOT]"
 
 class ArgHandler(metaclass=LogBase):
     def __init__(self, args, config):
@@ -440,7 +440,7 @@ class Main(metaclass=LogBase):
             if mtk.config.chipconfig.pl_payload_addr is not None:
                 plstageaddr = mtk.config.chipconfig.pl_payload_addr
             else:
-                plstageaddr = 0x40200000  # 0x40001000
+                plstageaddr = 0x40001000 #0x40200000  # 0x40001000
             if self.args.pl is None:
                 plstage = os.path.join(mtk.pathconfig.get_payloads_path(), "pl.bin")
             else:
@@ -448,7 +448,10 @@ class Main(metaclass=LogBase):
             if os.path.exists(plstage):
                 with open(plstage, "rb") as rf:
                     rf.seek(0)
-                    pldata = mtk.patch_preloader_security(rf.read())
+                    if os.path.basename(plstage)!="pl.bin":
+                        pldata = mtk.patch_preloader_security(rf.read())
+                    else:
+                        pldata = rf.read()
             if mtk.preloader.init():
                 if mtk.config.target_config["daa"]:
                     mtk = mtk.bypass_security()
@@ -458,12 +461,14 @@ class Main(metaclass=LogBase):
                 self.info("Connected to device, loading")
             else:
                 self.error("Couldn't connect to device, aborting.")
-            if mtk.config.is_brom and mtk.config.preloader is None:
+
+            if mtk.config.is_brom and mtk.config.preloader is None and os.path.basename(plstage)=="pl.bin":
                 self.warning("PL stage needs preloader, please use --preloader option. " +
                              "Trying to dump preloader from ram.")
                 plt = PLTools(mtk=mtk, loglevel=self.__logger.level)
                 dadata, filename = plt.run_dump_preloader(self.args.ptype)
                 mtk.config.preloader = mtk.patch_preloader_security(dadata)
+
             if mtk.config.preloader_filename is not None:
                 self.info("Using custom preloader : " + mtk.config.preloader_filename)
                 mtk.preloader.setreg_disablewatchdogtimer(mtk.config.hwcode)
@@ -473,20 +478,36 @@ class Main(metaclass=LogBase):
                     self.info(f"Sent preloader to {hex(daaddr)}, length {hex(len(dadata))}")
                     if mtk.preloader.jump_da(daaddr):
                         self.info(f"PL Jumped to daaddr {hex(daaddr)}.")
-                        time.sleep(1)
                         mtk = Mtk(config=mtk.config, loglevel=self.__logger.level)
-                        res = mtk.preloader.init()
-                        if not res:
-                            self.error("Error on loading preloader")
+                        if self.args.metamode is not None:
+                            time.sleep(1)
+                            meta = META(mtk, loglevel)
+                            if meta.init(metamode=self.args.metamode, display=False):
+                                self.info(f"Successfully set meta mode : {self.args.metamode}")
+                            mtk.port.close()
+                            self.close()
                             return
+                        if self.args.startpartition is not None or self.args.offset is not None or self.args.length is not None:
+                            time.sleep(1)
+                            res = mtk.preloader.init()
+                            if not res:
+                                self.error("Error on loading preloader")
+                                return
+                            else:
+                                self.info("Successfully connected to pl")
                         else:
-                            self.info("Successfully connected to pl")
+                            mtk.port.close()
+                            time.sleep(3)
+                            self.info(f"Keep pressed power button to boot.")
+                            self.close()
+                            return
 
                         if self.args.startpartition is not None:
                             partition = self.args.startpartition
                             self.info("Booting to : " + partition)
                             #mtk.preloader.send_partition_data(partition, mtk.patch_preloader_security(pldata))
                             status = mtk.preloader.jump_to_partition(partition)  # Do not remove !
+
                         if self.args.offset is not None and self.args.length is not None:
                             offset = getint(self.args.offset)
                             length = getint(self.args.length)
@@ -514,15 +535,23 @@ class Main(metaclass=LogBase):
                             else:
                                 self.info("Jumping to partition ....")
                             return
+                        mtk.port.close()
                         sys.exit(0)
             if mtk.preloader.send_da(plstageaddr, len(pldata), 0x100, pldata):
                 self.info(f"Sent stage2 to {hex(plstageaddr)}, length {hex(len(pldata))}")
                 mtk.preloader.get_hw_sw_ver()
                 if mtk.preloader.jump_da(plstageaddr):
                     self.info(f"Jumped to stage2 at {hex(plstageaddr)}.")
-                    ack = unpack(">I", mtk.port.usbread(4))[0]
-                    if ack == 0xB1B2B3B4:
-                        self.info("Successfully loaded stage2")
+                    if os.path.basename(plstage) == "pl.bin":
+                        ack = unpack(">I", mtk.port.usbread(4))[0]
+                        if ack == 0xB1B2B3B4:
+                            self.info("Successfully loaded stage2")
+                            return
+                    else:
+                        self.info("Successfully loaded stage2, dis- and reconnect usb cable")
+                        time.sleep(2)
+                        ack = unpack(">I", mtk.port.usbread(4))[0]
+                        mtk.port.close()
                         return
                 else:
                     self.error("Error on jumping to pl")

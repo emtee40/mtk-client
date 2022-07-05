@@ -38,10 +38,13 @@ class Mtk(metaclass=LogBase):
         patched = False
         data = bytearray(data)
         patches = [
-            ("A3687BB12846", "0123A3602846"),  # oppo security
-            ("B3F5807F01D1", "B3F5807F01D14FF000004FF000007047"),  # confirmed : mt6739 c30, mt6833
-            ("B3F5807F04BF4FF4807305F011B84FF0FF307047", "B3F5807F04BF4FF480734FF000004FF000007047"),
-            ("10B50C680268", "10B5012010BD")  # Ram blacklist
+            ("A3687BB12846", "0123A3602846", "oppo security"),
+            ("B3F5807F01D1", "B3F5807F01D14FF000004FF000007047", "mt6739 c30"),
+            ("B3F5807F04BF4FF4807305F011B84FF0FF307047", "B3F5807F04BF4FF480734FF000004FF000007047", "regular"),
+            ("10B50C680268", "10B5012010BD", "ram blacklist"),
+            ("08B5104B7B441B681B68", "00207047000000000000", "seclib_sec_usbdl_enabled"),
+            ("5072656C6F61646572205374617274","50617463686564204C205374617274", "Patched loader msg"),
+            ("F0B58BB002AE20250C460746","002070470000000000205374617274", "sec_img_auth")
         ]
         i = 0
         for patchval in patches:
@@ -50,17 +53,18 @@ class Mtk(metaclass=LogBase):
             if idx != -1:
                 patch = bytes.fromhex(patchval[1])
                 data[idx:idx + len(patch)] = patch
+                self.info(f"Patched \"{patchval[2]}\" in preloader")
                 patched = True
                 # break
             i += 1
-        if patched:
-            import sys
-            with open("preloader.patched", "wb") as wf:
-                wf.write(data)
-                print("Patched !")
-            self.info(f"Patched preloader security: {hex(i)}")
-        else:
+        if not patched:
             self.warning(f"Failed to patch preloader security")
+        else:
+            # with open("preloader.patched", "wb") as wf:
+            #    wf.write(data)
+            #    print("Patched !")
+            # self.info(f"Patched preloader security: {hex(i)}")
+            data = data
         return data
 
     def parse_preloader(self, preloader):
