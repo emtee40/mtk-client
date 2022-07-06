@@ -957,11 +957,11 @@ class DALegacy(metaclass=LogBase):
                         m_ext_ram_size = unpack(">Q", self.usbread(8))[0]  # 0x80000000
                         self.info(f"M_EXT_RAM_SIZE : {hex(m_ext_ram_size)}")
                         if self.daconfig.emiver in [0x0D]:
-                            self.usbread(4) # 00000003
-                            Raw_0 = self.usbread(4) # 1C004004
-                            Raw_1 = self.usbread(4) # aa080033
-                            CJ_0 = self.usbread(4) # 00000013
-                            CJ_1 = self.usbread(4) # 00000010
+                            self.usbread(4)  # 00000003
+                            Raw_0 = self.usbread(4)  # 1C004004
+                            Raw_1 = self.usbread(4)  # aa080033
+                            CJ_0 = self.usbread(4)  # 00000013
+                            CJ_1 = self.usbread(4)  # 00000010
                 else:
                     self.error("Preloader needed due to dram config.")
                     self.mtk.port.close(reset=True)
@@ -1112,8 +1112,13 @@ class DALegacy(metaclass=LogBase):
             return True
         return False
 
-    def close(self):
-        self.finish(0x0)  # DISCONNECT_USB_AND_RELEASE_POWERKEY
+    class ShutDownModes:
+        NORMAL = 0
+        HOME_SCREEN = 1
+        FASTBOOT = 2
+
+    def shutdown(self, async_mode: int = 0, dl_bit: int = 0, bootmode: ShutDownModes = ShutDownModes.NORMAL):
+        self.finish(bootmode)  # DISCONNECT_USB_AND_RELEASE_POWERKEY
         self.mtk.port.close(reset=True)
 
     def brom_send(self, dasetup, dadata, stage, packetsize=0x1000):

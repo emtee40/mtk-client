@@ -20,6 +20,7 @@ cmds = {
     "wo": "Write flash starting at offset from filename",
     "e": "Erase partition",
     "es": "Erase partition with sector count",
+    "ess": "Erase sector with sector count",
     "footer": "Read crypto footer from flash",
     "reset": "Send mtk reset command",
     "dumpbrom": "Try to dump the bootrom",
@@ -72,6 +73,7 @@ if __name__ == '__main__':
     parser_wo = subparsers.add_parser("wo", help="Write flash starting at offset from filename")
     parser_e = subparsers.add_parser("e", help="Erase partition")
     parser_es = subparsers.add_parser("es", help="Erase partition with sector count")
+    parser_ess = subparsers.add_parser("ess", help="Erase sector with sector count")
     parser_footer = subparsers.add_parser("footer", help="Read crypto footer from flash")
     parser_reset = subparsers.add_parser("reset", help="Send mtk reset command")
 
@@ -535,6 +537,36 @@ if __name__ == '__main__':
     parser_es.add_argument('--filename', help='Optional filename')
     parser_es.add_argument('--crash', help='Enforce crash if device is in pl mode to enter brom mode')
     parser_es.add_argument('--socid', help='Read Soc ID')
+
+    parser_ess.add_argument('startsector', help='Startsector to erase')
+    parser_ess.add_argument('sectors', help='Sectors to erase')
+    parser_ess.add_argument('--loader', type=str, help='Use specific DA loader, disable autodetection')
+    parser_ess.add_argument('--vid', type=str, help='Set usb vendor id used for MTK Preloader')
+    parser_ess.add_argument('--pid', type=str, help='Set usb product id used for MTK Preloader')
+    parser_ess.add_argument('--sectorsize', default='0x200', help='Set default sector size')
+    parser_ess.add_argument('--debugmode', action='store_true', default=False, help='Enable verbose mode')
+    parser_ess.add_argument('--gpt-num-part-entries', default='0', help='Set GPT entry count')
+    parser_ess.add_argument('--gpt-part-entry-size', default='0', help='Set GPT entry size')
+    parser_ess.add_argument('--gpt-part-entry-start-lba', default='0', help='Set GPT entry start lba sector')
+    parser_ess.add_argument('--gpt_file', help='Use a gpt file instead of trying to read gpt from flash')
+    parser_ess.add_argument('--skip', help='Skip reading partition with names "partname1,partname2,etc."')
+    parser_ess.add_argument('--skipwdt', help='Skip wdt init')
+    parser_ess.add_argument('--wdt', help='Set a specific watchdog addr')
+    parser_ess.add_argument('--mode', help='Set a crash mode (0=dasend1,1=dasend2,2=daread)')
+    parser_ess.add_argument('--var1', help='Set kamakiri specific var1 value')
+    parser_ess.add_argument('--uart_addr', help='Set payload uart_addr value')
+    parser_ess.add_argument('--da_addr', help='Set a specific da payload addr')
+    parser_ess.add_argument('--brom_addr', help='Set a specific brom payload addr')
+    parser_ess.add_argument('--ptype',
+                           help='Set the payload type ( "amonet","kamakiri","kamakiri2","carbonara" kamakiri2/da used by default)')
+    parser_ess.add_argument('--preloader', help='Set the preloader filename for dram config')
+    parser_ess.add_argument('--verifystage2', help='Verify if stage2 data has been written correctly')
+    parser_ess.add_argument('--parttype', help='Partition type\n' +
+                                              '\t\tEMMC: [user, boot1, boot2, gp1, gp2, gp3, gp4, rpmb]' +
+                                              '\t\tUFS: [lu0, lu1, lu2, lu0_lu1]')
+    parser_ess.add_argument('--filename', help='Optional filename')
+    parser_ess.add_argument('--crash', help='Enforce crash if device is in pl mode to enter brom mode')
+    parser_ess.add_argument('--socid', help='Read Soc ID')
 
     parser_footer.add_argument('filename', help='Filename to store footer')
     parser_footer.add_argument('--loader', type=str, help='Use specific DA loader, disable autodetection')

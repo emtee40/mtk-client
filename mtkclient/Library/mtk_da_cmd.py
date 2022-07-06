@@ -435,6 +435,37 @@ class DA_handler(metaclass=LogBase):
         elif countFP != len(partitions) and countFP > 1:
             print(f"Failed to format all partitions.")
 
+    def da_ess(self, sector: int, sectors: int, parttype: str):
+        if parttype == "user" or parttype is None:
+            wipedata = b"\x00" * 0x200000
+            error = False
+            while sectors:
+                sectorsize = sectors * self.mtk.daloader.daconfig.pagesize
+                wsize = min(sectorsize, 0x200000)
+                if self.mtk.daloader.writeflash(addr=sector * self.mtk.daloader.daconfig.pagesize,
+                                                length=wsize,
+                                                filename=None,
+                                                wdata=wipedata[:wsize],
+                                                parttype="user"):
+                    print(
+                        f"Failed to format sector {str(sector)} with " +
+                        f"sector count {str(sectors)}.")
+                    error = True
+                    break
+                sectors -= (wsize // self.mtk.daloader.daconfig.pagesize)
+                sector += (wsize // self.mtk.daloader.daconfig.pagesize)
+            if not error:
+                print(
+                    f"Formatted sector {str(sector)} with sector count {str(sectors)}.")
+        else:
+            pos = 0
+            self.mtk.daloader.formatflash(addr=sector * self.mtk.daloader.daconfig.pagesize,
+                                          length=min(sectors*self.mtk.daloader.daconfig.pagesize,0xF000000),
+                                          partitionname=None,
+                                          parttype=parttype,
+                                          display=True)
+            print(f"Formatted sector {str(pos // 0x200)}")
+
     def da_es(self, partitions: list, parttype: str, sectors: int):
         if parttype == "user" or parttype is None:
             i = 0
@@ -478,7 +509,8 @@ class DA_handler(metaclass=LogBase):
         else:
             pos = 0
             for partitionname in partitions:
-                self.mtk.daloader.formatflash(addr=pos, length=0xF000000, partitionname=partitionname,
+                self.mtk.daloader.formatflash(addr=pos, length=min(sectors * self.mtk.daloader.daconfig.pagesize,0xF000000),
+                                              partitionname=partitionname,
                                               parttype=parttype,
                                               display=True)
                 print(f"Formatted sector {str(pos // 0x200)}")
@@ -648,11 +680,19 @@ class DA_handler(metaclass=LogBase):
                 self.close()
             partitions = partitionname.split(",")
             self.da_es(partitions=partitions, parttype=parttype, sectors=sectors)
+        elif cmd == "ess":
+            sector = args.startsector
+            parttype = args.parttype
+            sectors = getint(args.sectors)
+            if args.sectors is None:
+                self.error("Sector count is missing. Usage: ess [sector] [sector count]")
+                self.close()
+            self.da_ess(sector=sector, parttype=parttype, sectors=sectors)
         elif cmd == "reset":
             if os.path.exists(".state"):
                 os.remove(".state")
                 os.remove(os.path.join("logs", "hwparam.json"))
-            mtk.daloader.close()
+            mtk.daloader.shutdown(bootmode=0)
             print("Reset command was sent. Disconnect usb cable to power off.")
         elif cmd == "da":
             subcmd = args.subcmd

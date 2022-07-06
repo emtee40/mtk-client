@@ -174,7 +174,7 @@ class DAXFlash(metaclass=LogBase):
         except:
             return -1
 
-    def xsend(self, data, datatype=DataType.DT_PROTOCOL_FLOW, is64bit:bool = False):
+    def xsend(self, data, datatype=DataType.DT_PROTOCOL_FLOW, is64bit: bool = False):
         if isinstance(data, int):
             if is64bit:
                 data = pack("<Q", data)
@@ -515,8 +515,9 @@ class DAXFlash(metaclass=LogBase):
 
         chipid = Chipid
         data = self.send_devctrl(self.Cmd.GET_CHIP_ID)
-        chipid.hw_code, chipid.hw_sub_code, chipid.hw_version, chipid.sw_version, chipid.chip_evolution = unpack("<HHHHH",
-                                                                                                  data[:(5 * 2)])
+        chipid.hw_code, chipid.hw_sub_code, chipid.hw_version, chipid.sw_version, chipid.chip_evolution = unpack(
+            "<HHHHH",
+            data[:(5 * 2)])
         status = self.status()
         if status == 0:
             self.info("HW-CODE         : 0x%X", chipid.hw_code)
@@ -778,6 +779,7 @@ class DAXFlash(metaclass=LogBase):
         if resp != b"":
             status = self.status()
             if status == 0:
+                # full-speed, high-speed, hyper-speed
                 return resp
             else:
                 self.error(f"Error on getting usb speed: {self.eh.status(status)}")
@@ -889,15 +891,31 @@ class DAXFlash(metaclass=LogBase):
                 return buffer
         return False
 
-    def close(self):
+    class ShutDownModes:
+        NORMAL = 0
+        HOME_SCREEN = 1
+        FASTBOOT = 2
+
+    def shutdown(self, async_mode: int = 0, dl_bit: int = 0, bootmode: ShutDownModes = ShutDownModes.NORMAL):
         if self.xsend(self.Cmd.SHUTDOWN):
             status = self.status()
             if status == 0:
-                self.mtk.port.close(reset=True)
-                return True
+                hasflags = 0
+                # bootmode 0: shutdown 1: home screen, 2: fastboot
+                if async_mode or dl_bit or bootmode > 0:
+                    hasflags = 1
+                enablewdt = 0  # Disable wdt
+                dont_resetrtc = 0  # Reset RTC
+                leaveusb = 0  # Disconnect usb
+                if self.xsend(pack("<IIIIIIII", hasflags, enablewdt, async_mode, bootmode, dl_bit,
+                                   dont_resetrtc, leaveusb, 0)):
+                    status = self.status()
+                    if status == 0:
+                        self.mtk.port.close(reset=True)
+                        return True
             else:
                 self.error(f"Error on sending shutdown: {self.eh.status(status)}")
-        self.mtk.port.close(True)
+        self.mtk.port.close(reset=True)
         return False
 
     def getstorage(self, parttype, length):
@@ -1031,7 +1049,7 @@ class DAXFlash(metaclass=LogBase):
 
             hashaddr, hashmode, hashlen = self.mtk.daloader.compute_hash_pos(da1, da2, da2sig_len)
             if hashaddr is not None:
-                #da1 = self.xft.patch_da1(da1)
+                # da1 = self.xft.patch_da1(da1)
                 da2 = self.xft.patch_da2(da2)
                 da1 = self.mtk.daloader.fix_hash(da1, da2, hashaddr, hashmode, hashlen)
                 self.patch = True

@@ -16,6 +16,7 @@ from mtkclient.Library.xflash_ext import xflashext
 from mtkclient.Library.legacy_ext import legacyext
 from mtkclient.Library.settings import hwparam
 
+
 class DAloader(metaclass=LogBase):
     def __init__(self, mtk, loglevel=logging.INFO):
         self.__logger = logsetup(self, self.__logger, loglevel, mtk.config.gui)
@@ -41,7 +42,7 @@ class DAloader(metaclass=LogBase):
 
     def writestate(self):
         config = {}
-        config["xflash"] = self.mtk.config.chipconfig.damode==damodes.XFLASH
+        config["xflash"] = self.mtk.config.chipconfig.damode == damodes.XFLASH
         config["hwcode"] = self.config.hwcode
         if self.config.meid is not None:
             config["meid"] = hexlify(self.config.meid).decode('utf-8')
@@ -49,7 +50,7 @@ class DAloader(metaclass=LogBase):
             config["socid"] = hexlify(self.config.socid).decode('utf-8')
         config["flashtype"] = self.daconfig.flashtype
         config["flashsize"] = self.daconfig.flashsize
-        if not self.mtk.config.chipconfig.damode==damodes.XFLASH:
+        if not self.mtk.config.chipconfig.damode == damodes.XFLASH:
             config["m_emmc_ua_size"] = self.da.emmc.m_emmc_ua_size
             config["m_emmc_boot1_size"] = self.da.emmc.m_emmc_boot1_size
             config["m_emmc_boot2_size"] = self.da.emmc.m_emmc_boot2_size
@@ -61,7 +62,7 @@ class DAloader(metaclass=LogBase):
         open(".state", "w").write(json.dumps(config))
 
     def compute_hash_pos(self, da1, da2, da2sig_len):
-        hashlen = len(da2)-da2sig_len
+        hashlen = len(da2) - da2sig_len
 
         hashmode, idx = self.calc_da_hash(da1, da2[:hashlen])
         if idx == -1:
@@ -118,7 +119,7 @@ class DAloader(metaclass=LogBase):
                 self.da.nand = nandinfo64()
                 self.da.emmc = emmcinfo(self.config)
                 self.da.sdc = sdcinfo(self.config)
-                self.lft=legacyext(self.mtk, self.da, self.loglevel)
+                self.lft = legacyext(self.mtk, self.da, self.loglevel)
                 self.da.emmc.m_emmc_ua_size = config["m_emmc_ua_size"]
                 self.da.emmc.m_emmc_boot1_size = config["m_emmc_boot1_size"]
                 self.da.emmc.m_emmc_boot2_size = config["m_emmc_boot2_size"]
@@ -152,7 +153,7 @@ class DAloader(metaclass=LogBase):
             self.xflash = True
         if self.xflash:
             self.da = DAXFlash(self.mtk, self.daconfig, self.loglevel)
-            if porttype not in ["off","usb","uart"]:
+            if porttype not in ["off", "usb", "uart"]:
                 self.error("Only \"off\",\"usb\" or \"uart\" are allowed.")
             if self.da.set_meta(porttype):
                 self.info(f"Successfully set meta mode to {porttype}")
@@ -192,8 +193,13 @@ class DAloader(metaclass=LogBase):
     def upload(self):
         return self.da.upload()
 
-    def close(self):
-        return self.da.close()
+    class ShutDownModes:
+        NORMAL = 0
+        HOME_SCREEN = 1
+        FASTBOOT = 2
+
+    def shutdown(self, bootmode=ShutDownModes.NORMAL):
+        return self.da.shutdown(async_mode=0, dl_bit=0, bootmode=bootmode)
 
     def upload_da(self, preloader=None):
         self.daconfig.setup()
@@ -213,12 +219,12 @@ class DAloader(metaclass=LogBase):
 
     def get_packet_length(self):
         if self.xflash:
-            pt=self.da.get_packet_length()
+            pt = self.da.get_packet_length()
             return pt.read_packet_length
         else:
             return 512
 
-    def peek(self, addr: int, length:int):
+    def peek(self, addr: int, length: int):
         if self.xflash:
             return self.xft.custom_read(addr=addr, length=length)
         else:
