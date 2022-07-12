@@ -91,6 +91,7 @@ class DAloader(metaclass=LogBase):
             dahash = hashlib.sha1(da2[:hashlen]).digest()
         elif hashmode == 2:
             dahash = hashlib.sha256(da2[:hashlen]).digest()
+        orighash=da1[hashpos:hashpos + len(dahash)]
         da1[hashpos:hashpos + len(dahash)] = dahash
         return da1
 

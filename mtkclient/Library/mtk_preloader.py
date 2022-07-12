@@ -574,6 +574,8 @@ class Preloader(metaclass=LogBase):
                 pass
 
             if status != 0:
+                if status == 0x1A1D:
+                    raise RuntimeError("Kamakiri2 failed, cache issue :(")
                 if isinstance(status, int):
                     raise RuntimeError(self.eh.status(status))
                 else:

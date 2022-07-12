@@ -21,6 +21,7 @@ class Mtk_Config(metaclass=LogBase):
         self.guiprogress = guiprogress
         self.update_status_text = update_status_text
         self.pid = -1
+        self.cid = None
         self.vid = -1
         self.var1 = 0xA
         self.is_brom = False
@@ -91,6 +92,8 @@ class Mtk_Config(metaclass=LogBase):
         return self.hwcode
 
     def get_cid(self):
+        if self.cid is None:
+            self.cid = self.hwparam.loadsetting("cid")
         return self.cid
 
     def set_cid(self, cid):

@@ -647,6 +647,14 @@ class DAXFlash(metaclass=LogBase):
             self.error(f"Error on getting nand info: {self.eh.status(status)}")
         return None
 
+    def get_rpmb_status(self):
+        resp = self.send_devctrl(self.Cmd.GET_RPMB_STATUS)
+        if resp == b'':
+            return None
+        status = self.status()
+        if status == 0:
+            return resp
+        
     def get_nor_info(self, display=True):
         resp = self.send_devctrl(self.Cmd.GET_NOR_INFO)
         if resp == b'':
@@ -1049,7 +1057,7 @@ class DAXFlash(metaclass=LogBase):
 
             hashaddr, hashmode, hashlen = self.mtk.daloader.compute_hash_pos(da1, da2, da2sig_len)
             if hashaddr is not None:
-                # da1 = self.xft.patch_da1(da1)
+                da1 = self.xft.patch_da1(da1)
                 da2 = self.xft.patch_da2(da2)
                 da1 = self.mtk.daloader.fix_hash(da1, da2, hashaddr, hashmode, hashlen)
                 self.patch = True

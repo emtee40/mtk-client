@@ -79,7 +79,11 @@ class legacyext(metaclass=LogBase):
         dwords=length//4
         if length%4!=0:
             dwords+=1
-        data = b"".join([pack(">I",val) for val in self.readmem(addr, dwords)])
+        data = bytearray()
+        for val in self.readmem(addr, dwords):
+            if val is None:
+                return None
+            data.extend(pack(">I",val))
         return data[:length]
 
     def writeregister(self, addr, dwords):

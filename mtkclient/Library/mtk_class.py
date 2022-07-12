@@ -44,7 +44,8 @@ class Mtk(metaclass=LogBase):
             ("10B50C680268", "10B5012010BD", "ram blacklist"),
             ("08B5104B7B441B681B68", "00207047000000000000", "seclib_sec_usbdl_enabled"),
             ("5072656C6F61646572205374617274","50617463686564204C205374617274", "Patched loader msg"),
-            ("F0B58BB002AE20250C460746","002070470000000000205374617274", "sec_img_auth")
+            ("F0B58BB002AE20250C460746","002070470000000000205374617274", "sec_img_auth"),
+            ("FFC0F3400008BD","FF4FF0000008BD","get_vfy_policy")
         ]
         i = 0
         for patchval in patches:

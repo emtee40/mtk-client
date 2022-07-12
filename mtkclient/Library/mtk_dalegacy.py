@@ -1019,11 +1019,11 @@ class DALegacy(metaclass=LogBase):
                 if hashaddr is not None:
                     da2patched = self.lft.patch_da2(da2)
                     if da2patched != da2:
-                        da1 = self.mtk.daloader.fix_hash(da1, da2, hashaddr, hashmode, hashlen)
+                        da1 = self.mtk.daloader.fix_hash(da1, da2patched, hashaddr, hashmode, hashlen)
                         self.patch = True
-                        self.daconfig.da2 = da2patched[:hashlen]
+                        self.daconfig.da2 = da2patched[:hashlen]+da2[hashlen:hashlen+da2sig_len]
                     else:
-                        self.daconfig.da2 = da2[:hashlen]
+                        self.daconfig.da2 = da2[:hashlen]+da2[hashlen:hashlen+da2sig_len]
                 else:
                     self.daconfig.da2 = da2[:-da2sig_len]
             else:
@@ -1073,7 +1073,7 @@ class DALegacy(metaclass=LogBase):
             if self.set_stage2_config(self.config.hwcode):
                 self.info("Uploading stage 2...")
                 # stage 2
-                if self.brom_send(self.daconfig, da2, 2):
+                if self.brom_send(self.daconfig, self.daconfig.da2, 2):
                     if self.read_flash_info():
                         if self.daconfig.flashtype == "nand":
                             self.daconfig.flashsize = self.nand.m_nand_flash_size
@@ -1123,6 +1123,7 @@ class DALegacy(metaclass=LogBase):
 
     def brom_send(self, dasetup, dadata, stage, packetsize=0x1000):
         offset = dasetup.da_loader.region[stage].m_buf
+        dasize=len(dadata)
         size = dasetup.da_loader.region[stage].m_len
         address = dasetup.da_loader.region[stage].m_start_addr
         self.usbwrite(pack(">I", address))

@@ -1223,7 +1223,8 @@ hwconfig = {
                        name="MT8167/MT8516/MT8362",
                        # description
                        loader="mt8167_payload.bin"),
-    0x8168: chipconfig(  # var1
+    0x8168: chipconfig(
+        var1=0xA,
         watchdog=0x10007000,
         uart=0x11002000,
         brom_payload_addr=0x100A00,
@@ -1233,20 +1234,19 @@ hwconfig = {
         sej_base=0x1000A000,
         # cqdma_base
         ap_dma_mem=0x11000280 + 0x1A0,
-        # blacklist
-        # blacklist_count
-        # send_ptr
-        # ctrl_buffer
-        # cmd_handler
-        # brom_register_access
-        # meid_addr
-        # socid_addr
+        blacklist=[(0x10303C, 0x0), (0x10A540, 0x0)],
+        blacklist_count=0xA,
+        send_ptr=(0x103080, 0x13834),
+        ctrl_buffer=0x0010637C,
+        cmd_handler=0x1436F,
+        brom_register_access=(0x13c18, 0x13d78),
+        meid_addr=0x106438,
+        socid_addr=0x106448,
         damode=damodes.XFLASH,
         dacode=0x8168,
-        name="MT8168/MT6357"
+        name="MT8168/MT6357",
         # description
-        # loader
-    ),
+        loader="mt8168_payload.bin"),
     0x8172: chipconfig(
         var1=0xA,
         watchdog=0x10007000,
@@ -1289,7 +1289,7 @@ hwconfig = {
         send_ptr=(0x1227b4, 0xa0e4),
         ctrl_buffer=0x0012305C,
         cmd_handler=0x0000AC6B,
-        brom_register_access=(0xa3b8,0xa580),
+        brom_register_access=(0xa3b8, 0xa580),
         meid_addr=0x1230B0,
         misc_lock=0x1202050,
         # socid_addr
