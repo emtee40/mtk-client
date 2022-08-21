@@ -1127,6 +1127,33 @@ hwconfig = {
         name="MT6893",
         description="Dimensity 1200",
         loader="mt6893_payload.bin"),
+    0x1172: chipconfig(
+        var1=0xA,
+        watchdog=0x1c007000,
+        uart=0x11001000,
+        brom_payload_addr=0x100A00,
+        da_payload_addr=0x201000,
+        pl_payload_addr=0x40200000,
+        gcpu_base=0x10050000,
+        dxcc_base=0x10210000,
+        sej_base=0x1000a000,
+        cqdma_base=0x10212000,
+        ap_dma_mem=0x11300800 + 0x1a0,
+        #blacklist=[(0x102848, 0x0), (0x00106B60, 0x0)],
+        #blacklist_count=0x0000000A,
+        #send_ptr=(0x102888, 0xE79C),
+        #ctrl_buffer=0x00102A9C,
+        #cmd_handler=0x0000F569,
+        #brom_register_access=(0xeba4, 0xec5c),
+        #meid_addr=0x102B98,
+        #socid_addr=0x102BA8,
+        #prov_addr=0x1066C0,
+        damode=damodes.XFLASH,
+        dacode=0x6895,
+        name="MT6895",
+        description="Dimensity 8100"
+        #loader="mt6893_payload.bin"
+        ),
     # Dimensity 1100 - MT6891 Realme Q3 Pro
     0x8127: chipconfig(
         var1=0xA,
