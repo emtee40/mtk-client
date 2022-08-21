@@ -77,6 +77,7 @@ class usb_class(DeviceClass):
         self.load_windows_dll()
         self.connected = False
         self.timeout = 1000
+        self.buffer = array.array('B', [0]) * 1048576
         self.vid = None
         self.pid = None
         self.stopbits = None
@@ -419,10 +420,11 @@ class usb_class(DeviceClass):
         epr = self.EP_IN.read
         wMaxPacketSize = self.EP_IN.wMaxPacketSize
         extend = res.extend
-
+        buffer = self.buffer[:resplen]
         while len(res) < resplen:
             try:
-                extend(epr(resplen))
+                rlen = epr(buffer, timeout)
+                extend(buffer[:rlen])
             except usb.core.USBError as e:
                 error = str(e.strerror)
                 if "timed out" in error:
