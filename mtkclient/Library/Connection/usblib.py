@@ -305,7 +305,7 @@ class usb_class(DeviceClass):
             try:
                 usb.util.claim_interface(self.device, 0)
             except:
-                pass
+                return False
 
             self.debug(self.configuration)
             try:
@@ -318,7 +318,7 @@ class usb_class(DeviceClass):
                 if self.interface != 0:
                     usb.util.claim_interface(self.device, self.interface)
             except:
-                pass
+                return False
 
             self.EP_OUT = EP_OUT
             self.EP_IN = EP_IN
@@ -352,7 +352,7 @@ class usb_class(DeviceClass):
                 except:
                     pass
             except Exception as err:
-                self.debug(str(err))
+                self.info(str(err))
             if reset:
                 try:
                     if not self.device.is_kernel_driver_active(0):

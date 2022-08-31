@@ -1089,11 +1089,14 @@ class DALegacy(metaclass=LogBase):
                             self.info("Reconnecting to preloader")
                             self.set_usb_cmd()
                             self.mtk.port.close(reset=False)
-                            time.sleep(2)
+                            time.sleep(1)
                             while not self.mtk.port.cdc.connect():
                                 self.info("Waiting for reconnection")
                                 time.sleep(0.5)
-                            self.info("Connected to preloader")
+                            if self.check_usb_cmd():
+                                self.info("Connected to preloader")
+                            else:
+                                return False
                         return True
         return False
 
