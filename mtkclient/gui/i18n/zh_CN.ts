@@ -363,7 +363,7 @@
         <location filename="../../../mtk_gui" line="182"/>
         <location filename="../../../mtk_gui" line="191"/>
         <source> left</source>
-        <translation> 左侧</translation>
+        <translation> 剩余</translation>
     </message>
     <message>
         <location filename="../../../mtk_gui" line="339"/>
@@ -399,7 +399,7 @@ Reading model info...</source>
         <location filename="../../Library/mtk_dalegacy.py" line="1094"/>
         <location filename="../../Library/mtk_dalegacy.py" line="1105"/>
         <source>Error on sending brom stage</source>
-        <translation>发送 brom 阶段时出错</translation>
+        <translation>发送 brom stage 时出错</translation>
     </message>
     <message>
         <location filename="../../Library/mtk_daxflash.py" line="1067"/>
@@ -414,17 +414,17 @@ Reading model info...</source>
     <message>
         <location filename="../../Library/mtk_main.py" line="166"/>
         <source>Uploading stage 1</source>
-        <translation>上传阶段 1</translation>
+        <translation>上传 stage 1</translation>
     </message>
     <message>
         <location filename="../../Library/mtk_main.py" line="169"/>
         <source>Successfully uploaded stage 1, sending stage 2</source>
-        <translation>已成功上传阶段 1，正在发送阶段 2</translation>
+        <translation>已成功上传 stage 1，正在发送 stage 2</translation>
     </message>
     <message>
         <location filename="../../Library/mtk_main.py" line="201"/>
         <source>Done sending stage 2</source>
-        <translation>已完成发送阶段 2</translation>
+        <translation>已完成发送 stage 2</translation>
     </message>
     <message>
         <location filename="../../Library/mtk_main.py" line="223"/>
