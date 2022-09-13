@@ -8,7 +8,7 @@ from mtkclient.Library.utils import LogBase, logsetup, getint
 from mtkclient.config.payloads import pathconfig
 from mtkclient.Library.error import ErrorHandler
 from mtkclient.Library.utils import progress
-
+from mtkclient.config.brom_config import efuse
 
 class DA_handler(metaclass=LogBase):
     def __init__(self, mtk, loglevel=logging.INFO):
@@ -529,6 +529,16 @@ class DA_handler(metaclass=LogBase):
                 print(f"Failed to write {partfilename} to sector {str(pos // 0x200)} with " +
                       f"sector count {str(size // 0x200)}.")
 
+    def da_efuse(self):
+        if self.mtk.config.chipconfig.efuse_addr is not None:
+            base = self.mtk.config.chipconfig.efuse_addr
+            hwcode = self.mtk.config.hwcode
+            efuseconfig = efuse(base,hwcode)
+            for idx in range(len(efuseconfig.efuses)):
+                addr = efuseconfig.efuses[idx]
+                data = bytearray(self.mtk.daloader.peek(addr=addr, length=4))
+                self.info(f"EFuse Idx {hex(idx)}: {data.hex()}")
+
     def da_peek(self, addr: int, length: int, filename: str):
         bytestoread = length
         pos = 0
@@ -697,7 +707,7 @@ class DA_handler(metaclass=LogBase):
         elif cmd == "da":
             subcmd = args.subcmd
             if subcmd is None:
-                print("Available da cmds are: [peek, poke, generatekeys, seccfg, rpmb, meta, memdump]")
+                print("Available da cmds are: [peek, poke, generatekeys, seccfg, rpmb, meta, memdump, efuse]")
                 return
             if subcmd == "peek":
                 addr = getint(args.address)
@@ -741,6 +751,8 @@ class DA_handler(metaclass=LogBase):
                 self.da_poke(addr=addr, data=data, filename=filename)
             elif subcmd == "generatekeys":
                 mtk.daloader.keys()
+            elif subcmd == "efuse":
+                self.da_efuse()
             elif subcmd == "seccfg":
                 v = mtk.daloader.seccfg(args.flag)
                 if v[0]:

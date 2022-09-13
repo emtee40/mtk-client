@@ -27,6 +27,7 @@ class crypto_setup:
     meid_addr = None
     socid_addr = None
     prov_addr = None
+    efuse_base = None
 
 
 class hwcrypto(metaclass=LogBase):

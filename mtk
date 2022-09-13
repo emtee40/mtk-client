@@ -4,7 +4,7 @@
 import argparse
 from mtkclient.Library.mtk_main import Main, metamodes
 
-info = "MTK Flash/Exploit Client V1.5.9 (c) B.Kerler 2018-2022"
+info = "MTK Flash/Exploit Client V1.6.0 (c) B.Kerler 2018-2022"
 
 cmds = {
     "printgpt": "Print GPT Table information",
@@ -93,7 +93,9 @@ if __name__ == '__main__':
     parser_meta = subparsers.add_parser("meta", help="Enter meta mode")
 
     parser_da = subparsers.add_parser("da", help="Run da special commands")
-    da_cmds = parser_da.add_subparsers(dest='subcmd', help='Commands: peek poke keys unlock')
+    da_cmds = parser_da.add_subparsers(dest='subcmd', help='Commands: peek poke keys unlock memdump seccfg rpmb efuse')
+    da_efuse = da_cmds.add_parser("efuse", help="Read efuses")
+    da_efuse.add_argument('--preloader', help='Set the preloader filename for dram config')
     da_peek = da_cmds.add_parser("peek", help="Read memory")
     da_peek.add_argument('--preloader', help='Set the preloader filename for dram config')
     da_dump = da_cmds.add_parser("memdump", help="Dump whole memory areas")
@@ -355,10 +357,7 @@ if __name__ == '__main__':
     parser_ro.add_argument('--parttype', help='Partition type\n' +
                                               '\t\tEMMC: [user, boot1, boot2, gp1, gp2, gp3, gp4, rpmb]' +
                                               '\t\tUFS: [lu0, lu1, lu2, lu0_lu1]')
-
-    parser_ro.add_argument('--filename', help='Optional filename')
     parser_ro.add_argument('--crash', help='Enforce crash if device is in pl mode to enter brom mode')
-    parser_ro.add_argument('--socid', help='Read Soc ID')
 
     parser_w.add_argument('partitionname', help='Partition to write (separate by comma for multiple partitions)')
     parser_w.add_argument('filename', help='Filename for writing (separate by comma for multiple filenames)')

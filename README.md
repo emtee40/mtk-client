@@ -193,6 +193,13 @@ Example:
 python mtk payload --metamode FASTBOOT
 ```
 
+### Read efuses
+
+Example:
+
+```
+python mtk da efuse
+```
 
 ### Unlock bootloader
 
