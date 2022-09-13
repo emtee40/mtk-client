@@ -316,7 +316,7 @@ hwconfig = {
         ap_dma_mem=0xC100119C,
         # blacklist
         damode=damodes.DEFAULT,
-        dacode=0x6575,
+        dacode=0x6572,
         name="MT6575/77"),
     0x6577: chipconfig(  # var1
         watchdog=0xC0000000,

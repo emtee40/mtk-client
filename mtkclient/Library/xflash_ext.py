@@ -612,12 +612,11 @@ class xflashext(metaclass=LogBase):
                 self.info("PROV        : " + hexlify(provkey).decode('utf-8'))
                 self.config.hwparam.writesetting("provkey", hexlify(provkey).decode('utf-8'))
                 retval["provkey"] = hexlify(provkey).decode('utf-8')
-            """
             hrid = self.xflash.get_hrid()
             if hrid is not None:
                 self.info("HRID        : " + hexlify(hrid).decode('utf-8'))
-                open(os.path.join("logs", "hrid.txt"), "wb").write(hexlify(hrid))
-            """
+                self.config.hwparam.writesetting("hrid", hexlify(hrid).decode('utf-8'))
+                retval["hrid"] = hexlify(hrid).decode('utf-8')
             return retval
         elif self.config.chipconfig.sej_base is not None:
             if os.path.exists("tee.json"):
