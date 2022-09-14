@@ -3,6 +3,7 @@ import os
 from struct import unpack, pack
 
 from mtkclient.config.payloads import pathconfig
+from mtkclient.config.brom_config import efuse
 from mtkclient.Library.error import ErrorHandler, ErrorCodes_XFlash
 from mtkclient.Library.hwcrypto import crypto_setup, hwcrypto
 from mtkclient.Library.utils import LogBase, progress, logsetup, find_binary
@@ -557,6 +558,16 @@ class xflashext(metaclass=LogBase):
                                    aeskey1=aeskey1, aeskey2=aeskey2)
                     open("tee_"+hex(idx)+".dec","wb").write(rdata)
 
+    def read_fuse(self, idx):
+        if self.mtk.config.chipconfig.efuse_addr is not None:
+            base = self.mtk.config.chipconfig.efuse_addr
+            hwcode = self.mtk.config.hwcode
+            efuseconfig = efuse(base,hwcode)
+            addr = efuseconfig.efuses[idx]
+            data = bytearray(self.mtk.daloader.peek(addr=addr, length=4))
+            return data
+        return None
+
     def generate_keys(self):
         hwc = self.cryptosetup()
         meid = self.config.get_meid()
@@ -614,10 +625,25 @@ class xflashext(metaclass=LogBase):
                 self.config.hwparam.writesetting("provkey", hexlify(provkey).decode('utf-8'))
                 retval["provkey"] = hexlify(provkey).decode('utf-8')
             hrid = self.xflash.get_hrid()
+            rid = self.xflash.get_random_id()
             if hrid is not None:
                 self.info("HRID        : " + hexlify(hrid).decode('utf-8'))
                 self.config.hwparam.writesetting("hrid", hexlify(hrid).decode('utf-8'))
                 retval["hrid"] = hexlify(hrid).decode('utf-8')
+            else:
+                val = self.read_fuse(0xC)
+                if val is not None:
+                    val += self.read_fuse(0xD)
+                    val += self.read_fuse(0xE)
+                    val += self.read_fuse(0xF)
+                    self.info("HRID        : " + hexlify(val).decode('utf-8'))
+                    self.config.hwparam.writesetting("hrid", hexlify(val).decode('utf-8'))
+                    retval["hrid"] = hexlify(val).decode('utf-8')
+
+            if rid is not None:
+                self.info("RID        : " + hexlify(rid).decode('utf-8'))
+                self.config.hwparam.writesetting("rid", hexlify(rid).decode('utf-8'))
+                retval["rid"] = hexlify(rid).decode('utf-8')
             return retval
         elif self.config.chipconfig.sej_base is not None:
             if os.path.exists("tee.json"):
