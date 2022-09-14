@@ -641,7 +641,7 @@ class xflashext(metaclass=LogBase):
                     retval["hrid"] = hexlify(val).decode('utf-8')
 
             if rid is not None:
-                self.info("RID        : " + hexlify(rid).decode('utf-8'))
+                self.info("RID         : " + hexlify(rid).decode('utf-8'))
                 self.config.hwparam.writesetting("rid", hexlify(rid).decode('utf-8'))
                 retval["rid"] = hexlify(rid).decode('utf-8')
             return retval
