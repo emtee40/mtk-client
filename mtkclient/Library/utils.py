@@ -173,7 +173,7 @@ class progress:
 
     def show_progress(self, prefix, pos, total, display=True):
         if pos != 0.0:
-            prog = round(float(pos) / float(total) * float(100), 1)
+            prog = round(float(pos) / float(total) * float(100), 2)
         else:
             prog = 0.0
         if prog == 0.0:

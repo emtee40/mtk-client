@@ -563,7 +563,7 @@ class DA_handler(metaclass=LogBase):
                 pos += len(data)
                 bytesread += len(data)
                 bytestoread -= len(data)
-            except:
+            except Exception as err:
                 pass
         pg.show_progress("Dump:", 100, 100)
         if filename is not None:
@@ -718,8 +718,8 @@ class DA_handler(metaclass=LogBase):
                 directory = args.directory
                 if not os.path.exists(directory):
                     os.mkdir(directory)
-                dramaddr = 0x20000000
-                dramsize = 0x100000000 - 0x20000000 # 0xE0000000
+                dramaddr = 0x40000000
+                dramsize = 0x100000000 - 0x40000000 # 0xE0000000
                 bromaddr = 0
                 bromsize = 0x200000
                 sramaddr = 0x200000
@@ -735,15 +735,15 @@ class DA_handler(metaclass=LogBase):
                 self.info("Dumping brom...")
                 self.da_peek(addr=bromaddr, length=bromsize,
                              filename=os.path.join(directory, "dump_brom.bin"))
-                self.info(f"Dumping sram at {hex(sramaddr)}, size {hex(sramsize)}...")
-                self.da_peek(addr=sramaddr, length=sramsize,
-                             filename=os.path.join(directory, "dump_sram.bin"))
                 self.info(f"Dumping dram at {hex(dramaddr)}, size {hex(dramsize-dramaddr)}...")
                 self.da_peek(addr=dramaddr, length=0x100000000-dramaddr,
                              filename=os.path.join(directory, f"dump_dram_{hex(dramaddr)}.bin"))
                 self.info(f"Dumping efuse at {hex(efuseaddr)}, size at {hex(efusesize)}...")
                 self.da_peek(addr=efuseaddr, length=efusesize,
                              filename=os.path.join(directory, "dump_efuse.bin"))
+                self.info(f"Dumping sram at {hex(sramaddr)}, size {hex(sramsize)}...")
+                self.da_peek(addr=sramaddr, length=sramsize,
+                             filename=os.path.join(directory, "dump_sram.bin"))
             elif subcmd == "poke":
                 addr = getint(args.address)
                 filename = args.filename

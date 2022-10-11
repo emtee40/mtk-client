@@ -172,17 +172,19 @@ class xflashext(metaclass=LogBase):
     def patch_da1(self, da1):
         # Patch error 0xC0020039
         self.info("Patching da1 ...")
-        da1patched = bytearray(da1)
-        da1patched = self.mtk.patch_preloader_security(da1patched)
-        # Patch security
+        if da1 is not None:
+            da1patched = bytearray(da1)
+            da1patched = self.mtk.patch_preloader_security(da1patched)
+            # Patch security
 
-        da_version_check = find_binary(da1, b"\x1F\xB5\x00\x23\x01\xA8\x00\x93\x00\xF0\xDE\xFE")
-        if da_version_check is not None:
-            da1patched=bytearray(da1patched)
-            da1patched[da_version_check:da_version_check+4] = b"\x00\x20\x70\x47"
+            da_version_check = find_binary(da1, b"\x1F\xB5\x00\x23\x01\xA8\x00\x93\x00\xF0\xDE\xFE")
+            if da_version_check is not None:
+                da1patched=bytearray(da1patched)
+                da1patched[da_version_check:da_version_check+4] = b"\x00\x20\x70\x47"
+            else:
+                self.warning("Error on patching da1 version check...")
         else:
-            self.warning("Error on patching da1 version check...")
-
+            print("Error, couldn't find da1.")
         return da1patched
 
     def patch_da2(self, da2):

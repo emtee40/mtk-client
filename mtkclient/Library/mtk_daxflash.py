@@ -1040,6 +1040,9 @@ class DAXFlash(metaclass=LogBase):
             return False
         loader = self.daconfig.loader
         self.info(f"Uploading xflash stage 1 from {os.path.basename(loader)}")
+        if not os.path.exists(loader):
+            self.info(f"Couldn't find {loader}, aborting.")
+            return False
         with open(loader, 'rb') as bootldr:
             # stage 1
             da1offset = self.daconfig.da_loader.region[1].m_buf

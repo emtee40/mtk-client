@@ -683,6 +683,15 @@ class DALegacy(metaclass=LogBase):
             self.patch = True
         self.lft = legacyext(self.mtk, self, loglevel)
 
+    def custom_F0(self, addr: int, dwords: int):
+        if self.usbwrite(self.Cmd.GET_FAT_INFO_CMD):  # 0xF0
+            self.usbwrite(pack(">I", addr))
+            self.usbwrite(pack(">I", dwords))
+            res=[unpack(">I", self.usbread(4))[0] for _ in range(dwords)]
+            ack = self.usbread(1)
+            if ack == self.Rsp.ACK:
+                return res
+
     def read_reg32(self, addr: int):
         if self.usbwrite(self.Cmd.READ_REG32_CMD):  # 0x7A
             self.usbwrite(pack(">I", addr))

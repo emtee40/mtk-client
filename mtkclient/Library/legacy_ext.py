@@ -52,6 +52,34 @@ class legacyext(metaclass=LogBase):
             self.info("Legacy DA2 is patched.")
         else:
             self.warning("Legacy address check not patched.")
+        check_addr2 = find_binary(da2, bytes.fromhex("30 B5 85 B0 03 AB 4A F2 C8 64 68 46 01 A9 02"))
+        if check_addr2 is not None:
+            """
+            PUSH            {R4-R6,LR}
+            MOV             R4, #0x8004A6C8
+            LDR             R3, [R4,#0x24]
+            BLX             R3
+            LDR             R3, [R4,#0x24]
+            MOV             R5, R0
+            BLX             R3
+            MOV             R6, R0
+            LDR             R0, [R5]
+            ADD.W           R5, R5, #4
+            LDR             R3, [R4,#0x28]
+            BLX             R3
+            SUB.W           R6, R6, #1
+            CMP             R6, #0
+            BNE             0x8000C1B6
+            MOVS            R0, #0x5A
+            LDR             R3, [R4,#0x10]
+            POP.W           {R4-R6,LR}
+            BX              R3
+            """
+            cmdF0 = bytes.fromhex("70 B5 4A F2 C8 64 C8 F2 04 04 63 6A 98 47 63 6A 05 46 98 47 06 46 4F F0 00 01 28 68 05 F1 04 05 A3 6A 98 47 A6 F1 01 06 00 2E F6 D1 5A 20 23 69 BD E8 70 40 18 47")
+            da2patched[check_addr2:check_addr2+len(cmdF0)]=cmdF0
+            self.info("Legacy DA2 CMD F0 is patched.")
+        else:
+            self.warning("Legacy DA2 CMD F0 not patched.")
         return da2patched
 
     def fix_hash(self, da1, da2, da2sig_len, hashpos, hashmode):
@@ -79,11 +107,9 @@ class legacyext(metaclass=LogBase):
         dwords=length//4
         if length%4!=0:
             dwords+=1
-        data = bytearray()
-        for val in self.readmem(addr, dwords):
-            if val is None:
-                return None
-            data.extend(pack(">I",val))
+        #data = bytearray(b"".join(int.to_bytes(val,4,'little') for val in [self.legacy.read_reg32(addr + pos * 4) for pos in range(dwords)]))
+        res = self.legacy.custom_F0(addr, dwords)
+        data = bytearray(b"".join([int.to_bytes(val,4,'little') for val in res]))
         return data[:length]
 
     def writeregister(self, addr, dwords):
