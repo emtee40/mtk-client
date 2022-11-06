@@ -26,7 +26,7 @@ setup(
     'pyusb',
     'pyserial',
     'pycryptodome',
-    'PySide2',
+    'PySide6',
     'mock'
     ],
     author='B. Kerler',
