@@ -668,6 +668,11 @@ class xflashext(metaclass=LogBase):
                     self.config.hwparam.writesetting("mtee", hexlify(mtee).decode('utf-8'))
                     self.info("MTEE        : " + hexlify(mtee).decode('utf-8'))
                     retval["mtee"] = hexlify(mtee).decode('utf-8')
+                mtee3 = hwc.aes_hwcrypt(mode="mtee3", btype="sej")
+                if mtee3:
+                    self.config.hwparam.writesetting("mtee3", hexlify(mtee3).decode('utf-8'))
+                    self.info("MTEE3       : " + hexlify(mtee3).decode('utf-8'))
+                    retval["mtee3"] = hexlify(mtee3).decode('utf-8')
             else:
                 self.info("SEJ Mode: No meid found. Are you in brom mode ?")
         if self.config.chipconfig.gcpu_base is not None:

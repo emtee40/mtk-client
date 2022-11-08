@@ -70,6 +70,8 @@ class hwcrypto(metaclass=LogBase):
                 return self.sej.generate_rpmb(meid=data, otp=otp)
             elif mode == "mtee":
                 return self.sej.generate_mtee(otp=otp)
+            elif mode == "mtee3":
+                return self.sej.generate_mtee_hw(otp=otp)
         elif btype == "gcpu":
             addr = self.setup.da_payload_addr
             if mode == "ecb":
@@ -78,7 +80,7 @@ class hwcrypto(metaclass=LogBase):
                 if self.gcpu.aes_setup_cbc(addr=addr, data=data, iv=iv, encrypt=encrypt):
                     return self.gcpu.aes_read_cbc(addr=addr, encrypt=encrypt)
             elif mode == "mtee":
-                if self.hwcode == 0x321:
+                if self.hwcode in [0x321]:
                     return self.gcpu.mtk_gcpu_mtee_6735()
                 elif self.hwcode in [0x8167,0x8163]:
                     return self.gcpu.mtk_gcpu_mtee_8167()

@@ -146,6 +146,10 @@ class sej(metaclass=LogBase):
         0x168BEE66, 0x1284B684, 0xDF3BCE3A, 0x217F6FA2
     ]
 
+    g_HACC_CFG_MTEE = [
+        0x9ED40400, 0xE884A1, 0xE3F083BD, 0x2F4E6D8A
+    ]
+
     def __init__(self, setup, loglevel=logging.INFO):
         self.__logger = self.__logger
         self.hwcode = setup.hwcode
@@ -255,6 +259,59 @@ class sej(metaclass=LogBase):
         # self.tz_dapc_set_master_transaction(4,1)
         # self.crypto_secure(1)
         return
+
+    def SEJ_Init_MTEE(self, encrypt=True, iv=None):
+        if iv is None:
+            iv = self.g_HACC_CFG_MTEE
+        acon_setting = self.HACC_AES_CHG_BO_OFF | self.HACC_AES_CBC | self.HACC_AES_128
+        if encrypt:
+            acon_setting |= self.HACC_AES_ENC
+        else:
+            acon_setting |= self.HACC_AES_DEC
+
+        # clear key
+        self.reg.HACC_AKEY0 = 0
+        self.reg.HACC_AKEY1 = 0
+        self.reg.HACC_AKEY2 = 0
+        self.reg.HACC_AKEY3 = 0
+        self.reg.HACC_AKEY4 = 0
+        self.reg.HACC_AKEY5 = 0
+        self.reg.HACC_AKEY6 = 0
+        self.reg.HACC_AKEY7 = 0
+
+        self.reg.HACC_ACON2 = self.HACC_AES_CBC
+        self.reg.HACC_ACONK = self.HACC_AES_BK2C
+        self.reg.HACC_ACONK |= 0x100
+        self.reg.HACC_ACON = self.HACC_AES_CLR
+
+        self.reg.HACC_ACFG0 = iv[0]
+        self.reg.HACC_ACFG1 = iv[1]
+        self.reg.HACC_ACFG2 = iv[2]
+        self.reg.HACC_ACFG3 = iv[3]
+
+        for val in [[0x2d44bb70,0xa744d227,0xd0a9864b,0x83ffc244],
+                    [0x7ec8266b,0x43e80fb2,0x1a6348a,0x2067f9a0],
+                    [0x54536405,0xd546a6b1,0x1cc3ec3a,0xde377a83]]:
+            self.reg.HACC_ASRC0 = val[0]
+            self.reg.HACC_ASRC1 = val[1]
+            self.reg.HACC_ASRC2 = val[2]
+            self.reg.HACC_ASRC3 = val[3]
+            self.reg.HACC_ACON2 = self.HACC_AES_START
+            i = 0
+            while i < 20:
+                if self.reg.HACC_ACON2 & self.HACC_AES_RDY != 0:
+                    break
+                i += 1
+            if i == 20:
+                self.error("SEJ Hardware seems not to be configured correctly. Results may be wrong.")
+
+        self.reg.HACC_ACON2 = self.HACC_AES_CBC
+        self.reg.HACC_ACFG0 = iv[0]
+        self.reg.HACC_ACFG1 = iv[1]
+        self.reg.HACC_ACFG2 = iv[2]
+        self.reg.HACC_ACFG3 = iv[3]
+        self.reg.HACC_ACON  = acon_setting
+        self.reg.HACC_ACONK = 0x0
 
     def SEJ_Init(self, encrypt=True, iv=None):
         if iv is None:
@@ -549,3 +606,14 @@ class sej(metaclass=LogBase):
         self.sej_key_config(meid)
         res1 = self.sej_do_aes(True, None, meid, 32)
         return self.sej_do_aes(True, None, res1, 32)
+
+    def generate_mtee_hw(self, otp=None):
+        if otp is not None:
+            self.sej_set_otp(otp)
+        self.info("HACC init")
+        self.SEJ_Init_MTEE(encrypt=True)
+        self.info("HACC run")
+        dec = self.SEJ_Run(bytes.fromhex("7777772E6D6564696174656B2E636F6D30313233343536373839414243444546"))
+        self.info("HACC terminate")
+        self.SEJ_Terminate()
+        return dec

@@ -430,6 +430,12 @@ class Stage2(metaclass=LogBase):
                 self.info("MTEE        : " + hexlify(mtee).decode('utf-8'))
                 self.config.hwparam.writesetting("mtee", hexlify(mtee).decode('utf-8'))
                 retval["mtee"] = hexlify(mtee).decode('utf-8')
+            mtee3 = self.hwcrypto.aes_hwcrypt(mode="mtee3", otp=otp, btype="sej")
+            if mtee3:
+                self.info("MTEE3       : " + hexlify(mtee3).decode('utf-8'))
+                self.config.hwparam.writesetting("mtee3", hexlify(mtee3).decode('utf-8'))
+                retval["mtee3"] = hexlify(mtee3).decode('utf-8')
+
             keyinfo+="\nKeys :\n-----------------------------------------\n"
             keyinfo+="RPMB: " + hexlify(rpmbkey).decode('utf-8')
             keyinfo+="\n"
