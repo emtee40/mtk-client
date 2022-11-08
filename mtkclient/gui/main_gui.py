@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'main_gui.ui'
+## Form generated from reading UI file 'main_guiarqDOg.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.2.1
+## Created by: Qt User Interface Compiler version 6.4.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -28,7 +28,7 @@ class Ui_MainWindow(object):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
         MainWindow.setWindowModality(Qt.NonModal)
-        MainWindow.resize(777, 720)
+        MainWindow.resize(746, 720)
         sizePolicy = QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -77,276 +77,7 @@ class Ui_MainWindow(object):
         self.centralwidget.setObjectName(u"centralwidget")
         self.gridLayout_8 = QGridLayout(self.centralwidget)
         self.gridLayout_8.setObjectName(u"gridLayout_8")
-        self.connectInfo = QWidget(self.centralwidget)
-        self.connectInfo.setObjectName(u"connectInfo")
-        sizePolicy1 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-        sizePolicy1.setHorizontalStretch(0)
-        sizePolicy1.setVerticalStretch(0)
-        sizePolicy1.setHeightForWidth(self.connectInfo.sizePolicy().hasHeightForWidth())
-        self.connectInfo.setSizePolicy(sizePolicy1)
-        self.connectInfo.setMinimumSize(QSize(0, 0))
-        self.connectInfo.setMaximumSize(QSize(16777215, 0))
-        self.verticalLayout_6 = QVBoxLayout(self.connectInfo)
-        self.verticalLayout_6.setSpacing(0)
-        self.verticalLayout_6.setObjectName(u"verticalLayout_6")
-        self.verticalLayout_6.setSizeConstraint(QLayout.SetDefaultConstraint)
-        self.verticalLayout_6.setContentsMargins(0, 0, 0, 0)
-        self.horizontalLayout_4 = QHBoxLayout()
-        self.horizontalLayout_4.setSpacing(0)
-        self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
-        self.horizontalSpacer_2 = QSpacerItem(5, 20, QSizePolicy.Minimum, QSizePolicy.Minimum)
-
-        self.horizontalLayout_4.addItem(self.horizontalSpacer_2)
-
-        self.horizontalSpacer_7 = QSpacerItem(9, 20, QSizePolicy.Fixed, QSizePolicy.Minimum)
-
-        self.horizontalLayout_4.addItem(self.horizontalSpacer_7)
-
-        self.initStepsImage = QLabel(self.connectInfo)
-        self.initStepsImage.setObjectName(u"initStepsImage")
-        self.initStepsImage.setMinimumSize(QSize(685, 330))
-        self.initStepsImage.setMaximumSize(QSize(685, 330))
-        self.initStepsImage.setFrameShape(QFrame.NoFrame)
-        self.initStepsImage.setPixmap(QPixmap(u"images/initsteps.png"))
-        self.initStepsImage.setScaledContents(True)
-        self.initStepsImage.setAlignment(Qt.AlignHCenter|Qt.AlignTop)
-        self.initStepsImage.setWordWrap(False)
-        self.initStepsImage.setMargin(0)
-
-        self.horizontalLayout_4.addWidget(self.initStepsImage)
-
-        self.horizontalSpacer = QSpacerItem(5, 18, QSizePolicy.Minimum, QSizePolicy.Minimum)
-
-        self.horizontalLayout_4.addItem(self.horizontalSpacer)
-
-
-        self.verticalLayout_6.addLayout(self.horizontalLayout_4)
-
-        self.horizontalLayout_3 = QHBoxLayout()
-        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
-        self.horizontalSpacer_6 = QSpacerItem(10, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
-
-        self.horizontalLayout_3.addItem(self.horizontalSpacer_6)
-
-        self.label_2 = QLabel(self.connectInfo)
-        self.label_2.setObjectName(u"label_2")
-        sizePolicy2 = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
-        sizePolicy2.setHorizontalStretch(0)
-        sizePolicy2.setVerticalStretch(0)
-        sizePolicy2.setHeightForWidth(self.label_2.sizePolicy().hasHeightForWidth())
-        self.label_2.setSizePolicy(sizePolicy2)
-        self.label_2.setMinimumSize(QSize(195, 0))
-        self.label_2.setMaximumSize(QSize(195, 16777215))
-        self.label_2.setAlignment(Qt.AlignHCenter|Qt.AlignTop)
-        self.label_2.setWordWrap(True)
-        self.label_2.setMargin(5)
-
-        self.horizontalLayout_3.addWidget(self.label_2)
-
-        self.horizontalSpacer_3 = QSpacerItem(50, 0, QSizePolicy.Fixed, QSizePolicy.Minimum)
-
-        self.horizontalLayout_3.addItem(self.horizontalSpacer_3)
-
-        self.label_3 = QLabel(self.connectInfo)
-        self.label_3.setObjectName(u"label_3")
-        sizePolicy2.setHeightForWidth(self.label_3.sizePolicy().hasHeightForWidth())
-        self.label_3.setSizePolicy(sizePolicy2)
-        self.label_3.setMinimumSize(QSize(195, 10))
-        self.label_3.setMaximumSize(QSize(195, 16777215))
-        self.label_3.setAlignment(Qt.AlignHCenter|Qt.AlignTop)
-        self.label_3.setWordWrap(True)
-        self.label_3.setMargin(5)
-
-        self.horizontalLayout_3.addWidget(self.label_3)
-
-        self.horizontalSpacer_4 = QSpacerItem(50, 0, QSizePolicy.Fixed, QSizePolicy.Minimum)
-
-        self.horizontalLayout_3.addItem(self.horizontalSpacer_4)
-
-        self.label_4 = QLabel(self.connectInfo)
-        self.label_4.setObjectName(u"label_4")
-        sizePolicy2.setHeightForWidth(self.label_4.sizePolicy().hasHeightForWidth())
-        self.label_4.setSizePolicy(sizePolicy2)
-        self.label_4.setMinimumSize(QSize(195, 0))
-        self.label_4.setMaximumSize(QSize(195, 16777215))
-        self.label_4.setScaledContents(False)
-        self.label_4.setAlignment(Qt.AlignHCenter|Qt.AlignTop)
-        self.label_4.setWordWrap(True)
-        self.label_4.setMargin(5)
-
-        self.horizontalLayout_3.addWidget(self.label_4)
-
-        self.horizontalSpacer_5 = QSpacerItem(10, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
-
-        self.horizontalLayout_3.addItem(self.horizontalSpacer_5)
-
-
-        self.verticalLayout_6.addLayout(self.horizontalLayout_3)
-
-        self.horizontalLayout_5 = QHBoxLayout()
-        self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
-        self.horizontalSpacer_showdebug = QSpacerItem(50, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
-
-        self.horizontalLayout_5.addItem(self.horizontalSpacer_showdebug)
-
-        self.showdebugbtn = QPushButton(self.connectInfo)
-        self.showdebugbtn.setObjectName(u"showdebugbtn")
-
-        self.horizontalLayout_5.addWidget(self.showdebugbtn)
-
-
-        self.verticalLayout_6.addLayout(self.horizontalLayout_5)
-
-
-        self.gridLayout_8.addWidget(self.connectInfo, 2, 0, 1, 1)
-
-        self.line_2 = QFrame(self.centralwidget)
-        self.line_2.setObjectName(u"line_2")
-        self.line_2.setFrameShape(QFrame.HLine)
-        self.line_2.setFrameShadow(QFrame.Sunken)
-
-        self.gridLayout_8.addWidget(self.line_2, 1, 0, 1, 1)
-
-        self.topInfo = QHBoxLayout()
-        self.topInfo.setObjectName(u"topInfo")
-        self.verticalLayout = QVBoxLayout()
-        self.verticalLayout.setObjectName(u"verticalLayout")
-        self.title = QLabel(self.centralwidget)
-        self.title.setObjectName(u"title")
-        self.title.setEnabled(True)
-        sizePolicy3 = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        sizePolicy3.setHorizontalStretch(0)
-        sizePolicy3.setVerticalStretch(0)
-        sizePolicy3.setHeightForWidth(self.title.sizePolicy().hasHeightForWidth())
-        self.title.setSizePolicy(sizePolicy3)
-        self.title.setMinimumSize(QSize(0, 24))
-        self.title.setMaximumSize(QSize(16777215, 20))
-        font = QFont()
-        font.setFamilies([u"Arial"])
-        font.setPointSize(18)
-        self.title.setFont(font)
-        self.title.setLineWidth(0)
-        self.title.setTextFormat(Qt.AutoText)
-        self.title.setScaledContents(False)
-        self.title.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignTop)
-        self.title.setWordWrap(False)
-        self.title.setIndent(0)
-
-        self.verticalLayout.addWidget(self.title)
-
-        self.horizontalLayout = QHBoxLayout()
-        self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.logoPic = QLabel(self.centralwidget)
-        self.logoPic.setObjectName(u"logoPic")
-        sizePolicy3.setHeightForWidth(self.logoPic.sizePolicy().hasHeightForWidth())
-        self.logoPic.setSizePolicy(sizePolicy3)
-        self.logoPic.setMinimumSize(QSize(128, 128))
-        self.logoPic.setMaximumSize(QSize(128, 128))
-        self.logoPic.setPixmap(QPixmap(u"images/logo_256.png"))
-        self.logoPic.setScaledContents(True)
-        self.logoPic.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignTop)
-
-        self.horizontalLayout.addWidget(self.logoPic)
-
-        self.copyrightInfo = QLabel(self.centralwidget)
-        self.copyrightInfo.setObjectName(u"copyrightInfo")
-        sizePolicy4 = QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
-        sizePolicy4.setHorizontalStretch(0)
-        sizePolicy4.setVerticalStretch(0)
-        sizePolicy4.setHeightForWidth(self.copyrightInfo.sizePolicy().hasHeightForWidth())
-        self.copyrightInfo.setSizePolicy(sizePolicy4)
-
-        self.horizontalLayout.addWidget(self.copyrightInfo)
-
-
-        self.verticalLayout.addLayout(self.horizontalLayout)
-
-
-        self.topInfo.addLayout(self.verticalLayout)
-
-        self.verticalLayout_7 = QVBoxLayout()
-        self.verticalLayout_7.setSpacing(0)
-        self.verticalLayout_7.setObjectName(u"verticalLayout_7")
-        self.phoneInfoTextbox = QLabel(self.centralwidget)
-        self.phoneInfoTextbox.setObjectName(u"phoneInfoTextbox")
-        sizePolicy5 = QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Expanding)
-        sizePolicy5.setHorizontalStretch(0)
-        sizePolicy5.setVerticalStretch(0)
-        sizePolicy5.setHeightForWidth(self.phoneInfoTextbox.sizePolicy().hasHeightForWidth())
-        self.phoneInfoTextbox.setSizePolicy(sizePolicy5)
-        self.phoneInfoTextbox.setAlignment(Qt.AlignRight|Qt.AlignTop|Qt.AlignTrailing)
-        self.phoneInfoTextbox.setWordWrap(True)
-
-        self.verticalLayout_7.addWidget(self.phoneInfoTextbox)
-
-        self.phoneDebugInfoTextbox = QLabel(self.centralwidget)
-        self.phoneDebugInfoTextbox.setObjectName(u"phoneDebugInfoTextbox")
-        self.phoneDebugInfoTextbox.setStyleSheet(u"color:#888;")
-        self.phoneDebugInfoTextbox.setTextFormat(Qt.PlainText)
-        self.phoneDebugInfoTextbox.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
-
-        self.verticalLayout_7.addWidget(self.phoneDebugInfoTextbox)
-
-        self.horizontalLayout_2 = QHBoxLayout()
-        self.horizontalLayout_2.setSpacing(0)
-        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.horizontalSpacer_8 = QSpacerItem(40, 1, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
-
-        self.horizontalLayout_2.addItem(self.horizontalSpacer_8)
-
-        self.consettingsbtn = QPushButton(self.centralwidget)
-        self.consettingsbtn.setObjectName(u"consettingsbtn")
-        self.consettingsbtn.setMaximumSize(QSize(200, 16777215))
-
-        self.horizontalLayout_2.addWidget(self.consettingsbtn)
-
-
-        self.verticalLayout_7.addLayout(self.horizontalLayout_2)
-
-        self.verticalSpacer_5 = QSpacerItem(20, 2, QSizePolicy.Minimum, QSizePolicy.Maximum)
-
-        self.verticalLayout_7.addItem(self.verticalSpacer_5)
-
-        self.verticalSpacer_6 = QSpacerItem(20, 30, QSizePolicy.Minimum, QSizePolicy.Fixed)
-
-        self.verticalLayout_7.addItem(self.verticalSpacer_6)
-
-
-        self.topInfo.addLayout(self.verticalLayout_7)
-
-        self.widget_3 = QWidget(self.centralwidget)
-        self.widget_3.setObjectName(u"widget_3")
-        sizePolicy3.setHeightForWidth(self.widget_3.sizePolicy().hasHeightForWidth())
-        self.widget_3.setSizePolicy(sizePolicy3)
-        self.widget_3.setMinimumSize(QSize(87, 166))
-        self.pic = QLabel(self.widget_3)
-        self.pic.setObjectName(u"pic")
-        self.pic.setGeometry(QRect(0, 0, 87, 128))
-        sizePolicy6 = QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
-        sizePolicy6.setHorizontalStretch(0)
-        sizePolicy6.setVerticalStretch(0)
-        sizePolicy6.setHeightForWidth(self.pic.sizePolicy().hasHeightForWidth())
-        self.pic.setSizePolicy(sizePolicy6)
-        self.pic.setMinimumSize(QSize(50, 128))
-        self.pic.setMaximumSize(QSize(87, 128))
-        self.pic.setPixmap(QPixmap(u"images/phone_notfound.png"))
-        self.pic.setScaledContents(True)
-        self.pic.setAlignment(Qt.AlignCenter)
-        self.pic.setWordWrap(False)
-        self.spinner_pic = QLabel(self.widget_3)
-        self.spinner_pic.setObjectName(u"spinner_pic")
-        self.spinner_pic.setGeometry(QRect(18, 40, 51, 51))
-        sizePolicy3.setHeightForWidth(self.spinner_pic.sizePolicy().hasHeightForWidth())
-        self.spinner_pic.setSizePolicy(sizePolicy3)
-        self.spinner_pic.setPixmap(QPixmap(u"images/phone_loading.png"))
-        self.spinner_pic.setScaledContents(True)
-        self.spinner_pic.setAlignment(Qt.AlignCenter)
-
-        self.topInfo.addWidget(self.widget_3)
-
-
-        self.gridLayout_8.addLayout(self.topInfo, 0, 0, 1, 1)
-
+        self.gridLayout_8.setSizeConstraint(QLayout.SetDefaultConstraint)
         self.Main = QVBoxLayout()
         self.Main.setSpacing(0)
         self.Main.setObjectName(u"Main")
@@ -355,7 +86,7 @@ class Ui_MainWindow(object):
         self.tabWidget.setEnabled(True)
         sizePolicy.setHeightForWidth(self.tabWidget.sizePolicy().hasHeightForWidth())
         self.tabWidget.setSizePolicy(sizePolicy)
-        self.tabWidget.setMinimumSize(QSize(650, 340))
+        self.tabWidget.setMinimumSize(QSize(100, 340))
         self.tabWidget.setMouseTracking(False)
         self.tabWidget.setAutoFillBackground(False)
         self.readtab = QWidget()
@@ -369,6 +100,9 @@ class Ui_MainWindow(object):
 
         self.readtitle = QLabel(self.readtab)
         self.readtitle.setObjectName(u"readtitle")
+        sizePolicy1 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        sizePolicy1.setHorizontalStretch(0)
+        sizePolicy1.setVerticalStretch(0)
         sizePolicy1.setHeightForWidth(self.readtitle.sizePolicy().hasHeightForWidth())
         self.readtitle.setSizePolicy(sizePolicy1)
         self.readtitle.setMinimumSize(QSize(0, 20))
@@ -376,13 +110,18 @@ class Ui_MainWindow(object):
 
         self.gridLayout_7.addWidget(self.readtitle, 0, 0, 1, 1)
 
+        self.readpartitionsbtn = QPushButton(self.readtab)
+        self.readpartitionsbtn.setObjectName(u"readpartitionsbtn")
+
+        self.gridLayout_7.addWidget(self.readpartitionsbtn, 0, 1, 1, 1)
+
         self.readpartitionList = QScrollArea(self.readtab)
         self.readpartitionList.setObjectName(u"readpartitionList")
-        sizePolicy7 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.MinimumExpanding)
-        sizePolicy7.setHorizontalStretch(0)
-        sizePolicy7.setVerticalStretch(0)
-        sizePolicy7.setHeightForWidth(self.readpartitionList.sizePolicy().hasHeightForWidth())
-        self.readpartitionList.setSizePolicy(sizePolicy7)
+        sizePolicy2 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.MinimumExpanding)
+        sizePolicy2.setHorizontalStretch(0)
+        sizePolicy2.setVerticalStretch(0)
+        sizePolicy2.setHeightForWidth(self.readpartitionList.sizePolicy().hasHeightForWidth())
+        self.readpartitionList.setSizePolicy(sizePolicy2)
         self.readpartitionList.setMinimumSize(QSize(0, 280))
         self.readpartitionList.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.readpartitionList.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
@@ -390,15 +129,10 @@ class Ui_MainWindow(object):
         self.readpartitionList.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 573, 278))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 600, 278))
         self.readpartitionList.setWidget(self.scrollAreaWidgetContents)
 
         self.gridLayout_7.addWidget(self.readpartitionList, 2, 0, 1, 1)
-
-        self.readpartitionsbtn = QPushButton(self.readtab)
-        self.readpartitionsbtn.setObjectName(u"readpartitionsbtn")
-
-        self.gridLayout_7.addWidget(self.readpartitionsbtn, 0, 1, 1, 1)
 
         self.readselectallcheckbox = QCheckBox(self.readtab)
         self.readselectallcheckbox.setObjectName(u"readselectallcheckbox")
@@ -421,8 +155,11 @@ class Ui_MainWindow(object):
 
         self.writepartitionList = QScrollArea(self.writetab)
         self.writepartitionList.setObjectName(u"writepartitionList")
-        sizePolicy5.setHeightForWidth(self.writepartitionList.sizePolicy().hasHeightForWidth())
-        self.writepartitionList.setSizePolicy(sizePolicy5)
+        sizePolicy3 = QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Expanding)
+        sizePolicy3.setHorizontalStretch(0)
+        sizePolicy3.setVerticalStretch(0)
+        sizePolicy3.setHeightForWidth(self.writepartitionList.sizePolicy().hasHeightForWidth())
+        self.writepartitionList.setSizePolicy(sizePolicy3)
         self.writepartitionList.setMinimumSize(QSize(0, 280))
         self.writepartitionList.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.writepartitionList.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
@@ -430,7 +167,7 @@ class Ui_MainWindow(object):
         self.writepartitionList.setWidgetResizable(True)
         self.scrollAreaWidgetContents_2 = QWidget()
         self.scrollAreaWidgetContents_2.setObjectName(u"scrollAreaWidgetContents_2")
-        self.scrollAreaWidgetContents_2.setGeometry(QRect(0, 0, 98, 278))
+        self.scrollAreaWidgetContents_2.setGeometry(QRect(0, 0, 577, 327))
         self.writepartitionList.setWidget(self.scrollAreaWidgetContents_2)
 
         self.gridLayout_6.addWidget(self.writepartitionList, 1, 0, 2, 1)
@@ -452,8 +189,8 @@ class Ui_MainWindow(object):
         self.gridLayout_5.setObjectName(u"gridLayout_5")
         self.erasepartitionList = QScrollArea(self.erasetab)
         self.erasepartitionList.setObjectName(u"erasepartitionList")
-        sizePolicy5.setHeightForWidth(self.erasepartitionList.sizePolicy().hasHeightForWidth())
-        self.erasepartitionList.setSizePolicy(sizePolicy5)
+        sizePolicy3.setHeightForWidth(self.erasepartitionList.sizePolicy().hasHeightForWidth())
+        self.erasepartitionList.setSizePolicy(sizePolicy3)
         self.erasepartitionList.setMinimumSize(QSize(0, 280))
         self.erasepartitionList.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.erasepartitionList.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
@@ -461,7 +198,7 @@ class Ui_MainWindow(object):
         self.erasepartitionList.setWidgetResizable(True)
         self.scrollAreaWidgetContents_3 = QWidget()
         self.scrollAreaWidgetContents_3.setObjectName(u"scrollAreaWidgetContents_3")
-        self.scrollAreaWidgetContents_3.setGeometry(QRect(0, 0, 98, 278))
+        self.scrollAreaWidgetContents_3.setGeometry(QRect(0, 0, 598, 298))
         self.erasepartitionList.setWidget(self.scrollAreaWidgetContents_3)
 
         self.gridLayout_5.addWidget(self.erasepartitionList, 2, 0, 2, 1)
@@ -651,12 +388,12 @@ class Ui_MainWindow(object):
 
         self.logBox = QPlainTextEdit(self.debugtab)
         self.logBox.setObjectName(u"logBox")
-        sizePolicy8 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        sizePolicy8.setHorizontalStretch(0)
-        sizePolicy8.setVerticalStretch(0)
-        sizePolicy8.setHeightForWidth(self.logBox.sizePolicy().hasHeightForWidth())
-        self.logBox.setSizePolicy(sizePolicy8)
-        self.logBox.setMinimumSize(QSize(722, 0))
+        sizePolicy4 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        sizePolicy4.setHorizontalStretch(0)
+        sizePolicy4.setVerticalStretch(0)
+        sizePolicy4.setHeightForWidth(self.logBox.sizePolicy().hasHeightForWidth())
+        self.logBox.setSizePolicy(sizePolicy4)
+        self.logBox.setMinimumSize(QSize(700, 0))
         self.logBox.setStyleSheet(u"")
         self.logBox.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.logBox.setReadOnly(True)
@@ -670,10 +407,6 @@ class Ui_MainWindow(object):
         self.tabWidget.addTab(self.debugtab, "")
 
         self.Main.addWidget(self.tabWidget)
-
-        self.verticalSpacer_4 = QSpacerItem(20, 15, QSizePolicy.Minimum, QSizePolicy.Fixed)
-
-        self.Main.addItem(self.verticalSpacer_4)
 
         self.partProgressText = QLabel(self.centralwidget)
         self.partProgressText.setObjectName(u"partProgressText")
@@ -700,22 +433,279 @@ class Ui_MainWindow(object):
 
         self.gridLayout_8.addLayout(self.Main, 3, 0, 1, 1)
 
+        self.connectInfo = QWidget(self.centralwidget)
+        self.connectInfo.setObjectName(u"connectInfo")
+        self.connectInfo.setEnabled(True)
+        sizePolicy1.setHeightForWidth(self.connectInfo.sizePolicy().hasHeightForWidth())
+        self.connectInfo.setSizePolicy(sizePolicy1)
+        self.connectInfo.setMinimumSize(QSize(0, 0))
+        self.connectInfo.setMaximumSize(QSize(16777215, 0))
+        self.verticalLayout_6 = QVBoxLayout(self.connectInfo)
+        self.verticalLayout_6.setSpacing(0)
+        self.verticalLayout_6.setObjectName(u"verticalLayout_6")
+        self.verticalLayout_6.setSizeConstraint(QLayout.SetDefaultConstraint)
+        self.verticalLayout_6.setContentsMargins(0, 0, 0, 0)
+        self.horizontalLayout_4 = QHBoxLayout()
+        self.horizontalLayout_4.setSpacing(0)
+        self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
+        self.horizontalSpacer_2 = QSpacerItem(5, 20, QSizePolicy.Minimum, QSizePolicy.Minimum)
+
+        self.horizontalLayout_4.addItem(self.horizontalSpacer_2)
+
+        self.horizontalSpacer_7 = QSpacerItem(9, 20, QSizePolicy.Fixed, QSizePolicy.Minimum)
+
+        self.horizontalLayout_4.addItem(self.horizontalSpacer_7)
+
+        self.initStepsImage = QLabel(self.connectInfo)
+        self.initStepsImage.setObjectName(u"initStepsImage")
+        self.initStepsImage.setMinimumSize(QSize(685, 330))
+        self.initStepsImage.setMaximumSize(QSize(685, 330))
+        self.initStepsImage.setFrameShape(QFrame.NoFrame)
+        self.initStepsImage.setPixmap(QPixmap(u"images/initsteps.png"))
+        self.initStepsImage.setScaledContents(True)
+        self.initStepsImage.setAlignment(Qt.AlignHCenter|Qt.AlignTop)
+        self.initStepsImage.setWordWrap(False)
+        self.initStepsImage.setMargin(0)
+
+        self.horizontalLayout_4.addWidget(self.initStepsImage)
+
+        self.horizontalSpacer = QSpacerItem(5, 18, QSizePolicy.Minimum, QSizePolicy.Minimum)
+
+        self.horizontalLayout_4.addItem(self.horizontalSpacer)
+
+
+        self.verticalLayout_6.addLayout(self.horizontalLayout_4)
+
+        self.horizontalLayout_3 = QHBoxLayout()
+        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
+        self.horizontalSpacer_6 = QSpacerItem(10, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.horizontalLayout_3.addItem(self.horizontalSpacer_6)
+
+        self.label_2 = QLabel(self.connectInfo)
+        self.label_2.setObjectName(u"label_2")
+        sizePolicy5 = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
+        sizePolicy5.setHorizontalStretch(0)
+        sizePolicy5.setVerticalStretch(0)
+        sizePolicy5.setHeightForWidth(self.label_2.sizePolicy().hasHeightForWidth())
+        self.label_2.setSizePolicy(sizePolicy5)
+        self.label_2.setMinimumSize(QSize(195, 0))
+        self.label_2.setMaximumSize(QSize(195, 16777215))
+        self.label_2.setAlignment(Qt.AlignHCenter|Qt.AlignTop)
+        self.label_2.setWordWrap(True)
+        self.label_2.setMargin(5)
+
+        self.horizontalLayout_3.addWidget(self.label_2)
+
+        self.horizontalSpacer_3 = QSpacerItem(50, 0, QSizePolicy.Fixed, QSizePolicy.Minimum)
+
+        self.horizontalLayout_3.addItem(self.horizontalSpacer_3)
+
+        self.label_3 = QLabel(self.connectInfo)
+        self.label_3.setObjectName(u"label_3")
+        sizePolicy5.setHeightForWidth(self.label_3.sizePolicy().hasHeightForWidth())
+        self.label_3.setSizePolicy(sizePolicy5)
+        self.label_3.setMinimumSize(QSize(195, 10))
+        self.label_3.setMaximumSize(QSize(195, 16777215))
+        self.label_3.setAlignment(Qt.AlignHCenter|Qt.AlignTop)
+        self.label_3.setWordWrap(True)
+        self.label_3.setMargin(5)
+
+        self.horizontalLayout_3.addWidget(self.label_3)
+
+        self.horizontalSpacer_4 = QSpacerItem(50, 0, QSizePolicy.Fixed, QSizePolicy.Minimum)
+
+        self.horizontalLayout_3.addItem(self.horizontalSpacer_4)
+
+        self.label_4 = QLabel(self.connectInfo)
+        self.label_4.setObjectName(u"label_4")
+        sizePolicy5.setHeightForWidth(self.label_4.sizePolicy().hasHeightForWidth())
+        self.label_4.setSizePolicy(sizePolicy5)
+        self.label_4.setMinimumSize(QSize(195, 0))
+        self.label_4.setMaximumSize(QSize(195, 16777215))
+        self.label_4.setScaledContents(False)
+        self.label_4.setAlignment(Qt.AlignHCenter|Qt.AlignTop)
+        self.label_4.setWordWrap(True)
+        self.label_4.setMargin(5)
+
+        self.horizontalLayout_3.addWidget(self.label_4)
+
+        self.horizontalSpacer_5 = QSpacerItem(10, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.horizontalLayout_3.addItem(self.horizontalSpacer_5)
+
+
+        self.verticalLayout_6.addLayout(self.horizontalLayout_3)
+
+        self.horizontalLayout_5 = QHBoxLayout()
+        self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
+        self.horizontalSpacer_showdebug = QSpacerItem(50, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.horizontalLayout_5.addItem(self.horizontalSpacer_showdebug)
+
+        self.showdebugbtn = QPushButton(self.connectInfo)
+        self.showdebugbtn.setObjectName(u"showdebugbtn")
+
+        self.horizontalLayout_5.addWidget(self.showdebugbtn)
+
+
+        self.verticalLayout_6.addLayout(self.horizontalLayout_5)
+
+
+        self.gridLayout_8.addWidget(self.connectInfo, 2, 0, 1, 1)
+
+        self.line_2 = QFrame(self.centralwidget)
+        self.line_2.setObjectName(u"line_2")
+        self.line_2.setFrameShape(QFrame.HLine)
+        self.line_2.setFrameShadow(QFrame.Sunken)
+
+        self.gridLayout_8.addWidget(self.line_2, 1, 0, 1, 1)
+
+        self.topInfo = QHBoxLayout()
+        self.topInfo.setSpacing(6)
+        self.topInfo.setObjectName(u"topInfo")
+        self.topInfo.setSizeConstraint(QLayout.SetNoConstraint)
+        self.verticalLayout = QVBoxLayout()
+        self.verticalLayout.setObjectName(u"verticalLayout")
+        self.verticalLayout.setSizeConstraint(QLayout.SetDefaultConstraint)
+        self.horizontalLayout = QHBoxLayout()
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.horizontalLayout.setSizeConstraint(QLayout.SetDefaultConstraint)
+        self.horizontalLayout.setContentsMargins(-1, -1, -1, 0)
+        self.logoPic = QLabel(self.centralwidget)
+        self.logoPic.setObjectName(u"logoPic")
+        sizePolicy6 = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        sizePolicy6.setHorizontalStretch(0)
+        sizePolicy6.setVerticalStretch(0)
+        sizePolicy6.setHeightForWidth(self.logoPic.sizePolicy().hasHeightForWidth())
+        self.logoPic.setSizePolicy(sizePolicy6)
+        self.logoPic.setMinimumSize(QSize(158, 158))
+        self.logoPic.setMaximumSize(QSize(158, 158))
+        self.logoPic.setPixmap(QPixmap(u"images/logo_256.png"))
+        self.logoPic.setScaledContents(True)
+        self.logoPic.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignTop)
+
+        self.horizontalLayout.addWidget(self.logoPic)
+
+        self.copyrightInfo = QLabel(self.centralwidget)
+        self.copyrightInfo.setObjectName(u"copyrightInfo")
+        sizePolicy6.setHeightForWidth(self.copyrightInfo.sizePolicy().hasHeightForWidth())
+        self.copyrightInfo.setSizePolicy(sizePolicy6)
+
+        self.horizontalLayout.addWidget(self.copyrightInfo)
+
+
+        self.verticalLayout.addLayout(self.horizontalLayout)
+
+
+        self.topInfo.addLayout(self.verticalLayout)
+
+        self.verticalLayout_7 = QVBoxLayout()
+        self.verticalLayout_7.setSpacing(0)
+        self.verticalLayout_7.setObjectName(u"verticalLayout_7")
+        self.phoneInfoTextbox = QLabel(self.centralwidget)
+        self.phoneInfoTextbox.setObjectName(u"phoneInfoTextbox")
+        sizePolicy7 = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+        sizePolicy7.setHorizontalStretch(0)
+        sizePolicy7.setVerticalStretch(0)
+        sizePolicy7.setHeightForWidth(self.phoneInfoTextbox.sizePolicy().hasHeightForWidth())
+        self.phoneInfoTextbox.setSizePolicy(sizePolicy7)
+        self.phoneInfoTextbox.setAlignment(Qt.AlignRight|Qt.AlignTop|Qt.AlignTrailing)
+        self.phoneInfoTextbox.setWordWrap(True)
+
+        self.verticalLayout_7.addWidget(self.phoneInfoTextbox)
+
+        self.phoneDebugInfoTextbox = QLabel(self.centralwidget)
+        self.phoneDebugInfoTextbox.setObjectName(u"phoneDebugInfoTextbox")
+        sizePolicy8 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
+        sizePolicy8.setHorizontalStretch(0)
+        sizePolicy8.setVerticalStretch(0)
+        sizePolicy8.setHeightForWidth(self.phoneDebugInfoTextbox.sizePolicy().hasHeightForWidth())
+        self.phoneDebugInfoTextbox.setSizePolicy(sizePolicy8)
+        self.phoneDebugInfoTextbox.setMinimumSize(QSize(0, 110))
+        self.phoneDebugInfoTextbox.setMaximumSize(QSize(16777215, 110))
+        self.phoneDebugInfoTextbox.setStyleSheet(u"color:#888;")
+        self.phoneDebugInfoTextbox.setTextFormat(Qt.PlainText)
+        self.phoneDebugInfoTextbox.setAlignment(Qt.AlignBottom|Qt.AlignRight|Qt.AlignTrailing)
+
+        self.verticalLayout_7.addWidget(self.phoneDebugInfoTextbox)
+
+        self.horizontalLayout_2 = QHBoxLayout()
+        self.horizontalLayout_2.setSpacing(0)
+        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
+        self.horizontalLayout_2.setSizeConstraint(QLayout.SetDefaultConstraint)
+        self.horizontalLayout_2.setContentsMargins(-1, 0, -1, -1)
+        self.horizontalSpacer_8 = QSpacerItem(20, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.horizontalLayout_2.addItem(self.horizontalSpacer_8)
+
+        self.consettingsbtn = QPushButton(self.centralwidget)
+        self.consettingsbtn.setObjectName(u"consettingsbtn")
+        sizePolicy6.setHeightForWidth(self.consettingsbtn.sizePolicy().hasHeightForWidth())
+        self.consettingsbtn.setSizePolicy(sizePolicy6)
+        self.consettingsbtn.setMaximumSize(QSize(120, 16777215))
+
+        self.horizontalLayout_2.addWidget(self.consettingsbtn)
+
+
+        self.verticalLayout_7.addLayout(self.horizontalLayout_2)
+
+        self.verticalSpacer_5 = QSpacerItem(20, 2, QSizePolicy.Minimum, QSizePolicy.Maximum)
+
+        self.verticalLayout_7.addItem(self.verticalSpacer_5)
+
+
+        self.topInfo.addLayout(self.verticalLayout_7)
+
+        self.widget_3 = QWidget(self.centralwidget)
+        self.widget_3.setObjectName(u"widget_3")
+        sizePolicy6.setHeightForWidth(self.widget_3.sizePolicy().hasHeightForWidth())
+        self.widget_3.setSizePolicy(sizePolicy6)
+        self.widget_3.setMinimumSize(QSize(90, 158))
+        self.pic = QLabel(self.widget_3)
+        self.pic.setObjectName(u"pic")
+        self.pic.setGeometry(QRect(0, 0, 90, 158))
+        sizePolicy6.setHeightForWidth(self.pic.sizePolicy().hasHeightForWidth())
+        self.pic.setSizePolicy(sizePolicy6)
+        self.pic.setMinimumSize(QSize(90, 158))
+        self.pic.setMaximumSize(QSize(90, 158))
+        self.pic.setPixmap(QPixmap(u"images/phone_notfound.png"))
+        self.pic.setScaledContents(True)
+        self.pic.setAlignment(Qt.AlignCenter)
+        self.pic.setWordWrap(False)
+        self.spinner_pic = QLabel(self.widget_3)
+        self.spinner_pic.setObjectName(u"spinner_pic")
+        self.spinner_pic.setGeometry(QRect(20, 55, 51, 51))
+        sizePolicy6.setHeightForWidth(self.spinner_pic.sizePolicy().hasHeightForWidth())
+        self.spinner_pic.setSizePolicy(sizePolicy6)
+        self.spinner_pic.setPixmap(QPixmap(u"images/phone_loading.png"))
+        self.spinner_pic.setScaledContents(True)
+        self.spinner_pic.setAlignment(Qt.AlignCenter)
+
+        self.topInfo.addWidget(self.widget_3)
+
+
+        self.gridLayout_8.addLayout(self.topInfo, 0, 0, 1, 1)
+
         MainWindow.setCentralWidget(self.centralwidget)
         self.line_2.raise_()
         self.connectInfo.raise_()
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
-        self.menubar.setGeometry(QRect(0, 0, 777, 24))
+        self.menubar.setGeometry(QRect(0, 0, 746, 22))
         self.menuFile = QMenu(self.menubar)
         self.menuFile.setObjectName(u"menuFile")
         MainWindow.setMenuBar(self.menubar)
+#if QT_CONFIG(shortcut)
+        self.logoPic.setBuddy(self.logoPic)
+#endif // QT_CONFIG(shortcut)
 
         self.menubar.addAction(self.menuFile.menuAction())
         self.menuFile.addAction(self.action_Quit)
 
         self.retranslateUi(MainWindow)
 
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(5)
 
 
         QMetaObject.connectSlotsByName(MainWindow)
@@ -741,19 +731,6 @@ class Ui_MainWindow(object):
         self.actionUnlock_device.setText(QCoreApplication.translate("MainWindow", u"Unlock / Lock", None))
         self.actionLock_device.setText(QCoreApplication.translate("MainWindow", u"Lock device", None))
         self.action_Quit.setText(QCoreApplication.translate("MainWindow", u"&Quit", None))
-        self.initStepsImage.setText("")
-        self.label_2.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-weight:600;\">Step 1:</span></p><p>Power off the phone</p></body></html>", None))
-        self.label_3.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-weight:600;\">Step 2:</span></p><p>Connect the USB cable, hold both volume buttons if needed</p></body></html>", None))
-        self.label_4.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>No connection? Try shorting the test point to ground</p></body></html>", None))
-        self.showdebugbtn.setText(QCoreApplication.translate("MainWindow", u"Show Debug Log", None))
-        self.title.setText(QCoreApplication.translate("MainWindow", u"MTKClient v2.0", None))
-        self.logoPic.setText("")
-        self.copyrightInfo.setText(QCoreApplication.translate("MainWindow", u"<b>Made by:</b> Bjoern Kerler<br/><b>Gui by:</b> Geert-Jan Kreileman<br/><br/><b>Credits:</b><br/>kamakiri [xyzz]<br/>linecode exploit [chimera]<br/>Chaosmaster<br/>and all contributers</p>", None))
-        self.phoneInfoTextbox.setText(QCoreApplication.translate("MainWindow", u"No phone detected.", None))
-        self.phoneDebugInfoTextbox.setText("")
-        self.consettingsbtn.setText(QCoreApplication.translate("MainWindow", u"Connection settings", None))
-        self.pic.setText("")
-        self.spinner_pic.setText("")
         self.readDumpGPTCheckbox.setText(QCoreApplication.translate("MainWindow", u"Dump GPT", None))
         self.readtitle.setText(QCoreApplication.translate("MainWindow", u"Select partitions to read", None))
         self.readpartitionsbtn.setText(QCoreApplication.translate("MainWindow", u"Read partition(s)", None))
@@ -805,6 +782,18 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.debugtab), QCoreApplication.translate("MainWindow", u"Debug Log", None))
         self.partProgressText.setText("")
         self.fullProgressText.setText("")
+        self.initStepsImage.setText("")
+        self.label_2.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-weight:600;\">Step 1:</span></p><p>Power off the phone</p></body></html>", None))
+        self.label_3.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-weight:600;\">Step 2:</span></p><p>Connect the USB cable, hold both volume buttons if needed</p></body></html>", None))
+        self.label_4.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>No connection? Try shorting the test point to ground</p></body></html>", None))
+        self.showdebugbtn.setText(QCoreApplication.translate("MainWindow", u"Show Debug Log", None))
+        self.logoPic.setText("")
+        self.copyrightInfo.setText(QCoreApplication.translate("MainWindow", u"<b>Made by:</b> Bjoern Kerler<br/><b>GUI by:</b> Geert-Jan Kreileman<br/><br/><b>Credits:</b><br/>kamakiri [xyzz]<br/>linecode exploit [chimera]<br/>Chaosmaster<br/>and all contributors</p>", None))
+        self.phoneInfoTextbox.setText(QCoreApplication.translate("MainWindow", u"No phone detected.", None))
+        self.phoneDebugInfoTextbox.setText("")
+        self.consettingsbtn.setText(QCoreApplication.translate("MainWindow", u"Connection settings", None))
+        self.pic.setText("")
+        self.spinner_pic.setText("")
         self.menuFile.setTitle(QCoreApplication.translate("MainWindow", u"&File", None))
     # retranslateUi
 
