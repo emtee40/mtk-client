@@ -646,6 +646,12 @@ class xflashext(metaclass=LogBase):
                 self.info("RID         : " + hexlify(rid).decode('utf-8'))
                 self.config.hwparam.writesetting("rid", hexlify(rid).decode('utf-8'))
                 retval["rid"] = hexlify(rid).decode('utf-8')
+            if hwcode == 0x699 and self.config.chipconfig.sej_base is not None:
+                mtee3 = hwc.aes_hwcrypt(mode="mtee3", btype="sej")
+                if mtee3:
+                    self.config.hwparam.writesetting("mtee3", hexlify(mtee3).decode('utf-8'))
+                    self.info("MTEE3       : " + hexlify(mtee3).decode('utf-8'))
+                    retval["mtee3"] = hexlify(mtee3).decode('utf-8')
             return retval
         elif self.config.chipconfig.sej_base is not None:
             if os.path.exists("tee.json"):

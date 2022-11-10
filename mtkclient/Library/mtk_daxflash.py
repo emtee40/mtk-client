@@ -324,6 +324,7 @@ class DAXFlash(metaclass=LogBase):
             status = self.status()
             if status == 0:
                 try:
+                    time.sleep(0.01)
                     if self.xsend(pack("<I", len(emi))):
                         if self.send_param([emi]):
                             self.info(f"DRAM setup passed.")
