@@ -130,6 +130,7 @@ if __name__ == '__main__':
 
     da_dump.add_argument('directory', type=str, help="Directory to dump ram dump files")
     da_dump.add_argument('--preloader', help='Set the preloader filename for dram config')
+    da_dump.add_argument('--loader', type=str, help='Use specific DA loader, disable autodetection')
 
     da_poke.add_argument('address', type=str, help="Address to read from (hex value)")
     da_poke.add_argument('data', type=str, help="Data to write")

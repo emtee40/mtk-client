@@ -159,6 +159,9 @@ class DAconfig(metaclass=LogBase):
             siglen = unpack("<I", data[0x2C:0x2C + 4])[0]
             data = data[:mlen-siglen]
             dramsize = unpack("<I",data[-4:])[0]
+            if dramsize==0:
+                data = data[:-0x800]
+                dramsize = unpack("<I", data[-4:])[0]
             data = data[-dramsize-4:-4]
         bldrstring = b"MTK_BLOADER_INFO_v"
         len_bldrstring = len(bldrstring)
