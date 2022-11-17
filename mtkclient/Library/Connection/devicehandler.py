@@ -38,11 +38,14 @@ class DeviceClass(metaclass=LogBase):
             fh = logging.FileHandler(logfilename, encoding='utf-8')
             self.__logger.addHandler(fh)
 
-    def connect(self, options):
+    def connect(self, EP_IN=-1, EP_OUT=-1):
         raise NotImplementedError()
 
     def setportname(self, portname:str):
         raise NotImplementedError()
+
+    def set_fast_mode(self, enabled:bool):
+        raise NotImplementedError
 
     def close(self, reset=False):
         raise NotImplementedError()

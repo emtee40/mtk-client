@@ -1136,6 +1136,7 @@ class DAXFlash(metaclass=LogBase):
             while not self.mtk.port.cdc.connect():
                 time.sleep(0.5)
             self.info("Connected to preloader")
+            self.mtk.port.cdc.set_fast_mode(True)
             self.config.set_gui_status(self.config.tr("Connected to preloader"))
 
     def upload_da(self):

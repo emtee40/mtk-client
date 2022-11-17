@@ -1104,6 +1104,7 @@ class DALegacy(metaclass=LogBase):
                                 time.sleep(0.5)
                             if self.check_usb_cmd():
                                 self.info("Connected to preloader")
+                                self.mtk.port.cdc.set_fast_mode(True)
                             else:
                                 return False
                         return True

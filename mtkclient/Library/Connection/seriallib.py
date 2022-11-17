@@ -53,6 +53,9 @@ class serial_class(DeviceClass):
     def setportname(self, portname:str):
         self.portname = portname
 
+    def set_fast_mode(self, enabled):
+        pass
+
     def close(self, reset=False):
         if self.connected:
             self.device.close()

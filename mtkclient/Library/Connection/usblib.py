@@ -80,6 +80,7 @@ class usb_class(DeviceClass):
         self.buffer = array.array('B', [0]) * 1048576
         self.vid = None
         self.pid = None
+        self.fast = False
         self.stopbits = None
         self.databits = None
         self.interface = None
@@ -101,6 +102,12 @@ class usb_class(DeviceClass):
                 self.backend.lib.libusb_set_option(self.backend.ctx, 1)
             except:
                 self.backend = None
+
+    def set_fast_mode(self, enabled):
+        if enabled:
+            self.fast = True
+        else:
+            self.fast = False
 
     def verify_data(self, data, pre="RX:"):
         if self.__logger.level == logging.DEBUG:
@@ -416,11 +423,16 @@ class usb_class(DeviceClass):
         epr = self.EP_IN.read
         wMaxPacketSize = self.EP_IN.wMaxPacketSize
         extend = res.extend
-        buffer = self.buffer[:resplen]
+        buffer = None
+        if self.fast:
+            buffer = self.buffer[:resplen]
         while len(res) < resplen:
             try:
-                rlen = epr(buffer, timeout)
-                extend(buffer[:rlen])
+                if self.fast:
+                    rlen = epr(buffer, timeout)
+                    extend(buffer[:rlen])
+                else:
+                    extend(epr(resplen))
             except usb.core.USBError as e:
                 error = str(e.strerror)
                 if "timed out" in error:
