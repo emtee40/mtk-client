@@ -595,6 +595,8 @@ class xflashext(metaclass=LogBase):
         if self.config.chipconfig.dxcc_base is not None:
             self.info("Generating dxcc rpmbkey...")
             rpmbkey = hwc.aes_hwcrypt(btype="dxcc", mode="rpmb")
+            self.info("Generating dxcc mirpmbkey...")
+            mirpmbkey = hwc.aes_hwcrypt(btype="dxcc", mode="mirpmb")
             self.info("Generating dxcc fdekey...")
             fdekey = hwc.aes_hwcrypt(btype="dxcc", mode="fde")
             self.info("Generating dxcc rpmbkey2...")
@@ -605,6 +607,10 @@ class xflashext(metaclass=LogBase):
             # platkey, provkey = hwc.aes_hwcrypt(btype="dxcc", mode="prov")
             # self.info("Provkey     : " + hexlify(provkey).decode('utf-8'))
             # self.info("Platkey     : " + hexlify(platkey).decode('utf-8'))
+            if mirpmbkey is not None:
+                self.info("MIRPMB      : " + hexlify(mirpmbkey).decode('utf-8'))
+                self.config.hwparam.writesetting("mirpmbkey", hexlify(mirpmbkey).decode('utf-8'))
+                retval["mirpmbkey"] = hexlify(mirpmbkey).decode('utf-8')
             if rpmbkey is not None:
                 self.info("RPMB        : " + hexlify(rpmbkey).decode('utf-8'))
                 self.config.hwparam.writesetting("rpmbkey", hexlify(rpmbkey).decode('utf-8'))

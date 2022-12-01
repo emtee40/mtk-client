@@ -1119,6 +1119,16 @@ class dxcc(metaclass=LogBase):
         self.tzcc_clk(0)
         return rpmbkey
 
+    def generate_rpmb_mitee(self):
+        rpmb_ikey = bytes.fromhex("AD1AC6B4BDF4EDB7")
+        rpmb_salt = bytes.fromhex("69EF6584")
+        keylength = 0x10
+        self.tzcc_clk(1)
+        dstaddr = self.da_payload_addr - 0x300
+        rpmbkey = self.SBROM_KeyDerivation(1, rpmb_ikey, rpmb_salt, keylength, dstaddr)
+        self.tzcc_clk(0)
+        return rpmbkey
+
     def salt_func(self, value):
         while True:
             val=self.read32(self.dxcc_base+(0x2AF*4))&1

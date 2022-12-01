@@ -91,6 +91,8 @@ class hwcrypto(metaclass=LogBase):
                 return self.dxcc.generate_rpmb(2)
             elif mode == "rpmb":
                 return self.dxcc.generate_rpmb()
+            elif mode == "mirpmb":
+                return self.dxcc.generate_rpmb_mitee()
             elif mode == "itrustee":
                 return self.dxcc.generate_itrustee_fbe()
             elif mode == "prov":
