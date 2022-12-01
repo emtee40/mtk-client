@@ -680,6 +680,7 @@ class DAXFlash(metaclass=LogBase):
 
     def get_ufs_info(self, display=True):
         resp = self.send_devctrl(self.Cmd.GET_UFS_INFO)
+        print(resp.hex())
         if resp == b'':
             return None
         status = self.status()
@@ -691,28 +692,32 @@ class DAXFlash(metaclass=LogBase):
                 lu1_size = 0
                 lu2_size = 0
                 cid = b""
-                fwver = 0
-
+                fwver = b""
+                serial = b""
             ufs = UfsInfo()
             ufs.type, ufs.block_size, ufs.lu2_size, ufs.lu1_size, ufs.lu0_size = unpack("<IIQQQ",
                                                                                         resp[:(2 * 4) + (3 * 8)])
             pos = (2 * 4) + (3 * 8)
-            ufs.cid = resp[pos:pos + 16]
-            ufs.fwver = unpack("<I", resp[pos + 16:pos + 16 + 4])[0]
+            buf = resp[pos:]
+            ufs.cid = buf[:16]
+            ufs.fwver = buf[22:22+4]
+            ufs.serial = buf[30:30+0xC]
             if ufs.type != 0:
                 if display:
-                    self.info(f"UFS FWVer:    {hex(ufs.fwver)}")
                     self.info(f"UFS Blocksize:{hex(ufs.block_size)}")
                     try:
                         self.info(f"UFS ID:       {ufs.cid[2:].decode('utf-8')}")
                     except:
                         pass
+                    self.info(f"UFS MID:      {hex(ufs.cid[0])}")
                     self.info(f"UFS CID:      {hexlify(ufs.cid).decode('utf-8')}")
-                    if self.config.hwparam is not None:
-                        self.config.set_cid(ufs.cid)
+                    self.info(f"UFS FWVer:    {hexlify(ufs.fwver).decode('utf-8')}")
+                    self.info(f"UFS Serial:   {hexlify(ufs.serial).decode('utf-8')}")
                     self.info(f"UFS LU0 Size: {hex(ufs.lu0_size)}")
                     self.info(f"UFS LU1 Size: {hex(ufs.lu1_size)}")
                     self.info(f"UFS LU2 Size: {hex(ufs.lu2_size)}")
+                if self.config.hwparam is not None:
+                    self.config.set_cid(buf[:0x11+2]+buf[0x16:0x16+4+1]+buf[0x1E:0x1E+0xC])
                 self.mtk.config.pagesize = ufs.block_size
                 self.mtk.daloader.daconfig.pagesize = ufs.block_size
             return ufs
