@@ -680,7 +680,6 @@ class DAXFlash(metaclass=LogBase):
 
     def get_ufs_info(self, display=True):
         resp = self.send_devctrl(self.Cmd.GET_UFS_INFO)
-        print(resp.hex())
         if resp == b'':
             return None
         status = self.status()
