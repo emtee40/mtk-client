@@ -922,7 +922,7 @@ class DALegacy(metaclass=LogBase):
                     if ret == self.Rsp.ACK:
                         self.info("Sending dram info ...")
                         dramlength = len(self.daconfig.emi)
-                        if self.daconfig.emiver in [0x10, 0x14, 0x15]:
+                        if self.daconfig.emiver in [0xF, 0x10, 0x14, 0x15]:
                             dramlength = unpack(">I", self.usbread(0x4))[0]  # 0x000000BC
                             self.info("RAM-Length: " + hex(dramlength))
                             self.usbwrite(self.Rsp.ACK)

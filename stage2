@@ -381,7 +381,7 @@ class Stage2(metaclass=LogBase):
                     retval["socid"] = hexlify(socid).decode('utf-8')
             except Exception as err:
                 pass
-        if self.setup.dxcc_base is not None and mode not in ["sej_aes_decrypt","sej_aes_encrypt","dxcc_sha256"]:
+        if self.setup.dxcc_base is not None and mode not in ["sej_aes_decrypt","sej_aes_encrypt","sej_sst_decrypt","sej_sst_encrypt","dxcc_sha256"]:
             rpmbkey = self.hwcrypto.aes_hwcrypt(btype="dxcc",mode="rpmb")
             rpmb2key = self.hwcrypto.aes_hwcrypt(btype="dxcc", mode="rpmb2")
             fdekey = self.hwcrypto.aes_hwcrypt(btype="dxcc",mode="fde")
@@ -417,7 +417,7 @@ class Stage2(metaclass=LogBase):
                 self.config.hwparam.writesetting("provkey", hexlify(provkey).decode('utf-8'))
                 retval["provkey"] = hexlify(provkey).decode('utf-8')
             return retval, keyinfo
-        elif self.setup.sej_base is not None and mode not in ["sej_aes_decrypt","sej_aes_encrypt","dxcc_sha256"]:
+        elif self.setup.sej_base is not None and mode not in ["sej_aes_decrypt","sej_aes_encrypt","sej_sst_decrypt","sej_sst_encrypt","dxcc_sha256"]:
             retval={}
             rpmbkey = self.hwcrypto.aes_hwcrypt(mode="rpmb", data=meid, otp=otp, btype="sej")
             if rpmbkey:
@@ -454,6 +454,18 @@ class Stage2(metaclass=LogBase):
             keyinfo+="\n"
             keyinfo+="Data: " + hexlify(enc_data).decode('utf-8')
             keyinfo+="\n"
+            return enc_data, keyinfo
+        elif mode == "sej_sst_decrypt":
+            dec_data = self.hwcrypto.aes_hwcrypt(mode="sst", data=data, btype="sej", encrypt=False)
+            keyinfo+="\n"
+            keyinfo+="Data: " + hexlify(dec_data).decode('utf-8')
+            keyinfo+="\n"
+            return dec_data, keyinfo
+        elif mode == "sej_sst_encrypt":
+            enc_data = self.hwcrypto.aes_hwcrypt(mode="sst", data=data, btype="sej", encrypt=True)
+            keyinfo += "\n"
+            keyinfo += "Data: " + hexlify(enc_data).decode('utf-8')
+            keyinfo += "\n"
             return enc_data, keyinfo
         elif mode == "dxcc_sha256":
             sha256val = self.hwcrypto.aes_hwcrypt(mode="sha256", data=data, btype="dxcc")
@@ -565,7 +577,9 @@ def main():
     parser_keys.add_argument('--otp', dest='otp', type=str,
                         help='OTP for keys (dxcc,sej,gcpu)')
     parser_keys.add_argument('--mode', dest='mode', default=None, type=str,
-                        help='keymode (dxcc,sej,gcpu)')
+                        help='keymode (dxcc,sej,gcpu,sej_aes_decrypt,sej_aes_decrypt,sej_sst_decrypt,sej_sst_encrypt')
+    parser_keys.add_argument('--data', dest='data', default=None, type=str,
+                        help='data')
     args = parser.parse_args()
     cmd = args.cmd
     if cmd not in cmds:
@@ -637,7 +651,7 @@ def main():
         elif cmd == "keys":
             keyinfo=""
             data=b""
-            if args.mode == "sej_aes_decrypt" or args.mode == "sej_aes_encrypt":
+            if args.mode in ["sej_aes_decrypt","sej_aes_encrypt","sej_sst_decrypt","sej_sst_encrypt"]:
                 if not args.data:
                     print("Option --data is needed")
                     exit(0)

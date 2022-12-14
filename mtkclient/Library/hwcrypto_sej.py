@@ -6,6 +6,7 @@ from struct import pack, unpack
 from mtkclient.Library.utils import LogBase
 from binascii import hexlify
 
+CustomSeed = bytearray(b"12abcdef")
 
 # SEJ = Security Engine for JTAG protection
 
@@ -448,6 +449,19 @@ class sej(metaclass=LogBase):
         self.tz_pre_init()
         self.info("HACC init")
         self.SEJ_V3_Init(ben=encrypt, iv=iv)
+        self.info("HACC run")
+        buf2 = self.SEJ_Run(buf)
+        self.info("HACC terminate")
+        self.SEJ_Terminate()
+        return buf2
+
+    def hw_aes128_sst_encrypt(self, buf, encrypt=True):
+        seed = (CustomSeed[2]<<16) | (CustomSeed[1]<<8) | CustomSeed[0] | (CustomSeed[3]<<24)
+        iv = [seed,(~seed)&0xFFFFFFFF,(((seed>>16)|(seed<<16))&0xFFFFFFFF),(~((seed>>16)|(seed<<16))&0xFFFFFFFF)]
+
+        self.tz_pre_init()
+        self.info("HACC init")
+        self.SEJ_Init(encrypt=encrypt, iv=iv)
         self.info("HACC run")
         buf2 = self.SEJ_Run(buf)
         self.info("HACC terminate")

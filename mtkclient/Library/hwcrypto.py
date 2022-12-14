@@ -63,9 +63,13 @@ class hwcrypto(metaclass=LogBase):
             if encrypt:
                 if mode == "cbc":
                     return self.sej.hw_aes128_cbc_encrypt(buf=data, encrypt=True)
+                elif mode == "sst":
+                    return self.sej.hw_aes128_sst_encrypt(buf=data, encrypt=True)
             else:
                 if mode == "cbc":
                     return self.sej.hw_aes128_cbc_encrypt(buf=data, encrypt=False)
+                elif mode == "sst":
+                    return self.sej.hw_aes128_sst_encrypt(buf=data, encrypt=False)
             if mode == "rpmb":
                 return self.sej.generate_rpmb(meid=data, otp=otp)
             elif mode == "mtee":

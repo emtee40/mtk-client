@@ -239,3 +239,12 @@ class DAconfig(metaclass=LogBase):
         if self.da_loader is None:
             self.error("No da_loader config set up")
         return self.da_loader
+
+if __name__ == "__main__":
+    from mtkclient.Library.mtk_class import Mtk
+    from mtkclient.Library.mtk_main import Mtk_Config
+    config = Mtk_Config(loglevel=logging.INFO, gui=None,
+                        guiprogress=None)
+    mtkg=Mtk(config=config)
+    dac=DAconfig(mtk=mtkg)
+    dac.extract_emi("/home/bjk/Projects/mtkclient_github/preloader_meizu6795_lwt_l1.bin")
