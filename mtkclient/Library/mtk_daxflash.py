@@ -14,7 +14,36 @@ from mtkclient.Library.partition import Partition
 from mtkclient.config.payloads import pathconfig
 from mtkclient.Library.xflash_ext import xflashext, XCmd
 from mtkclient.Library.settings import hwparam
+from queue import Queue
+from threading import Thread, Event
 
+rq = Queue()
+wq = Queue()
+
+def writedata(filename,rq,event):
+    pos=0
+    with open(filename, "wb") as wf:
+        while True:
+            if event.is_set():
+                break
+            data = rq.get()
+            pos+=len(data)
+            wf.write(data)
+            rq.task_done()
+
+def readdata(filename,wq,pagesize,event):
+    pos=0
+    with open(filename, "rb") as rf:
+        bytestoread=os.stat(filename).st_size
+        while bytestoread>0:
+            if event.is_set():
+                break
+            data = rf.read(pagesize)
+            size = len(data)
+            wq.put(data)
+            pos += size
+            bytestoread-=size
+            wq.task_done()
 
 class NandExtension:
     # uni=0, multi=1
@@ -848,6 +877,7 @@ class DAXFlash(metaclass=LogBase):
         return False
 
     def readflash(self, addr, length, filename, parttype=None, display=True):
+        global rq
         partinfo = self.getstorage(parttype, length)
         if not partinfo:
             return None
@@ -859,34 +889,39 @@ class DAXFlash(metaclass=LogBase):
             bytestoread = length
             total = length
             if filename != "":
-                with open(filename, "wb") as wf:
-                    while bytestoread > 0:
-                        status = self.usbread(4 + 4 + 4)
-                        magic, datatype, slength = unpack("<III", status)
-                        if magic == 0xFEEEEEEF:
-                            resdata = self.usbread(slength)
-                        if slength > 4:
-                            wf.write(resdata)
-                            stmp = pack("<III", self.Cmd.MAGIC, self.DataType.DT_PROTOCOL_FLOW, 4)
-                            data = pack("<I", 0)
-                            self.usbwrite(stmp)
-                            self.usbwrite(data)
-                            bytestoread -= len(resdata)
-                            bytesread += len(resdata)
-                            if display:
-                                self.mtk.daloader.progress.show_progress("Read", bytesread, total, display)
-                        elif slength == 4:
-                            if unpack("<I", resdata)[0] != 0:
-                                break
+                event = Event()
+                worker = Thread(target=writedata, args=(filename, rq, event), daemon=True)
+                worker.start()
+                resdata = bytearray()
+                while bytestoread > 0:
                     status = self.usbread(4 + 4 + 4)
                     magic, datatype, slength = unpack("<III", status)
                     if magic == 0xFEEEEEEF:
                         resdata = self.usbread(slength)
-                        if slength == 4:
-                            if unpack("<I", resdata)[0] == 0:
-                                if display:
-                                    self.mtk.daloader.progress.show_progress("Read", total, total, display)
-                                return True
+                    if len(resdata) > 4:
+                        rq.put(resdata)
+                        stmp = pack("<III", self.Cmd.MAGIC, self.DataType.DT_PROTOCOL_FLOW, 4)
+                        data = pack("<I", 0)
+                        self.usbwrite(stmp)
+                        self.usbwrite(data)
+                        bytestoread -= len(resdata)
+                        bytesread += len(resdata)
+                        if display:
+                            self.mtk.daloader.progress.show_progress("Read", bytesread, total, display)
+                    elif slength == 4:
+                        if unpack("<I", resdata)[0] != 0:
+                            break
+                status = self.usbread(4 + 4 + 4)
+                magic, datatype, slength = unpack("<III", status)
+                if magic == 0xFEEEEEEF:
+                    resdata = self.usbread(slength)
+                    if slength == 4:
+                        if unpack("<I", resdata)[0] == 0:
+                            if display:
+                                self.mtk.daloader.progress.show_progress("Read", total, total, display)
+                            event.set()
+                            return True
+                event.set()
                 return False
             else:
                 buffer = bytearray()
@@ -1135,7 +1170,7 @@ class DAXFlash(metaclass=LogBase):
             self.info("Reconnecting to preloader")
             self.config.set_gui_status(self.config.tr("Reconnecting to preloader"))
             self.set_usb_speed()
-            self.mtk.port.close(reset=False)
+            self.mtk.port.close(reset=True)
             time.sleep(2)
             while not self.mtk.port.cdc.connect():
                 time.sleep(0.5)
