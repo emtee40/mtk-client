@@ -26,6 +26,7 @@ setup(
     'pyusb',
     'pyserial',
     'pycryptodome',
+    'pycryptodomex',
     'PySide6',
     'mock'
     ],
