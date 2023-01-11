@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # (c) B.Kerler 2018-2021 GPLv3 License
 import logging
+import sys
 import time
 import os
 import hashlib
@@ -14,6 +15,22 @@ from mtkclient.Library.partition import Partition
 from mtkclient.config.payloads import pathconfig
 from mtkclient.Library.xflash_ext import xflashext, XCmd
 from mtkclient.Library.settings import hwparam
+from queue import Queue
+from threading import Thread, Event
+
+rq = Queue()
+
+def writedata(filename, rq):
+    pos = 0
+    with open(filename, "wb") as wf:
+        while True:
+            data = rq.get()
+            if data is None:
+                sys.stdout.flush()
+                break
+            pos += len(data)
+            wf.write(data)
+            rq.task_done()
 
 
 class NandExtension:
@@ -848,6 +865,7 @@ class DAXFlash(metaclass=LogBase):
         return False
 
     def readflash(self, addr, length, filename, parttype=None, display=True):
+        global rq
         partinfo = self.getstorage(parttype, length)
         if not partinfo:
             return None
@@ -859,14 +877,15 @@ class DAXFlash(metaclass=LogBase):
             bytestoread = length
             total = length
             if filename != "":
-                with open(filename, "wb") as wf:
-                    while bytestoread > 0:
-                        status = self.usbread(4 + 4 + 4)
-                        magic, datatype, slength = unpack("<III", status)
-                        if magic == 0xFEEEEEEF:
-                            resdata = self.usbread(slength)
+                worker = Thread(target=writedata, args=(filename, rq), daemon=True)
+                worker.start()
+                while bytestoread > 0:
+                    status = self.usbread(4 + 4 + 4)
+                    magic, datatype, slength = unpack("<III", status)
+                    if magic == 0xFEEEEEEF:
+                        resdata = self.usbread(slength)
                         if slength > 4:
-                            wf.write(resdata)
+                            rq.put(resdata)
                             stmp = pack("<III", self.Cmd.MAGIC, self.DataType.DT_PROTOCOL_FLOW, 4)
                             data = pack("<I", 0)
                             self.usbwrite(stmp)
@@ -878,15 +897,19 @@ class DAXFlash(metaclass=LogBase):
                         elif slength == 4:
                             if unpack("<I", resdata)[0] != 0:
                                 break
-                    status = self.usbread(4 + 4 + 4)
-                    magic, datatype, slength = unpack("<III", status)
-                    if magic == 0xFEEEEEEF:
-                        resdata = self.usbread(slength)
-                        if slength == 4:
-                            if unpack("<I", resdata)[0] == 0:
-                                if display:
-                                    self.mtk.daloader.progress.show_progress("Read", total, total, display)
-                                return True
+                status = self.usbread(4 + 4 + 4)
+                magic, datatype, slength = unpack("<III", status)
+                if magic == 0xFEEEEEEF:
+                    resdata = self.usbread(slength)
+                    if slength == 4:
+                        if unpack("<I", resdata)[0] == 0:
+                            if display:
+                                self.mtk.daloader.progress.show_progress("Read", total, total, display)
+                            rq.put(None)
+                            worker.join(60)
+                            return True
+                rq.put(None)
+                worker.join(60)
                 return False
             else:
                 buffer = bytearray()

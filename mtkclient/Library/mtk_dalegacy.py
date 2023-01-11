@@ -14,7 +14,22 @@ from mtkclient.Library.partition import Partition
 from mtkclient.config.payloads import pathconfig
 from mtkclient.Library.legacy_ext import legacyext
 from mtkclient.config.mtk_config import Mtk_Config
+from queue import Queue
+from threading import Thread, Event
 
+rq = Queue()
+
+def writedata(filename, rq):
+    pos = 0
+    with open(filename, "wb") as wf:
+        while True:
+            data = rq.get()
+            if data is None:
+                sys.stdout.flush()
+                break
+            pos += len(data)
+            wf.write(data)
+            rq.task_done()
 
 class norinfo:
     m_nor_ret = None
@@ -1366,6 +1381,7 @@ class DALegacy(metaclass=LogBase):
         return length, parttype
 
     def readflash(self, addr, length, filename, parttype=None, display=True):
+        global rq
         self.mtk.daloader.progress.clear()
         length, parttype = self.get_parttype(length, parttype)
         self.check_usb_cmd()
@@ -1409,24 +1425,27 @@ class DALegacy(metaclass=LogBase):
         if display:
             self.mtk.daloader.progress.show_progress("Read", 0, length, display)
         if filename != "":
-            with open(filename, "wb") as wf:
-                bytestoread = length
-                while bytestoread > 0:
-                    size = bytestoread
-                    if bytestoread > packetsize:
-                        size = packetsize
-                    wf.write(self.usbread(size))
-                    bytestoread -= size
-                    checksum = unpack(">H", self.usbread(1) + self.usbread(1))[0]
-                    self.debug("Checksum: %04X" % checksum)
-                    self.usbwrite(self.Rsp.ACK)
-                    if length > bytestoread:
-                        rpos = length - bytestoread
-                    else:
-                        rpos = 0
-                    self.mtk.daloader.progress.show_progress("Read", rpos, length, display)
-                self.mtk.daloader.progress.show_progress("Read", length, length, display)
-                return True
+            worker = Thread(target=writedata, args=(filename, rq), daemon=True)
+            worker.start()
+            bytestoread = length
+            while bytestoread > 0:
+                size = bytestoread
+                if bytestoread > packetsize:
+                    size = packetsize
+                rq.put(self.usbread(size))
+                bytestoread -= size
+                checksum = unpack(">H", self.usbread(1) + self.usbread(1))[0]
+                self.debug("Checksum: %04X" % checksum)
+                self.usbwrite(self.Rsp.ACK)
+                if length > bytestoread:
+                    rpos = length - bytestoread
+                else:
+                    rpos = 0
+                self.mtk.daloader.progress.show_progress("Read", rpos, length, display)
+            self.mtk.daloader.progress.show_progress("Read", length, length, display)
+            rq.put(None)
+            worker.join(60)
+            return True
         else:
             buffer = bytearray()
             bytestoread = length
