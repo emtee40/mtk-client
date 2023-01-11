@@ -25,7 +25,6 @@ def writedata(filename, rq):
         while True:
             data = rq.get()
             if data is None:
-                sys.stdout.flush()
                 break
             pos += len(data)
             wf.write(data)
