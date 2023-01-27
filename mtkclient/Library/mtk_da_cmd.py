@@ -596,8 +596,8 @@ class DA_handler(metaclass=LogBase):
             self.da_gpt(directory=directory)
         elif cmd == "printgpt":
             data, guid_gpt = mtk.daloader.get_gpt()
-            if guid_gpt is None:
-                self.error("Error reading gpt")
+            if not guid_gpt:
+                self.error("Error reading gpt, please read whole flash using \"mtk rf flash.bin\".")
             else:
                 guid_gpt.print()
         elif cmd == "r":
