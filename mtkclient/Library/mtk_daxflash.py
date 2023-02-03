@@ -649,7 +649,7 @@ class DAXFlash(metaclass=LogBase):
             pos += 2 * 8
             nand.nand_bmt_exist = resp[pos:pos + 1]
             pos += 1
-            nand.nand_id = unpack("<12B", resp[pos:pos + 12])
+            nand.nand_id = bytearray(resp[pos:pos + 12])
             if nand.type != 0:
                 if display:
                     self.info(f"NAND Pagesize:   {hex(nand.page_size)}")
@@ -657,7 +657,7 @@ class DAXFlash(metaclass=LogBase):
                     self.info(f"NAND Sparesize:  {hex(nand.spare_size)}")
                     self.info(f"NAND Total size: {hex(nand.total_size)}")
                     self.info(f"NAND Avail:      {hex(nand.available_size)}")
-                    self.info(f"NAND ID:         {hexlify(nand.nand_id).decode('utf-8')}")
+                    self.info(f"NAND ID:         {nand.nand_id.hex()}")
             return nand
         else:
             self.error(f"Error on getting nand info: {self.eh.status(status)}")
