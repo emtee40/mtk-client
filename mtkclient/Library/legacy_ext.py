@@ -52,7 +52,7 @@ class legacyext(metaclass=LogBase):
             self.info("Legacy DA2 is patched.")
         else:
             self.warning("Legacy address check not patched.")
-        check_addr2 = find_binary(da2, b"\x30\xB5\x85\xB0\x03\xAB.\xF2..\x68\x46\x01\xA9\x02")
+        check_addr2 = find_binary(da2, b"\x30\xB5\x85\xB0\x03\xAB")
         if check_addr2 is not None:
             """
             PUSH            {R4-R6,LR}
