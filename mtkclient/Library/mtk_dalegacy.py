@@ -1100,8 +1100,9 @@ class DALegacy(metaclass=LogBase):
                     if self.read_flash_info():
                         if self.daconfig.flashtype == "nand":
                             self.daconfig.flashsize = self.nand.m_nand_flash_size
-                        elif self.daconfig.flashtype == "emmc":
+                        elif self.daconfig.flashtype == "emmc" or self.emmc.m_emmc_ua_size!=0:
                             self.daconfig.flashsize = self.emmc.m_emmc_ua_size
+                            self.daconfig.flashtype = "emmc"
                             if self.daconfig.flashsize == 0:
                                 self.daconfig.flashsize = self.sdc.m_sdmmc_ua_size
                         elif self.daconfig.flashtype == "nor":
