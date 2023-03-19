@@ -4,7 +4,6 @@
 import logging, os
 from struct import pack, unpack
 from mtkclient.Library.utils import LogBase
-from binascii import hexlify
 
 CustomSeed = bytearray(b"12abcdef")
 
@@ -524,7 +523,6 @@ class sej(metaclass=LogBase):
         self.sej_set_mode(AES_CBC_MODE)
         self.sej_set_key(AES_HW_KEY, AES_KEY_128)
         hw_key = self.sej_do_aes(True, iv, swkey, 32)
-        # print(hexlify(hw_key))
         self.sej_set_key(AES_HW_WRAP_KEY, AES_KEY_256, hw_key)
 
     def sej_sec_cfg_sw(self, data, encrypt=True):

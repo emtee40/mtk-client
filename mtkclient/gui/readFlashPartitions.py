@@ -1,8 +1,7 @@
 import os
 import sys
 import mock
-import time
-from PySide6.QtCore import Slot, QObject, Signal
+from PySide6.QtCore import QObject, Signal
 from mtkclient.gui.toolkit import convert_size, FDialog, trap_exc_during_debug, asyncThread
 
 sys.excepthook = trap_exc_during_debug

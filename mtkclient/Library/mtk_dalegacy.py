@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 # (c) B.Kerler 2018-2021 GPLv3 License
-import sys
 import logging
 import os
 import time
@@ -15,7 +14,7 @@ from mtkclient.config.payloads import pathconfig
 from mtkclient.Library.legacy_ext import legacyext
 from mtkclient.config.mtk_config import Mtk_Config
 from queue import Queue
-from threading import Thread, Event
+from threading import Thread
 
 rq = Queue()
 

@@ -1,4 +1,3 @@
-import hmac
 import os
 from struct import unpack, pack
 
@@ -9,7 +8,6 @@ from mtkclient.Library.hwcrypto import crypto_setup, hwcrypto
 from mtkclient.Library.utils import LogBase, progress, logsetup, find_binary
 from mtkclient.Library.seccfg import seccfg
 from binascii import hexlify
-import hashlib
 from mtkclient.Library.utils import mtktee
 import json
 

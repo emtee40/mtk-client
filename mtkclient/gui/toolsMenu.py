@@ -1,5 +1,5 @@
 from PySide6.QtCore import Slot, QObject, Signal
-from PySide6.QtWidgets import QTableWidget, QTableWidgetItem
+from PySide6.QtWidgets import QTableWidgetItem
 from mtkclient.gui.toolkit import trap_exc_during_debug, asyncThread, FDialog
 from mtkclient.Library.mtk_da_cmd import DA_handler
 import os

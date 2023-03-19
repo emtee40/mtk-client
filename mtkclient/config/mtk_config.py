@@ -5,7 +5,6 @@ from binascii import hexlify
 from mtkclient.Library.utils import LogBase
 from mtkclient.Library.settings import hwparam
 from mtkclient.config.brom_config import chipconfig, damodes, hwconfig
-from struct import pack
 try:
     from PySide6.QtCore import QObject
 except ImportError:
