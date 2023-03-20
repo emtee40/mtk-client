@@ -29,6 +29,18 @@ class Partition(metaclass=LogBase):
 
     def get_gpt(self, gpt_settings, parttype="user"):
         data = self.readflash(addr=0, length=2 * self.config.pagesize, filename="", parttype=parttype, display=False)
+        if data[:4] == b"BPI\x00":
+            guid_gpt = gpt(
+                num_part_entries=gpt_settings.gpt_num_part_entries,
+                part_entry_size=gpt_settings.gpt_part_entry_size,
+                part_entry_start_lba=gpt_settings.gpt_part_entry_start_lba,
+            )
+            data = self.readflash(addr=0, length=32 * self.config.pagesize, filename="",
+                                  parttype=parttype, display=False)
+            if data == b"":
+                return None, None
+            guid_gpt.parse_bpi(data, self.config.pagesize)
+            return data, guid_gpt
         if data[:9] == b"EMMC_BOOT" and self.read_pmt is not None:
             partdata, partentries = self.read_pmt()
             if partdata == b"":

@@ -5,6 +5,7 @@ import argparse
 import os
 import sys
 import logging
+from io import BytesIO
 from enum import Enum
 from struct import unpack, pack
 from binascii import hexlify
@@ -160,7 +161,7 @@ class gpt(metaclass=LogBase):
     def parseheader(self, gptdata, sectorsize=512):
         return self.gpt_header(gptdata[sectorsize:sectorsize + 0x5C])
 
-    def parse_bpi(self, gptdata):
+    def parse_bpi(self, gptdata, pagesize=0x200):
         class partf:
             unique = b""
             first_lba = 0
@@ -171,7 +172,7 @@ class gpt(metaclass=LogBase):
             type = b""
             name = ""
             entryoffset = 0
-        self.sectorsize = 0x200
+        self.sectorsize = pagesize
         self.totalsectors = 0
         self.partentries = []
         for pos in range(0x800,len(gptdata),0x80):
