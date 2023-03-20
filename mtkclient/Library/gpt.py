@@ -1,28 +1,194 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# (c) B.Kerler 2018-2021
-import argparse
+# (c) B.Kerler 2018-2023
+# GPLv3 License
 import os
 import sys
+import argparse
+import colorama
+import copy
 import logging
+import logging.config
 from enum import Enum
-from struct import unpack, pack
 from binascii import hexlify
+from struct import calcsize, unpack, pack
+from io import BytesIO
 
-try:
-    from mtkclient.Library.utils import LogBase, structhelper
-except:
-    from utils import LogBase, structhelper
+class ColorFormatter(logging.Formatter):
+    LOG_COLORS = {
+        logging.ERROR: colorama.Fore.RED,
+        logging.DEBUG: colorama.Fore.LIGHTMAGENTA_EX,
+        logging.WARNING: colorama.Fore.YELLOW,
+    }
 
-class gpt_settings:
-    gpt_num_part_entries = 0
-    gpt_part_entry_size = 0
-    gpt_part_entry_start_lba = 0
+    def format(self, record, *args, **kwargs):
+        # if the corresponding logger has children, they may receive modified
+        # record, so we want to keep it intact
+        new_record = copy.copy(record)
+        if new_record.levelno in self.LOG_COLORS:
+            pad = ""
+            if new_record.name != "root":
+                print(new_record.name)
+                pad = "[LIB]: "
+            # we want levelname to be in different color, so let"s modify it
+            new_record.msg = "{pad}{color_begin}{msg}{color_end}".format(
+                pad=pad,
+                msg=new_record.msg,
+                color_begin=self.LOG_COLORS[new_record.levelno],
+                color_end=colorama.Style.RESET_ALL,
+            )
+        # now we can let standart formatting take care of the rest
+        return super(ColorFormatter, self).format(new_record, *args, **kwargs)
 
-    def __init__(self, gpt_num_part_entries: str, gpt_part_entry_size: str, gpt_part_entry_start_lba: str):
-        self.gpt_num_part_entries = int(gpt_num_part_entries)
-        self.gpt_part_entry_size = int(gpt_part_entry_size)
-        self.gpt_part_entry_start_lba = int(gpt_part_entry_start_lba)
+
+class LogBase(type):
+    debuglevel = logging.root.level
+
+    def __init__(cls, *args):
+        super().__init__(*args)
+        logger_attribute_name = "_" + cls.__name__ + "__logger"
+        logger_debuglevel_name = "_" + cls.__name__ + "__debuglevel"
+        logger_name = ".".join([c.__name__ for c in cls.mro()[-2::-1]])
+        log_config = {
+            "version": 1,
+            "disable_existing_loggers": False,
+            "formatters": {
+                "root": {
+                    "()": ColorFormatter,
+                    "format": "%(name)s - %(message)s",
+                }
+            },
+            "handlers": {
+                "root": {
+                    # "level": cls.__logger.level,
+                    "formatter": "root",
+                    "class": "logging.StreamHandler",
+                    "stream": "ext://sys.stdout",
+                }
+            },
+            "loggers": {
+                "": {
+                    "handlers": ["root"],
+                    # "level": cls.debuglevel,
+                    "propagate": False
+                }
+            },
+        }
+        logging.config.dictConfig(log_config)
+        logger = logging.getLogger(logger_name)
+
+        setattr(cls, logger_attribute_name, logger)
+        setattr(cls, logger_debuglevel_name, cls.debuglevel)
+        cls.logsetup = logsetup
+
+
+def logsetup(self, logger, loglevel):
+    self.info = logger.info
+    self.debug = logger.debug
+    self.error = logger.error
+    self.warning = logger.warning
+    if loglevel == logging.DEBUG:
+        logfilename = os.path.join("logs", "log.txt")
+        if os.path.exists(logfilename):
+            try:
+                os.remove(logfilename)
+            except:
+                pass
+        fh = logging.FileHandler(logfilename, encoding="utf-8")
+        logger.addHandler(fh)
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.INFO)
+    self.loglevel = loglevel
+    return logger
+
+
+def read_object(data: object, definition: object) -> object:
+    """
+    Unpacks a structure using the given data and definition.
+    """
+    obj = {}
+    object_size = 0
+    pos = 0
+    for (name, stype) in definition:
+        object_size += calcsize(stype)
+        obj[name] = unpack(stype, data[pos:pos + calcsize(stype)])[0]
+        pos += calcsize(stype)
+    obj["object_size"] = object_size
+    obj["raw_data"] = data
+    return obj
+
+
+class structhelper:
+    pos = 0
+
+    def __init__(self, data, pos=0):
+        self.pos = 0
+        self.data = data
+
+    def qword(self, big=False):
+        e = ">" if big else "<"
+        dat = unpack(e + "Q", self.data[self.pos:self.pos + 8])[0]
+        self.pos += 8
+        return dat
+
+    def dword(self, big=False):
+        e = ">" if big else "<"
+        dat = unpack(e + "I", self.data[self.pos:self.pos + 4])[0]
+        self.pos += 4
+        return dat
+
+    def dwords(self, dwords=1, big=False):
+        e = ">" if big else "<"
+        dat = unpack(e + str(dwords) + "I", self.data[self.pos:self.pos + 4 * dwords])
+        self.pos += 4 * dwords
+        return dat
+
+    def qwords(self, qwords=1, big=False):
+        e = ">" if big else "<"
+        dat = unpack(e + str(qwords) + "Q", self.data[self.pos:self.pos + 8 * qwords])
+        self.pos += 8 * qwords
+        return dat
+
+    def short(self, big=False):
+        e = ">" if big else "<"
+        dat = unpack(e + "H", self.data[self.pos:self.pos + 2])[0]
+        self.pos += 2
+        return dat
+
+    def shorts(self, shorts, big=False):
+        e = ">" if big else "<"
+        dat = unpack(e + str(shorts) + "H", self.data[self.pos:self.pos + 2 * shorts])
+        self.pos += 2 * shorts
+        return dat
+
+    def bytes(self, rlen=1):
+        dat = self.data[self.pos:self.pos + rlen]
+        self.pos += rlen
+        if rlen == 1: return dat[0]
+        return dat
+
+    def string(self, rlen=1):
+        dat = self.data[self.pos:self.pos + rlen]
+        self.pos += rlen
+        return dat
+
+    def getpos(self):
+        return self.pos
+
+    def seek(self, pos):
+        self.pos = pos
+
+
+AB_FLAG_OFFSET = 6
+AB_PARTITION_ATTR_SLOT_ACTIVE = (0x1 << 2)
+AB_PARTITION_ATTR_BOOT_SUCCESSFUL = (0x1 << 6)
+AB_PARTITION_ATTR_UNBOOTABLE = (0x1 << 7)
+AB_SLOT_ACTIVE_VAL = 0x3F
+AB_SLOT_INACTIVE_VAL = 0x0
+AB_SLOT_ACTIVE = 1
+AB_SLOT_INACTIVE = 0
+
 
 class gpt(metaclass=LogBase):
     class gpt_header:
@@ -51,6 +217,10 @@ class gpt(metaclass=LogBase):
             self.last_lba = sh.qword()
             self.flags = sh.qword()
             self.name = sh.string(72)
+
+        def create(self):
+            val = pack("16s16sQQQ72s", self.type, self.unique, self.first_lba, self.last_lba, self.flags, self.name)
+            return val
 
     class efi_type(Enum):
         EFI_UNUSED = 0x00000000
@@ -154,16 +324,58 @@ class gpt(metaclass=LogBase):
         self.__logger.setLevel(loglevel)
         if loglevel == logging.DEBUG:
             logfilename = "log.txt"
-            fh = logging.FileHandler(logfilename, encoding='utf-8')
+            fh = logging.FileHandler(logfilename, encoding="utf-8")
             self.__logger.addHandler(fh)
 
     def parseheader(self, gptdata, sectorsize=512):
         return self.gpt_header(gptdata[sectorsize:sectorsize + 0x5C])
 
+    def parse_bpi(self, gptdata):
+        class partf:
+            unique = b""
+            first_lba = 0
+            last_lba = 0
+            flags = 0
+            sector = 0
+            sectors = 0
+            type = b""
+            name = ""
+            entryoffset = 0
+        self.sectorsize = 0x200
+        self.totalsectors = 0
+        self.partentries = []
+        for pos in range(0x800,len(gptdata),0x80):
+            data = gptdata[pos:pos+0x80]
+            if int(hexlify(data[16:32]), 16) == 0:
+                break
+
+            rf = BytesIO(bytearray(data))
+            pf = partf()
+            rf.read(16)
+            guid1 = int.from_bytes(rf.read(4),'little')
+            guid2 = int.from_bytes(rf.read(2),'little')
+            guid3 = int.from_bytes(rf.read(2),'little')
+            guid4 = int.from_bytes(rf.read(2),'little')
+            guid5 = bytearray(rf.read(6)).hex()
+            pf.unique = "{:08x}-{:04x}-{:04x}-{:04x}-{}".format(guid1, guid2, guid3, guid4, guid5)
+            pf.first_lba = int.from_bytes(rf.read(8),'little')
+            pf.last_lba = int.from_bytes(rf.read(8), 'little')
+            pf.sector = pf.first_lba
+            pf.sectors = pf.last_lba - pf.first_lba + 1
+            pf.flags = int.from_bytes(rf.read(8), 'little')
+            pf.name = rf.read(0x48).replace(b"\x00\x00", b"").decode("utf-16")
+            pf.type = 0
+            if pf.last_lba > self.totalsectors:
+                self.totalsectors = pf.last_lba
+            self.partentries.append(pf)
+
     def parse(self, gptdata, sectorsize=512):
         self.header = self.gpt_header(gptdata[sectorsize:sectorsize + 0x5C])
         self.sectorsize = sectorsize
         if self.header.signature != b"EFI PART":
+            if gptdata[0:4]==b"BPI\x00":
+                self.parse_bpi(gptdata)
+                return True
             return False
         if self.header.revision != 0x10000:
             self.error("Unknown GPT revision.")
@@ -185,6 +397,7 @@ class gpt(metaclass=LogBase):
             sectors = 0
             type = b""
             name = ""
+            entryoffset = 0
 
         num_part_entries = self.header.num_part_entries
 
@@ -198,17 +411,18 @@ class gpt(metaclass=LogBase):
             guid2 = unpack("<H", partentry.unique[0x4:0x6])[0]
             guid3 = unpack("<H", partentry.unique[0x6:0x8])[0]
             guid4 = unpack("<H", partentry.unique[0x8:0xA])[0]
-            guid5 = hexlify(partentry.unique[0xA:0x10]).decode('utf-8')
+            guid5 = hexlify(partentry.unique[0xA:0x10]).decode("utf-8")
             pa.unique = "{:08x}-{:04x}-{:04x}-{:04x}-{}".format(guid1, guid2, guid3, guid4, guid5)
             pa.sector = partentry.first_lba
             pa.sectors = partentry.last_lba - partentry.first_lba + 1
             pa.flags = partentry.flags
+            pa.entryoffset = start + (idx * entrysize)
             type = int(unpack("<I", partentry.type[0:0x4])[0])
             try:
                 pa.type = self.efi_type(type).name
             except:
                 pa.type = hex(type)
-            pa.name = partentry.name.replace(b"\x00\x00", b"").decode('utf-16')
+            pa.name = partentry.name.replace(b"\x00\x00", b"").decode("utf-16")
             if pa.type == "EFI_UNUSED":
                 continue
             self.partentries.append(pa)
@@ -221,7 +435,7 @@ class gpt(metaclass=LogBase):
     def tostring(self):
         mstr = "\nGPT Table:\n-------------\n"
         for partition in self.partentries:
-            mstr += ("{:20} Offset 0x{:016x}, Length 0x{:016x}, Flags 0x{:08x}, UUID {}, Type {}\n".format(
+            mstr += ("{:20} Offset 0x{:016x}, Length 0x{:016x}, Flags 0x{:016x}, UUID {}, Type {}\n".format(
                 partition.name + ":", partition.sector * self.sectorsize, partition.sectors * self.sectorsize,
                 partition.flags, partition.unique, partition.type))
         mstr += ("\nTotal disk size:0x{:016x}, sectors:0x{:016x}\n".format(self.totalsectors * self.sectorsize,
@@ -253,7 +467,7 @@ class gpt(metaclass=LogBase):
             sectors = self.header.first_usable_lba
             mstr += f"\t<program SECTOR_SIZE_IN_BYTES=\"{sectorsize}\" " + \
                     f"file_sector_offset=\"0\" " + \
-                    f"filename=\"gpt_lun{str(lun)}.bin\" " + \
+                    f"filename=\"gpt_{str(lun)}.bin\" " + \
                     f"label=\"PrimaryGPT\" " + \
                     f"num_partition_sectors=\"{sectors}\" " + \
                     f"partofsingleimage=\"{partofsingleimage}\" " + \
@@ -277,7 +491,7 @@ class gpt(metaclass=LogBase):
                     f"start_byte_hex=\"({sectorsize}*NUM_DISK_SECTORS)-{sectorsize * sectors}.\" " + \
                     f"start_sector=\"NUM_DISK_SECTORS-{sectors}.\"/>\n"
             mstr += "</data>"
-            wf.write(bytes(mstr, 'utf-8'))
+            wf.write(bytes(mstr, "utf-8"))
             print(f"Wrote partition xml as {fname}")
 
     def print_gptfile(self, filename):
@@ -301,37 +515,141 @@ class gpt(metaclass=LogBase):
         res = self.print_gptfile(os.path.join("TestFiles", "gpt_sm8180x.bin"))
         assert res, "GPT Partition wasn't decoded properly"
 
+    def patch(self, data:bytes, partitionname="boot", active: bool = True):
+        try:
+            rf = BytesIO(data)
+            for sectorsize in [512, 4096]:
+                result = self.parse(data, sectorsize)
+                if result:
+                    for partition in self.partentries:
+                        if partitionname.lower() == partition.name.lower():
+                            rf.seek(partition.entryoffset)
+                            sdata = rf.read(self.header.part_entry_size)
+                            partentry = self.gpt_partition(sdata)
+                            flags = partentry.flags
+                            if active:
+                                flags |= AB_PARTITION_ATTR_SLOT_ACTIVE << (AB_FLAG_OFFSET*8)
+                            else:
+                                flags |= AB_PARTITION_ATTR_UNBOOTABLE << (AB_FLAG_OFFSET*8)
+                            partentry.flags = flags
+                            data = partentry.create()
+                            return data, partition.entryoffset
+                    break
+            return None, None
+        except Exception as e:
+            self.error(str(e))
+        return None, None
 
-if __name__ == "__main__":
+    def get_flag(self, filename, imagename):
+        if "." in imagename:
+            imagename = imagename[:imagename.find(".")]
+        try:
+            with open(filename, "rb") as rf:
+                if os.stat(filename).st_size > 0x2000000:
+                    self.error("Error: GPT is too big or no GPT at all.")
+                    return None
+                data = rf.read()
+                return self.get_flag_data(data, imagename)
+        except FileNotFoundError:
+            self.error(f"File not found : {filename}")
+            return None, None
+
+    def get_flag_data(self, gpt: bytes, imagename: str):
+        for sectorsize in [512, 4096]:
+            try:
+                result = self.parse(gpt, sectorsize)
+            except:
+                return None, None
+            if result:
+                for partition in self.partentries:
+                    if imagename in partition.name.lower():
+                        return partition.sector, sectorsize
+        return None, None
+
+
+def main():
     parser = argparse.ArgumentParser(description="GPT utils")
-    subparsers = parser.add_subparsers(dest="command", help='sub-command help')
+    parser.add_argument("image", help="The path of the GPT disk image")
+    subparsers = parser.add_subparsers(dest="command", help="sub-command help")
 
     parser_print = subparsers.add_parser("print", help="Print the gpt table")
-    parser_print.add_argument("image", help="The path of the GPT disk image")
-
     parser_test = subparsers.add_parser("test", help="Run self-test")
-
+    parser_patch = subparsers.add_parser("patch", help="Set active boot slot")
+    parser_patch.add_argument("partition", help="Extract specific partitions (separated by comma)")
+    parser_patch.add_argument("-active", action="store_true", help="Set bootable")
     parser_extract = subparsers.add_parser("extract", help="Extract the partitions")
-    parser_extract.add_argument("image", help="The path of the GPT disk image")
     parser_extract.add_argument("-out", "-o", help="The path to extract the partitions")
     parser_extract.add_argument("-partition", "-p", help="Extract specific partitions (separated by comma)")
+    parser_footer = subparsers.add_parser("footer", help="Extract the metadata footer")
 
     args = parser.parse_args()
-    if args.command not in ["print", "extract", "test"]:
+    if args.command not in ["print", "extract", "test", "patch", "footer"]:
         parser.error("Command is mandatory")
 
     gp = gpt()
     if args.command == "print":
         if not os.path.exists(args.image):
             print(f"File {args.image} does not exist. Aborting.")
-            sys.exit(1)
+            return
         gp.print_gptfile(args.image)
     elif args.command == "test":
         gp.test_gpt()
+    elif args.command == "patch":
+        partitition = args.partition
+        active = args.active
+        filesize = os.stat(args.image).st_size
+        with open(args.image, "rb") as rf:
+            size = min(32 * 4096, filesize)
+            data = bytearray(rf.read(size))
+            pdata, offset = gp.patch(data,partitition, active=active)
+            if data is not None:
+                data[offset:offset + len(pdata)] = pdata
+                wfilename = args.image + ".patched"
+                with open(wfilename,"wb") as wf:
+                    wf.write(data)
+                print(f"Successfully wrote patched gpt to {wfilename}")
+            else:
+                print("Error on setting bootable mode")
+    elif args.command == "footer":
+        if not os.path.exists(args.image):
+            print(f"File {args.image} does not exist. Aborting.")
+            return
+        filesize = os.stat(args.image).st_size
+        with open(args.image, "rb", buffering=1024 * 1024) as rf:
+            data = rf.read(min(32 * 4096, filesize))
+            ssize = None
+            try:
+                for sectorsize in [512, 4096]:
+                    result = gp.parse(data, sectorsize)
+                    if result:
+                        ssize = sectorsize
+                        break
+            except:
+                pass
+            if ssize is not None:
+                for partition in gp.partentries:
+                    if args.partition is not None:
+                        if partition.name.lower() != "userdata":
+                            continue
+                    start = partition.sector * ssize
+                    length = partition.sectors * ssize
+                    break
+            else:
+                start = 0
+                length = filesize
+            rf.seek(start+length-0x4000)
+            rdata = rf.read(0x4000)
+            if rdata[:4] in [b"\xC4\xB1\xB5\xD0", b"\xC5\xB1\xB5\xD0"]:
+                with open("metadata.bin", "rb") as wf:
+                    wf.write(rdata)
+                    print("Metadata footer successfully written to metadata.bin.")
+                    return
+            print("Couldn't detect metadata footer")
+            return
     elif args.command == "extract":
         if not os.path.exists(args.image):
             print(f"File {args.image} does not exist. Aborting.")
-            sys.exit(1)
+            return
         filesize = os.stat(args.image).st_size
         with open(args.image, "rb", buffering=1024 * 1024) as rf:
             data = rf.read(min(32 * 4096, filesize))
@@ -342,26 +660,36 @@ if __name__ == "__main__":
                     ssize = sectorsize
                     break
             if ssize is not None:
-                for partition in gp.partentries:
-                    if args.partition is not None:
-                        if partition.name.lower() != args.partition:
-                            continue
-                    name = partition.name
-                    start = partition.sector * ssize
-                    length = partition.sectors * ssize
-                    out = args.out
-                    if out is None:
-                        out = "."
-                    else:
-                        if not os.path.exists(out):
-                            os.makedirs(out)
-                    filename = os.path.join(out, name)
-                    rf.seek(start)
-                    bytestoread = length
-                    with open(filename, "wb", buffering=1024 * 1024) as wf:
-                        while bytestoread > 0:
-                            size = min(bytestoread, 0x200000)
-                            data=rf.read(size)
-                            wf.write(data)
-                            bytestoread -= size
-                    print(f"Extracting {name} to {filename} at {hex(start)}, length {hex(length)}")
+                if args.partition == "gpt" or args.partition is None:
+                    print(f"Extracting gpt to gpt.bin at {hex(0)}, length {hex(32 * ssize)}")
+                    rf.seek(0)
+                    data = rf.read(32 * ssize)
+                    with open("gpt.bin", "wb") as wf:
+                        wf.write(data)
+                if args.partition != "gpt":
+                    for partition in gp.partentries:
+                        if args.partition is not None:
+                            if partition.name.lower() != args.partition:
+                                continue
+                        name = partition.name
+                        start = partition.sector * ssize
+                        length = partition.sectors * ssize
+                        out = args.out
+                        if out is None:
+                            out = "."
+                        else:
+                            if not os.path.exists(out):
+                                os.makedirs(out)
+                        filename = os.path.join(out, name) + ".bin"
+                        print(f"Extracting {name} to {filename} at {hex(start)}, length {hex(length)}")
+                        rf.seek(start)
+                        bytestoread = length
+                        with open(filename, "wb", buffering=1024 * 1024) as wf:
+                            while bytestoread > 0:
+                                size = min(bytestoread, 0x200000)
+                                data = rf.read(size)
+                                wf.write(data)
+                                bytestoread -= size
+
+if __name__ == "__main__":
+    main()
