@@ -1220,6 +1220,7 @@ class DALegacy(metaclass=LogBase):
     def sdmmc_write_data(self, addr, length, filename, offset=0, parttype=None, wdata=None, display=True):
         length, parttype = self.get_parttype(length, parttype)
         storage = self.get_storage()
+        fh = False
 
         if filename is not None:
             fh = open(filename, "rb")
