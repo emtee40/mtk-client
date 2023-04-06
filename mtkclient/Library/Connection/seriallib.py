@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 # (c) B.Kerler 2018-2022
-import os.path
 import time
 import sys
 if sys.platform != "win32":
@@ -17,8 +16,6 @@ def _reset_input_buffer_org(self):
 import serial
 import serial.tools.list_ports
 import inspect
-import traceback
-from binascii import hexlify
 from mtkclient.Library.utils import *
 from mtkclient.Library.Connection.devicehandler import DeviceClass
 

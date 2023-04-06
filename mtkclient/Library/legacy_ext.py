@@ -5,7 +5,7 @@ from mtkclient.Library.settings import hwparam
 from mtkclient.config.payloads import pathconfig
 from mtkclient.Library.error import ErrorHandler
 from mtkclient.Library.hwcrypto import crypto_setup, hwcrypto
-from mtkclient.Library.utils import LogBase, progress, logsetup, find_binary
+from mtkclient.Library.utils import LogBase, logsetup, find_binary
 from mtkclient.Library.seccfg import seccfg
 from binascii import hexlify
 from mtkclient.Library.utils import mtktee

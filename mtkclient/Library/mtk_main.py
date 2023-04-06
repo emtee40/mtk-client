@@ -17,7 +17,6 @@ from mtkclient.Library.utils import print_progress
 from mtkclient.Library.error import ErrorHandler
 from mtkclient.Library.mtk_da_cmd import DA_handler
 from mtkclient.Library.gpt import gpt_settings
-import argparse
 metamodes = "[FASTBOOT, FACTFACT, METAMETA, FACTORYM, ADVEMETA, AT+NBOOT]"
 
 class ArgHandler(metaclass=LogBase):
