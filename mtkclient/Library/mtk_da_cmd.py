@@ -109,6 +109,11 @@ class DA_handler(metaclass=LogBase):
                             self.error("Failed to dump preloader from ram.")
             else:
                 self.info("Device is in Preloader-Mode :(")
+
+
+        if preloader is not None and mtk.config.preloader is None:
+            mtk.config.preloader = preloader
+
         if not mtk.daloader.upload_da(preloader=preloader):
             return None
         else:

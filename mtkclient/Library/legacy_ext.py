@@ -160,6 +160,100 @@ class legacyext(metaclass=LogBase):
         setup.writemem = self.writemem
         return hwcrypto(setup, self.loglevel, self.config.gui)
 
+    def seccfg_custom_V3(self, seccfg_data, lockflag, hwc, partition):
+
+        # enum {
+        ATTR_LOCK       = 0x6000
+        ATTR_VERIFIED   = 0x6001
+        ATTR_CUSTOM     = 0x6002
+        ATTR_MP_DEFAULT = 0x6003
+        ATTR_DEFAULT    = 0x33333333
+        ATTR_UNLOCK     = 0x44444444
+        # } SECCFG_ATTR;
+
+        magic_number_beg = 0x10
+        magic_number_end = magic_number_beg + 4
+
+        secattr_beg = 0x854
+
+        enc_cfg_sz = 0x1860
+        enc_cfg_beg = 0x2C
+        enc_cfg_end = enc_cfg_sz - 4
+
+        enc_cfg_secattr = secattr_beg - enc_cfg_beg
+
+        if seccfg_data[magic_number_beg : magic_number_end] != pack("<I", 0x4D4D4D4D):
+            return False
+
+        sc_new = seccfg(hwc)
+        self.setotp(hwc)
+
+        enc_data = seccfg_data[enc_cfg_beg : enc_cfg_end]
+
+        self.info("Attempt decrypt current seccfg")
+        data_wr = sc_new.hwc.sej.sej_sec_cfg_hw_V3(enc_data, False)
+
+
+        if lockflag == "lock":
+            _SEC_ATTR_NEW = ATTR_DEFAULT
+        else:
+            _SEC_ATTR_NEW = ATTR_UNLOCK
+
+
+        _SEC_ATTR_CURRENT = data_wr[enc_cfg_secattr : enc_cfg_secattr + 4]
+        _SEC_ATTR_CURRENT = unpack('<I', _SEC_ATTR_CURRENT)[0]
+
+
+        if (lockflag == "lock"
+        and _SEC_ATTR_CURRENT != ATTR_UNLOCK):
+            return False, ("Can't find lock state, current (%#x)" % _SEC_ATTR_CURRENT)
+        elif (lockflag == "unlock"
+        and _SEC_ATTR_CURRENT != ATTR_DEFAULT
+        and _SEC_ATTR_CURRENT != ATTR_MP_DEFAULT
+        and _SEC_ATTR_CURRENT != ATTR_CUSTOM
+        and _SEC_ATTR_CURRENT != ATTR_VERIFIED
+        and _SEC_ATTR_CURRENT != ATTR_LOCK):
+            return False, ("Can't find unlock state, current (%#x)" % _SEC_ATTR_CURRENT)
+
+
+        self.info("Set %s flag" % lockflag)
+        data_wr[enc_cfg_secattr : enc_cfg_secattr + 4] = pack('<I', _SEC_ATTR_NEW)
+
+        self.info("Attempt encrypt new seccfg")
+        enc_data = sc_new.hwc.sej.sej_sec_cfg_hw_V3(data_wr, True)
+
+        # Test new seccfg {
+        self.info("Attempt decrypt new seccfg")
+        data_wr = sc_new.hwc.sej.sej_sec_cfg_hw_V3(enc_data, False)
+
+        if data_wr[enc_cfg_secattr : enc_cfg_secattr + 4] == pack('<I', _SEC_ATTR_NEW):
+            self.info("Test OK. Set %s in new seccfg successfully" % lockflag)
+        else:
+            return False, "Test error. Can't decrypt new seccfg"
+        # }
+
+        seccfg_data[enc_cfg_beg : enc_cfg_end] = enc_data
+
+        # 0x22 is (SECURE_CFG_V3*)->fb_status
+        # 0x23 is (SECURE_CFG_V3*)->dbg_status
+        if lockflag == "lock":
+            seccfg_data[0x22:0x23] = b'\x00'
+            seccfg_data[0x23:0x24] = b'\x01'
+        elif lockflag == "unlock":
+            # seccfg_data[0x22:0x23] = b'\x67'
+            seccfg_data[0x22:0x23] = b'\xF2'
+            seccfg_data[0x23:0x24] = b'\x07'
+
+        enc_writedata = seccfg_data
+
+
+        self.info("Attempt write new seccfg config")
+        if self.legacy.writeflash(addr=partition.sector * self.mtk.daloader.daconfig.pagesize,
+                                  length=len(enc_writedata),
+                                  filename=None, wdata=enc_writedata, parttype="user", display=True):
+            return True, "Successfully wrote custom seccfg."
+        return False, "Error on writing custom seccfg config to flash."
+
     def seccfg(self, lockflag):
         if lockflag not in ["unlock", "lock"]:
             return False, "Valid flags are: unlock, lock"
@@ -179,6 +273,13 @@ class legacyext(metaclass=LogBase):
         if seccfg_data is None:
             return False, "Couldn't detect existing seccfg partition. Aborting unlock."
         if seccfg_data[:4] != pack("<I", 0x4D4D4D4D):
+            # Probe antother seccfg format
+            state, msg = self.seccfg_custom_V3(seccfg_data, lockflag, hwc, partition)
+            if state:
+                return True, msg
+            else:
+                self.info(msg)
+
             return False, "Unknown seccfg partition header. Aborting unlock."
 
         if not sc_org.parse(seccfg_data):
