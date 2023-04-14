@@ -318,7 +318,7 @@ class legacyext(metaclass=LogBase):
             else:
                 self.info("SEJ Mode: No meid found. Are you in brom mode ?")
         if self.config.chipconfig.gcpu_base is not None:
-            if self.config.hwcode in [0x335,0x8167,0x8163]:
+            if self.config.hwcode in [0x335,0x8167,0x8163,0x8176]:
                 self.info("Generating gcpu mtee2 key...")
                 mtee2 = hwc.aes_hwcrypt(btype="gcpu", mode="mtee")
                 if mtee2 is not None:

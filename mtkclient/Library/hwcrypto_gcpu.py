@@ -262,6 +262,9 @@ class GCpu(metaclass=LogBase):
         elif self.hwcode in [0x8172, 0x8127]:
             self.release()
             self.reg.GCPU_REG_MSC = self.reg.GCPU_REG_MSC & 0xFFFFDFFF
+        elif self.hwcode == 0x8176:
+            self.release()
+            self.reg.GCPU_REG_MSC |= 0x2000
         elif self.hwcode == 0x335:
             self.reg.GCPU_REG_CTL = self.reg.GCPU_REG_MSC & 0xFFFFDFFF
             self.reg.GCPU_REG_CTL |= 7

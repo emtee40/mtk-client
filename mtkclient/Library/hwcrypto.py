@@ -86,7 +86,7 @@ class hwcrypto(metaclass=LogBase):
             elif mode == "mtee":
                 if self.hwcode in [0x321]:
                     return self.gcpu.mtk_gcpu_mtee_6735()
-                elif self.hwcode in [0x8167,0x8163]:
+                elif self.hwcode in [0x8167,0x8163,0x8176]:
                     return self.gcpu.mtk_gcpu_mtee_8167()
         elif btype == "dxcc":
             if mode == "fde":
