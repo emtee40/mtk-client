@@ -1111,7 +1111,7 @@ class DALegacy(metaclass=LogBase):
                         if speed[0] == 0:  # 1 = USB High Speed, 2= USB Ultra high speed
                             self.info("Reconnecting to preloader")
                             self.set_usb_cmd()
-                            self.mtk.port.close(reset=False)
+                            self.mtk.port.close(reset=True)
                             time.sleep(1)
                             while not self.mtk.port.cdc.connect():
                                 self.info("Waiting for reconnection")

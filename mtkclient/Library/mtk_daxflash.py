@@ -1155,7 +1155,7 @@ class DAXFlash(metaclass=LogBase):
             self.info("Reconnecting to preloader")
             self.config.set_gui_status(self.config.tr("Reconnecting to preloader"))
             self.set_usb_speed()
-            self.mtk.port.close(reset=False)
+            self.mtk.port.close(reset=True)
             time.sleep(2)
             while not self.mtk.port.cdc.connect():
                 time.sleep(0.5)
