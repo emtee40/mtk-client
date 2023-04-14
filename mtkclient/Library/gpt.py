@@ -7,7 +7,7 @@ import sys
 import logging
 from io import BytesIO
 from enum import Enum
-from struct import unpack, pack
+from struct import unpack
 from binascii import hexlify
 
 try:

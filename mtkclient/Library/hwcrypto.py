@@ -2,14 +2,12 @@
 # -*- coding: utf-8 -*-
 # (c) B.Kerler 2018-2021 GPLv3 License
 import logging
-import time
 
 from mtkclient.Library.utils import LogBase, logsetup
 from mtkclient.Library.hwcrypto_gcpu import GCpu
 from mtkclient.Library.hwcrypto_dxcc import dxcc
 from mtkclient.Library.hwcrypto_sej import sej
 from mtkclient.Library.cqdma import cqdma
-from struct import unpack
 
 
 class crypto_setup:

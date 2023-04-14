@@ -6,7 +6,7 @@ import array
 import time
 import os
 from struct import pack, unpack
-from mtkclient.Library.utils import LogBase, print_progress, revdword, logsetup, getint
+from mtkclient.Library.utils import LogBase, print_progress, revdword, logsetup
 from mtkclient.Library.Connection.usblib import usb
 from mtkclient.config.payloads import pathconfig
 

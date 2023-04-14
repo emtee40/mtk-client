@@ -4,7 +4,7 @@
 
 # DXCC = Discretix CryptoCell
 
-import logging, os
+import logging
 import hashlib
 from struct import pack
 from Cryptodome.Util.number import bytes_to_long

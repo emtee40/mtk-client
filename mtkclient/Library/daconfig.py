@@ -4,7 +4,7 @@
 import logging
 import os
 from struct import unpack
-from mtkclient.Library.utils import LogBase, read_object, logsetup
+from mtkclient.Library.utils import LogBase, logsetup
 from mtkclient.config.payloads import pathconfig
 from mtkclient.config.brom_config import damodes
 from mtkclient.Library.utils import structhelper

@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 # (c) B.Kerler 2018-2021 GPLv3 License
-import io
 import logging
 
 import usb.core  # pyusb
@@ -12,13 +11,11 @@ import traceback
 import array
 import usb.backend.libusb0
 import usb.backend.libusb1
-from struct import calcsize
+from struct import pack, calcsize
 from enum import Enum
 from binascii import hexlify
 from ctypes import c_void_p, c_int
 from mtkclient.Library.utils import *
-from struct import pack, calcsize
-import traceback
 from mtkclient.Library.Connection.devicehandler import DeviceClass
 USB_DIR_OUT = 0  # to device
 USB_DIR_IN = 0x80  # to host

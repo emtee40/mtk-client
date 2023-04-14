@@ -3,13 +3,11 @@
 # (c) B.Kerler 2018-2021 GPLv3 License
 import os
 import logging
-import shutil
 from enum import Enum
 from struct import unpack, pack
 from binascii import hexlify
 from mtkclient.Library.utils import LogBase, logsetup
 from mtkclient.Library.error import ErrorHandler
-import time
 
 USBDL_BIT_EN = 0x00000001  # 1: download bit enabled
 USBDL_BROM = 0x00000002  # 0: usbdl by brom; 1: usbdl by bootloader
