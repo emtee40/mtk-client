@@ -333,6 +333,11 @@ class Main(metaclass=LogBase):
             serialport = self.args.serialport
         except:
             pass
+        try:
+            iot = self.args.iot
+            config.iot = iot
+        except:
+            pass
         mtk = Mtk(config=config, loglevel=loglevel, serialportname=serialport)
         config.set_peek(mtk.daloader.peek)
         if mtk.config.debugmode:

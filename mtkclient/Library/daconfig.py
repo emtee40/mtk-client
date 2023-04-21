@@ -116,6 +116,7 @@ class DAconfig(metaclass=LogBase):
         self.mtk = mtk
         self.pathconfig = pathconfig()
         self.config = self.mtk.config
+        self.iot = False
         self.usbwrite = self.mtk.port.usbwrite
         self.usbread = self.mtk.port.usbread
         self.flashsize = 0
@@ -235,8 +236,7 @@ class DAconfig(metaclass=LogBase):
                         if self.da_loader is None:
                             self.da_loader = loader
                             self.loader = loader.loader
-
-        if self.da_loader is None:
+        if self.da_loader is None and dacode != 0x6261:
             self.error("No da_loader config set up")
         return self.da_loader
 

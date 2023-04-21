@@ -96,7 +96,7 @@ class DA_handler(metaclass=LogBase):
             self.info("Device is unprotected.")
             # if not mtk.config.is_brom:
             #   self.mtk.preloader.reset_to_brom()
-            if mtk.config.is_brom:
+            if mtk.config.is_brom and not mtk.config.iot:
                 self.info("Device is in BROM-Mode. Bypassing security.")
                 mtk = mtk.bypass_security()  # Needed for dumping preloader
                 if mtk is not None:
@@ -107,8 +107,10 @@ class DA_handler(metaclass=LogBase):
                         preloader = self.dump_preloader_ram()
                         if preloader is None:
                             self.error("Failed to dump preloader from ram.")
-            else:
+            elif not mtk.config.is_brom:
                 self.info("Device is in Preloader-Mode :(")
+            else:
+                self.info("Device is in BROM-Mode. Iot Mode :)")
 
 
         if preloader is not None and mtk.config.preloader is None:
@@ -253,6 +255,7 @@ class DA_handler(metaclass=LogBase):
         else:
             length = self.mtk.daloader.daconfig.flashsize
         print(f"Dumping sector 0 with flash size {hex(length)} as {filename}.")
+        sys.stdout.flush()
         if self.mtk.daloader.readflash(addr=0, length=length, filename=filename, parttype=parttype):
             print(f"Dumped sector 0 with flash size {hex(length)} as {filename}.")
         else:

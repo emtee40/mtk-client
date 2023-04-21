@@ -160,16 +160,23 @@ class Preloader(metaclass=LogBase):
         if tries == 10:
             return False
 
-        if not self.echo(self.Cmd.GET_HW_CODE.value):  # 0xFD
-            if not self.echo(self.Cmd.GET_HW_CODE.value):
-                self.error("Sync error. Please power off the device and retry.")
-                self.config.set_gui_status(self.config.tr("Sync error. Please power off the device and retry."))
-            return False
+        if self.config.iot:
+            self.config.hwver = self.read_a2(0x80000000)
+            self.config.hwcode = self.read_a2(0x80000008)
+            self.config.hw_sub_code = self.read_a2(0x8000000C)
+            self.config.swver = (self.read32(0xA01C0108)&0xFFFF0000)>>16
         else:
-            val = self.rdword()
-            self.config.hwcode = (val >> 16) & 0xFFFF
-            self.config.hwver = val & 0xFFFF
-            self.config.init_hwcode(self.config.hwcode)
+            if not self.echo(self.Cmd.GET_HW_CODE.value):  # 0xFD
+                if not self.echo(self.Cmd.GET_HW_CODE.value):
+                    self.error("Sync error. Please power off the device and retry.")
+                    self.config.set_gui_status(self.config.tr("Sync error. Please power off the device and retry."))
+                return False
+            else:
+                val = self.rdword()
+                self.config.hwcode = (val >> 16) & 0xFFFF
+                self.config.hwver = val & 0xFFFF
+                self.config.init_hwcode(self.config.hwcode)
+        self.config.init_hwcode(self.config.hwcode)
 
         cpu = self.config.chipconfig.name
         if self.display:
@@ -194,16 +201,17 @@ class Preloader(metaclass=LogBase):
         self.info("Get Target info")
         self.get_blver()
         self.get_bromver()
-        res = self.get_hw_sw_ver()
-        self.config.hwsubcode = 0
-        self.config.hwver = 0
-        self.config.swver = 0
-        if res != -1:
-            self.config.hwsubcode = res[0]
-            self.config.hwver = res[1]
-            self.config.swver = res[2]
+        if not self.config.iot:
+            res = self.get_hw_sw_ver()
+            self.config.hw_sub_code = 0
+            self.config.hwver = 0
+            self.config.swver = 0
+            if res != -1:
+                self.config.hw_sub_code = res[0]
+                self.config.hwver = res[1]
+                self.config.swver = res[2]
         if self.display:
-            self.info("\tHW subcode:\t\t" + hex(self.config.hwsubcode))
+            self.info("\tHW subcode:\t\t" + hex(self.config.hw_sub_code))
             self.info("\tHW Ver:\t\t\t" + hex(self.config.hwver))
             self.info("\tSW Ver:\t\t\t" + hex(self.config.swver))
         meid = self.get_meid()
@@ -219,6 +227,14 @@ class Preloader(metaclass=LogBase):
                     if socid != b"":
                         self.info("SOC_ID:\t\t\t" + hexlify(socid).decode('utf-8').upper())
         return True
+
+    def read_a2(self, addr, dwords=1) -> list:
+        cmd = self.Cmd.CMD_READ16_A2
+        if self.echo(cmd.value):
+            if self.echo(pack(">I", addr)):
+                ack = self.echo(pack(">I", dwords))
+                return unpack(">H", self.usbread(2))[0]
+        return None
 
     def read(self, addr, dwords=1, length=32) -> list:
         result = []
@@ -367,7 +383,48 @@ class Preloader(metaclass=LogBase):
         """
         addr, value = self.config.get_watchdog_addr()
 
-        if hwcode in [0x6575, 0x6577]:
+        if hwcode == 0x6261:
+            #SetLongPressPWKEY
+            self.read32(0xA01C0108)
+            self.write16(0xA0700F00,0x41)
+            self.write16(0xA0700F00, 0x51)
+            self.write16(0xA0700F00, 0x41)
+            #SetReg_DisableChargeControl()
+            self.write16(0xA0700A28,self.read16(0xA0700A28)|0x4000)
+            self.write16(0xA0700A00,self.read16(0xA0700A00,1)|0x10)
+            self.write16(0xA0030000, 0x2200)
+            #SetReg_LockPowerKey
+            self.read16(0xA0710000,1)
+            #PowerKeysMatched
+            self.read16(0xA0710050, 1)
+            self.read16(0xA0710054, 1)
+            self.write16(0xA0710010, 0)
+            self.write16(0xA0710008, 0)
+            self.write16(0xA071000C, 0)
+
+            #Unlock
+            self.write16(0xA0710074, 1)
+            val2=self.read16(0xA0710000, 1)
+            self.write16(0xA0710050, 0xA357)
+            self.write16(0xA0710054, 0x67D2)
+            self.read16(0xA0710074, 1)
+            val2 = self.read16(0xA0710000, 1)
+            self.write16(0xA0710068, 0x586A)
+            self.write16(0xA0710074, 1)
+            self.read16(0xA0710000, 1)
+            self.write16(0xA0710068, 0x9136)
+            self.write16(0xA0710074, 1)
+            self.read16(0xA0710000, 1)
+            self.write16(0xA0710074, 1)
+            self.read16(0xA0710000, 1)
+            # Get Target Config : D8
+
+            # SetRemap:
+            self.write32(0xA0510000,self.read32(0xA0510000,1)|2)
+            self.write32(0xA0510000, self.read32(0xA0510000, 1) | 2)
+            res = True
+
+        elif hwcode in [0x6575, 0x6577]:
             """
             SoCs which share the same watchdog IP as mt6577 must use 16-bit I/O.
             For example: mt6575, mt8317 and mt8377 (their hwcodes are 0x6575).

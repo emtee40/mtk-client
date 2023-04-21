@@ -265,6 +265,12 @@ Read full flash to filename flash.bin (use --preloader for brom)
 python mtk rf flash.bin
 ```
 
+Read full flash to filename flash.bin (use --preloader for brom) for IoT devices (MT6261/MT2301):
+
+```
+python mtk rf flash.bin --iot
+```
+
 Read flash offset 0x128000 with length 0x200000 to filename flash.bin (use --preloader for brom)
 
 ```

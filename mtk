@@ -298,6 +298,7 @@ if __name__ == '__main__':
     parser_rf.add_argument('--filename', help='Optional filename')
     parser_rf.add_argument('--crash', help='Enforce crash if device is in pl mode to enter brom mode')
     parser_rf.add_argument('--socid', help='Read Soc ID')
+    parser_rf.add_argument('--iot', help='Use special mode for iot MT6261/2301', action="store_true", default=False)
 
     parser_rs.add_argument('startsector', help='Sector to start reading (int or hex)')
     parser_rs.add_argument('sectors', help='Sector count')
