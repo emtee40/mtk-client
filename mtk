@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-# MTK Flash Client (c) B.Kerler 2018-2022.
+# MTK Flash Client (c) B.Kerler 2018-2023.
 # Licensed under GPLv3 License
 import argparse
 from mtkclient.Library.mtk_main import Main, metamodes
 
-info = "MTK Flash/Exploit Client V1.6.1 (c) B.Kerler 2018-2023"
+info = "MTK Flash/Exploit Client V1.6.2 (c) B.Kerler 2018-2023"
 
 cmds = {
     "printgpt": "Print GPT Table information",
