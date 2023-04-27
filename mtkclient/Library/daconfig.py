@@ -116,7 +116,6 @@ class DAconfig(metaclass=LogBase):
         self.mtk = mtk
         self.pathconfig = pathconfig()
         self.config = self.mtk.config
-        self.iot = False
         self.usbwrite = self.mtk.port.usbwrite
         self.usbread = self.mtk.port.usbread
         self.flashsize = 0

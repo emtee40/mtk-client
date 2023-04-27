@@ -33,6 +33,7 @@ class Mtk_Config(metaclass=LogBase):
         self.preloader_filename = None
         self.payloadfile = None
         self.loader = None
+        self.iot = False
         self.gpt_file = None
         self.tr = QObject().tr
         if sys.platform.startswith('darwin'):
