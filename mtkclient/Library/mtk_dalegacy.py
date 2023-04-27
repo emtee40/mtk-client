@@ -1104,7 +1104,7 @@ class DALegacy(metaclass=LogBase):
                             self.info("RAM-Info: " + hexlify(info).decode('utf-8'))
                             dramlength = unpack(">I", self.usbread(0x4))[0]
                             self.usbwrite(self.Rsp.ACK)
-                        elif self.daconfig.emiver in [0x0D]:
+                        elif self.daconfig.emiver in [0x0C, 0x0D]:
                             dramlength = unpack(">I", self.usbread(0x4))[0]
                             self.info("RAM-Length: " + hex(dramlength))
                             self.usbwrite(self.Rsp.ACK)

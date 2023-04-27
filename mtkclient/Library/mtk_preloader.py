@@ -520,6 +520,9 @@ class Preloader(metaclass=LogBase):
                 else:
                     self.error(f"Jump_DA status error:{self.eh.status(status)}")
                     self.config.set_gui_status(self.config.tr("DA Error"))
+            else:
+                self.error(f"Jump_DA status error:{self.eh.status(addr)}")
+                self.config.set_gui_status(self.config.tr("DA Error"))
 
         return False
 
